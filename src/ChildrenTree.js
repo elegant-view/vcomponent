@@ -3,14 +3,15 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var Tree = require('dom-data-bind/trees/Tree');
+var Tree = require('dom-data-bind/src/trees/Tree');
 
 module.exports = Tree.extends(
     {
+        $name: 'ChildrenTree',
         initialize: function (options) {
-            if (!options.config || !options.domUpdater
-                || !options.exprCalculater || !options.treeVars
-                || !options.componentManager
+            if (!options.config
+                || !options.domUpdater
+                || !options.exprCalculater
             ) {
                 throw new Error('wrong arguments');
             }
@@ -18,7 +19,7 @@ module.exports = Tree.extends(
             options.componentChildren = undefined;
             delete options.componentChildren;
 
-            this.$super.initialize(options);
+            Tree.prototype.initialize.apply(this, arguments);
         }
     }
 );

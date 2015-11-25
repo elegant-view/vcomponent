@@ -1,34 +1,57 @@
-var Tree = require('dom-data-bind/trees/Tree');
-var ComponentParser = require('../parsers/ComponentParser');
-var Event = require('../Event');
+var Tree = require('dom-data-bind/src/trees/Tree');
+var ComponentParser = require('./ComponentParser');
+var Event = require('dom-data-bind/src/Event');
+var utils = require('dom-data-bind/src/utils');
+var ComponentManager = require('./ComponentManager');
 
-module.exports = Tree.extends(
-    {
-        initialize: function (options) {
-            if (!options.config
-                || !options.domUpdater
-                || !options.exprCalculater
-                || !options.treeVars
-                || !options.componentChildren
-                || !options.componentManager
-            ) {
-                throw new Error('wrong arguments');
-            }
+module.exports = Tree.extends({
+    $name: 'ComponentTree',
 
-            this.$super.initialize(options);
+    initialize: function (options) {
+        Tree.prototype.initialize.apply(this, arguments);
 
-            this.componentChildren = options.componentChildren;
-            this.componentEvent = new Event();
-        },
+        this.componentEvent = new Event();
+        if (options.componentChildren) {
+            this.setTreeVar('componentChildren', options.componentChildren);
+        }
 
-        createParser: function (ParserClass, options) {
-            var instance = this.$super.createParser.apply(this, arguments);
+        var componentManager = new ComponentManager();
+        componentManager.setParent(this.getTreeVar('componentManager'));
+        this.setTreeVar('componentManager', componentManager);
+    },
 
-            if (instance && ParserClass === ComponentParser) {
-                instance.parser.setComponentEvent(this.componentEvent);
-            }
+    createParser: function (ParserClass, options) {
+        var instance = Tree.prototype.createParser.apply(this, arguments);
 
-            return instance;
+        if (instance && ParserClass === ComponentParser) {
+            instance.parser.setComponentEvent(this.componentEvent);
+        }
+
+        return instance;
+    },
+
+    /**
+     * 注册组件类
+     * 设置绑定在树上面的额外变量。这些变量有如下特性：
+     * 1、无法覆盖；
+     * 2、在获取treeVars上面某个变量的时候，如果当前树取出来是undefined，那么就会到父级树的treeVars上去找，以此类推。
+     *
+     * @public
+     * @param  {Map.<string, Component>} componentClasses 组件名和组件类的映射
+     * @param {string} name  变量名
+     * @param {*} value 变量值
+     */
+    registeComponents: function (componentClasses) {
+        if (!utils.isPureObject(componentClasses)) {
+            return;
+        }
+
+        var componentManager = this.getTreeVar('componentManager');
+        for (var name in componentClasses) {
+            var componentClass = componentClasses[name];
+            // 此处占用了组件类上的name属性，外部不要用这个属性
+            componentClass.$name = name;
+            componentManager.registe(componentClass);
         }
     }
-);
+});

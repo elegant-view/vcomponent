@@ -3,19 +3,20 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var DirectiveParser = require('dom-data-bind/DirectiveParser');
+var DirectiveParser = require('dom-data-bind/src/DirectiveParser');
 var ChildrenTree = require('./ChildrenTree');
 
 module.exports = DirectiveParser.extends(
     {
+        $name: 'ChildrenDirectiveParser',
         initialize: function (options) {
-            this.$super.initialize(options);
+            DirectiveParser.prototype.initialize.apply(this, arguments);
 
             this.node = options.node;
         },
 
         collectExprs: function () {
-            var componentChildren = this.tree.componentChildren;
+            var componentChildren = this.tree.getTreeVar('componentChildren', true);
             if (!componentChildren) {
                 return;
             }
@@ -28,10 +29,9 @@ module.exports = DirectiveParser.extends(
                 endNode: div.lastChild,
                 config: this.tree.config,
                 domUpdater: this.tree.domUpdater,
-                exprCalculater: this.tree.exprCalculater,
-                treeVars: this.tree.treeVars,
-                componentManager: this.tree.componentManager
+                exprCalculater: this.tree.exprCalculater
             });
+            this.childrenTree.setParent(this.tree);
             this.childrenTree.traverse();
 
             this.childrenTree.rootScope.setParent(componentChildren.scope);
@@ -75,7 +75,7 @@ module.exports = DirectiveParser.extends(
             this.node = null;
             this.childrenTree = null;
 
-            this.$super.destroy();
+            DirectiveParser.prototype.destroy.apply(this);
         }
     },
     {

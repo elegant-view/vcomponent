@@ -3,16 +3,18 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var Parser = require('dom-data-bind/parsers/Parser');
-var Tree = require('dom-data-bind/trees/Tree');
-var utils = require('dom-data-bind/utils');
+var Parser = require('dom-data-bind/src/parsers/Parser');
+var Tree = require('dom-data-bind/src/trees/Tree');
+var utils = require('dom-data-bind/src/utils');
 
 module.exports = Parser.extends(
     {
+        $name: 'ComponentParser',
+
         initialize: function (options) {
             Parser.prototype.initialize.apply(this, arguments);
 
-            this.componentManager = this.tree.componentManager;
+            this.componentManager = this.tree.getTreeVar('componentManager');
 
             this.node = options.node;
 

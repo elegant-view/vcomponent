@@ -3,7 +3,7 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var utils = require('./utils');
+var utils = require('dom-data-bind/src/utils');
 
 function ComponentChildren(startNode, endNode, scope, component) {
     this.div = document.createElement('div');

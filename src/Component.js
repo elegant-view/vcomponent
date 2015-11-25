@@ -3,15 +3,16 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var log = require('dom-data-bind/log');
-var utils = require('dom-data-bind/utils');
-var ComponentTree = require('dom-data-bind/trees/ComponentTree');
+var log = require('dom-data-bind/src/log');
+var utils = require('dom-data-bind/src/utils');
+var ComponentTree = require('./ComponentTree');
 var ComponentChildren = require('./ComponentChildren');
 var ComponentManager = require('./ComponentManager');
-var Base = require('dom-data-bind/Base');
+var Base = require('dom-data-bind/src/Base');
 
 module.exports = Base.extends(
     {
+        $name: 'Component',
 
         initialize: function (options) {
             this.componentNode = options.componentNode;
@@ -107,24 +108,25 @@ module.exports = Base.extends(
 
             // 当前组件层级的组建管理器
             var componentManager = new ComponentManager();
-            componentManager.setParent(this.tree.componentManager);
+            componentManager.setParent(this.tree.getTreeVar('componentManager'));
 
             // 组件的作用域是和外部的作用域隔开的
+            var previousTree = this.tree;
             this.tree = new ComponentTree({
                 startNode: this.startNode,
                 endNode: this.endNode,
-                config: this.tree.config,
-                domUpdater: this.tree.domUpdater,
-                exprCalculater: this.tree.exprCalculater,
-                treeVars: this.tree.treeVars,
-                componentManager: componentManager,
-                componentChildren: new ComponentChildren(
-                    this.componentNode.firstChild,
-                    this.componentNode.lastChild,
-                    this.outScope,
-                    this
-                )
+                config: previousTree.config,
+                domUpdater: previousTree.domUpdater,
+                exprCalculater: previousTree.exprCalculater
             });
+            this.tree.setParent(previousTree);
+            this.tree.setTreeVar('componentManager', componentManager);
+            this.tree.setTreeVar('componentChildren', new ComponentChildren(
+                this.componentNode.firstChild,
+                this.componentNode.lastChild,
+                this.outScope,
+                this
+            ));
             this.tree.registeComponents(this.componentClasses);
             this.tree.componentEvent.on('newcomponent', function (data) {
                 // 监听子组件的创建
