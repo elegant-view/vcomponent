@@ -66,14 +66,15 @@ ComponentManager.prototype.mountStyle = function (ComponentClass) {
     // 判断一下，避免重复添加css
     if (!document.getElementById(styleNodeId)) {
         var style = ComponentClass.getStyle();
-
-        var styleNode = document.createElement('style');
-        styleNode.setAttribute('id', styleNodeId);
-        styleNode.innerHTML = style.replace(
-            /#root#/g,
-            '.' + ComponentManager.getCssClassName(ComponentClass).join('.')
-        );
-        document.head.appendChild(styleNode);
+        if (style) {
+            var styleNode = document.createElement('style');
+            styleNode.setAttribute('id', styleNodeId);
+            styleNode.innerHTML = style.replace(
+                /#root#/g,
+                '.' + ComponentManager.getCssClassName(ComponentClass).join('.')
+            );
+            document.head.appendChild(styleNode);
+        }
     }
 
     // 将父类的css样式也加上去。父类很可能没注册，如果此处不加上去，样式可能就会缺一块。
