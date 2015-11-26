@@ -12,15 +12,12 @@ var Base = require('dom-data-bind/src/Base');
 
 module.exports = Base.extends(
     {
-        $name: 'Component',
 
         initialize: function (options) {
             this.componentNode = options.componentNode;
             this.tree = options.tree;
             this.event = options.event;
             this.childComponents = [];
-
-            this.className = this.constructor.getComponentClassName();
         },
 
         /**
@@ -33,7 +30,7 @@ module.exports = Base.extends(
             utils.traverseNoChangeNodes(this.startNode, this.endNode, function (curNode) {
                 if (curNode.nodeType === 1) {
                     // TODO: 改进添加类名的兼容性
-                    curNode.classList.add(this.className);
+                    curNode.classList.add.apply(curNode.classList, ComponentManager.getCssClassName(this.constructor));
                 }
             }, this);
         },
@@ -107,8 +104,9 @@ module.exports = Base.extends(
             this.endNode = div.lastChild;
 
             // 当前组件层级的组建管理器
-            var componentManager = new ComponentManager();
-            componentManager.setParent(this.tree.getTreeVar('componentManager'));
+            // this.componentManager = new ComponentManager();
+            // this.componentManager.setParent(this.tree.getTreeVar('componentManager'));
+            // this.componentManager.registeList(this.componentClasses);
 
             // 组件的作用域是和外部的作用域隔开的
             var previousTree = this.tree;
@@ -117,17 +115,21 @@ module.exports = Base.extends(
                 endNode: this.endNode,
                 config: previousTree.config,
                 domUpdater: previousTree.domUpdater,
-                exprCalculater: previousTree.exprCalculater
+                exprCalculater: previousTree.exprCalculater,
+                componentChildren: new ComponentChildren(
+                    this.componentNode.firstChild,
+                    this.componentNode.lastChild,
+                    this.outScope,
+                    this
+                )
             });
             this.tree.setParent(previousTree);
-            this.tree.setTreeVar('componentManager', componentManager);
-            this.tree.setTreeVar('componentChildren', new ComponentChildren(
-                this.componentNode.firstChild,
-                this.componentNode.lastChild,
-                this.outScope,
-                this
-            ));
+
+            var curComponentManager = this.tree.getTreeVar('componentManager', true);
+            curComponentManager.setParent(previousTree.getTreeVar('componentManager'));
+
             this.tree.registeComponents(this.componentClasses);
+
             this.tree.componentEvent.on('newcomponent', function (data) {
                 // 监听子组件的创建
                 this.childComponents.push(data);
@@ -392,20 +394,7 @@ module.exports = Base.extends(
             return '';
         },
 
-        /**
-         * 根据组件js类名生成组件的css类名（即由驼峰到下划线的转换）
-         *
-         * @static
-         * @return {string} 组件css类名
-         */
-        getComponentClassName: function () {
-            return this.$name.replace(/[A-Z]/g, function (matched, index) {
-                if (index === 0) {
-                    return matched.toLowerCase();
-                }
-                return '-' + matched.toLowerCase();
-            });
-        }
+        $name: 'Component'
     }
 );
 

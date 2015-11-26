@@ -3,12 +3,11 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var DirectiveParser = require('dom-data-bind/src/DirectiveParser');
+var DirectiveParser = require('dom-data-bind/src/parsers/DirectiveParser');
 var ChildrenTree = require('./ChildrenTree');
 
 module.exports = DirectiveParser.extends(
     {
-        $name: 'ChildrenDirectiveParser',
         initialize: function (options) {
             DirectiveParser.prototype.initialize.apply(this, arguments);
 
@@ -82,7 +81,9 @@ module.exports = DirectiveParser.extends(
         isProperNode: function (node, config) {
             return node.nodeType === 8
                 && node.nodeValue.replace(/\s/g, '') === 'children';
-        }
+        },
+
+        $name: 'ChildrenDirectiveParser'
     }
 );
 

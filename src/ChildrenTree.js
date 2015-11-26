@@ -7,7 +7,6 @@ var Tree = require('dom-data-bind/src/trees/Tree');
 
 module.exports = Tree.extends(
     {
-        $name: 'ChildrenTree',
         initialize: function (options) {
             if (!options.config
                 || !options.domUpdater
@@ -21,5 +20,8 @@ module.exports = Tree.extends(
 
             Tree.prototype.initialize.apply(this, arguments);
         }
+    },
+    {
+        $name: 'ChildrenTree'
     }
 );

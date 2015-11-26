@@ -9,7 +9,6 @@ var utils = require('dom-data-bind/src/utils');
 
 module.exports = Parser.extends(
     {
-        $name: 'ComponentParser',
 
         initialize: function (options) {
             Parser.prototype.initialize.apply(this, arguments);
@@ -178,7 +177,9 @@ module.exports = Parser.extends(
         isProperNode: function (node, config) {
             return node.nodeType === 1
                 && node.tagName.toLowerCase().indexOf('ui-') === 0;
-        }
+        },
+
+        $name: 'ComponentParser'
     }
 );
 

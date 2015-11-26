@@ -5,7 +5,6 @@ var utils = require('dom-data-bind/src/utils');
 var ComponentManager = require('./ComponentManager');
 
 module.exports = Tree.extends({
-    $name: 'ComponentTree',
 
     initialize: function (options) {
         Tree.prototype.initialize.apply(this, arguments);
@@ -54,4 +53,6 @@ module.exports = Tree.extends({
             componentManager.registe(componentClass);
         }
     }
+}, {
+    $name: 'ComponentTree'
 });
