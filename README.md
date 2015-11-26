@@ -2,6 +2,17 @@
 
 基于 DOM template 的组件化库。
 
+### 有现成的解决方案，为什么要重复做这种组件化的东西？
+
+目前在前端领域，已经有非常多的组件化库： React 、 Vue 等等。那为啥还要去重复写这么一个东西呢？
+
+* 1、练手，提高自身逼格；
+* 2、目前我用过的组件化解决方案在 API 设计上都让我感觉不是太舒服，具体就是：
+
+	* React 的 render 方法很容易写得惨不忍睹，大量的组件拼接，不忍直视。
+	* Vue 父子组件嵌套使用类似于 layout 的思维方式，感觉有点复杂化了，为啥不沿用 HTML 式的嵌套设计呢？
+	* Vue 指令分优先级，用起来心累。
+
 ### 快速开始
 
 让我们先写一个 Hello world! 程序。
@@ -107,3 +118,111 @@ gulp build
 ```
 
 * 10、直接用浏览器打开第2步中创建的 `index.html` ，如果看到红色的 `Hello world!` 字样，那么恭喜您，您成功跑起来了。
+
+### 模板语法
+
+从“快速开始”的例子中，可以看到 Main 组件有一个 tpl 属性，这个属性就是用于设置组件模板的。
+
+一个模板可能包含：组件、 if 指令、 for 指令、表达式、 var 指令、 scope 指令 。比如可能会是这个样子：
+
+```html
+<div>
+	<!-- if: ${age} <= 10 -->
+		some content for children.
+	<!-- elif: ${age} > 18 -->
+		some content for adult.
+	<!-- else -->
+		no content.
+	<!-- /if -->
+	
+	<!-- for: ${users} as ${user} -->
+		${user.name}
+	<!-- /for -->
+	
+	<button event-click="${buttonClick(event)}">按钮</button>
+</div>
+```
+
+#### 表达式
+
+表达式就是 `${...}` 包裹的一块东西，存在于 DOM 节点属性值、文本节点等等。比如：
+
+```html
+<span>${username}</span>
+<span title="Hello ${username}">用户</span>
+```
+
+实际上，表达式会转换成相应的函数调用来处理，比如上面两个表达式转换成的函数大致为：
+
+```js
+// ${username}
+(function (username) { return username; })('张三')；
+
+// Hello ${username}
+'Hello ' + (function (username) { return username; })('张三')；
+```
+
+**注意：位于指令中的 `${...}` 不是表达式。**
+
+#### if 指令
+
+if 指令用于条件判断：
+
+```html
+<!-- if: ${age} <= 10 -->
+	some content for children.
+<!-- elif: ${age} > 18 -->
+	some content for adult.
+<!-- else -->
+	no content.
+<!-- /if -->
+```
+
+条件不满足的分支中的 DOM 节点将会从 DOM 树中移除。
+
+### for 指令
+
+for 指令用于处理迭代：
+
+```html
+<!-- for: ${users} as ${user} -->
+	${user.name}
+<!-- /for -->
+```
+
+for 指令可以迭代数组和对象。在 for 指令循环内部，有两个额外的本地变量，名字分别为 key 、 index 。当迭代的目标是数组的时候 key 和 index 都是当前索引；如果迭代目标是一个普通的对象，那么 key 就是当前的键， index 可以指明当前迭代了多少次。
+
+```html
+<!-- for: ${users} as ${user} -->
+	${user.name}, ${key}, ${index}
+<!-- /for -->
+```
+
+> for 指令目前只做了非常简单的优化： DOM 节点只增不减。
+
+for 指令会形成自己的作用域。
+
+### var 指令
+
+var 指令用于在当前作用域中声明定义变量，比如：
+
+```
+<!-- var: name = '张三' -->
+${name}
+```
+
+目前能形成作用域的东西有： for 指令、组件、 scope 指令。
+
+### scope 指令
+
+scope 指令可以在指定范围插入作用域：
+
+```html
+<!-- scope -->
+some content
+<!-- /scope -->
+```
+
+### 组件
+
+TODO
