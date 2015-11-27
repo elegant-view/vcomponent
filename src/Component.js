@@ -3,7 +3,6 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var log = require('dom-data-bind/src/log');
 var utils = require('dom-data-bind/src/utils');
 var ComponentTree = require('./ComponentTree');
 var ComponentChildren = require('./ComponentChildren');
@@ -13,6 +12,15 @@ var Base = require('dom-data-bind/src/Base');
 module.exports = Base.extends(
     {
 
+        /**
+         * 组件初始化
+         *
+         * @private
+         * @param  {options} options 初始化参数
+         * @param {Node} options.componentNode 组件在DOM树中的占位节点
+         * @param {Tree} options.tree 当前组件父级树
+         * @param {Event} options.event 外部传入的事件对象，主要用于组件内部发生的一些变化可以通知到外面
+         */
         initialize: function (options) {
             this.componentNode = options.componentNode;
             this.tree = options.tree;
@@ -56,14 +64,6 @@ module.exports = Base.extends(
          * @type {String}
          */
         tpl: '',
-
-        /**
-         * 组件模板的 url 地址。子类可以覆盖这个属性。
-         *
-         * @protected
-         * @type {String}
-         */
-        tplUrl: '',
 
         /**
          * 设置组件属性。假如有如下组件：
@@ -309,30 +309,6 @@ module.exports = Base.extends(
             }
 
             return dft;
-        },
-
-        /**
-         * 拿到到组件模板。优先检查 tpl 是否有模板，如果有了，就不再去请求了。
-         *
-         * @public
-         * @param  {function(string)} doneFn 模板就绪后的回调函数
-         */
-        getTpl: function (doneFn) {
-            if (this.tpl) {
-                doneFn();
-            }
-            else if (this.tplUrl) {
-                var me = this;
-                utils.xhr({
-                    url: this.tplUrl
-                }, function (data) {
-                    me.tpl = data.responseText;
-                    doneFn();
-                }, function () {
-                    log.warn('load tpl:', me.tplUrl, 'failed!');
-                    doneFn();
-                });
-            }
         },
 
         /**

@@ -225,4 +225,73 @@ some content
 
 ### 组件
 
-TODO
+组件是构成界面的基石。
+
+在模板语法中，组件节点必须以 `ui` 开头。
+
+在 vcomponent 中，每一个组件就是一个类。其中有一个组件基类 `Component` ，所有的组件类都应该继承自这个基类。
+
+`Component` 组件基类有如下的生命周期方法：
+
+* **beforeMount()** ：在组件挂载到 DOM 树之前调用。
+* **afterMount()** ：在组件挂载到 DOM 树之后调用。
+* **beforeDestroy()** ：在组件销毁之前调用。
+* **afterDestroy()** ：在组件销毁之后调用。
+* **literalAttrReady()** ：在组件各个属性都设置好之后调用。
+
+有如下辅助方法供调用：
+
+* **findComponent(filterFn)** ：找到第一个满足 filterFn 指定条件的子组件。
+* **findComponents(filterFn)** ：找到所有满足 filterFn 指定条件的子组件。
+* **ref(ref)** ：查找组件范围内子组件之外的带有指定 ref 的 DOM 节点或子组件。
+* **setData(name, value)** ：设置组件数据，界面会跟随变动。
+* **getData(name, dft)** ：获取当前组件数据。
+* **goDark()** ：隐藏当前组件。
+* **restoreFromDark()** ：显示当前组件。
+
+有一个 tpl 属性可以设置当前组件的模板，模板语法为上述所讲的语法。
+
+可以通过 `getStyle()` 静态方法设置当前组件的样式。对于样式，子组件会继承复用父组件的样式。
+
+例如下面是一个继承自 `Component` 的组件：
+
+```js
+var ChildComponent = Component.extends(
+	// 以下是实例属性，挂在 ChildComponent.prototype 下面
+	{
+		tpl: [
+			'<div></div>',
+			'<ui-some-other-component></ui-some-other-component>',
+			'<p></p>'
+		].join(''),
+		
+		beforeMount: function () {
+			console.log('before mount');
+		},
+		
+		afterMount: function () {
+			console.log('after mount');
+		},
+		
+		beforeDestroy: function () {
+			console.log('before destroy');
+		},
+		
+		afterDestroy: function () {
+			console.log('after destroy');
+		},
+		
+		literalAttrReady: function () {
+			console.log('literal attr ready');
+		}
+	},
+	// 以下是静态属性，会直接挂在 ChildComponent 下面
+	{
+		$name: 'ChildComponent',
+
+		getStyle: function () {
+			return '#root# {background-color: red;}';
+		}
+	}
+);
+```
