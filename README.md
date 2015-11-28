@@ -117,7 +117,7 @@ gulp.task('build', function () {
 gulp build
 ```
 
-* 10、直接用浏览器打开第2步中创建的 `index.html` ，如果看到红色的 `Hello world!` 字样，那么恭喜您，您成功跑起来了。
+* 10、直接用浏览器打开第2步中创建的 `index.html` ，如果看到红色的 `Hello world!` 字样，那么恭喜您，您成功跑起来了。如果没有跑起来，请在 [issue](https://github.com/elegant-view/vcomponent/issues) 中尽量准确描述您的情况，以便作者修复。
 
 ### 模板语法
 
