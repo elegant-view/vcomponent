@@ -1,5 +1,5 @@
 {
-  "name": "dom-component",
+  "name": "vcomponent",
   "version": "0.1.0",
   "description": "",
   "main": "src/main.js",
@@ -9,6 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "dom-data-bind": "github:yibuyisheng/dom-data-bind"
+    "vtpl": "github:elegant-view/vtpl"
   }
 }

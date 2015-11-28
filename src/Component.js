@@ -3,11 +3,11 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var utils = require('dom-data-bind/src/utils');
+var utils = require('vtpl/src/utils');
 var ComponentTree = require('./ComponentTree');
 var ComponentChildren = require('./ComponentChildren');
 var ComponentManager = require('./ComponentManager');
-var Base = require('dom-data-bind/src/Base');
+var Base = require('vtpl/src/Base');
 
 module.exports = Base.extends(
     {
@@ -26,21 +26,6 @@ module.exports = Base.extends(
             this.tree = options.tree;
             this.event = options.event;
             this.childComponents = [];
-        },
-
-        /**
-         * 给组件挂上类名
-         *
-         * @private
-         * @param {string} className 要添加的类名
-         */
-        addComponentClass: function () {
-            utils.traverseNoChangeNodes(this.startNode, this.endNode, function (curNode) {
-                if (curNode.nodeType === 1) {
-                    // TODO: 改进添加类名的兼容性
-                    curNode.classList.add.apply(curNode.classList, ComponentManager.getCssClassName(this.constructor));
-                }
-            }, this);
         },
 
         setOutScope: function (outScope) {
@@ -77,9 +62,13 @@ module.exports = Base.extends(
          *
          * 对于ref属性，特殊化，需要用这个属性来查找子组件。
          *
+         * setAttr和setData的区别在于：
+         * 1、setAttr可以设置一些非常特殊的属性，而这个属性不需要设置到scope中去，比如$$ref；
+         * 2、setAttr用于模板里面组件属性的设置，setData是直接在代码里面设置数据。
+         *
          * @public
          * @param {string} name  属性名
-         * @param {Any} value 属性值
+         * @param {*} value 属性值
          */
         setAttr: function (name, value) {
             if (name === 'ref') {
@@ -87,7 +76,62 @@ module.exports = Base.extends(
                 return;
             }
 
-            this.tree.rootScope.set(name, value);
+            if (name === 'classList') {
+                var classList = this.getData('classList', []);
+                classList.push.apply(classList, this.getClassList(value));
+                value = classList;
+            }
+
+            this.setData(name, value);
+        },
+
+        /**
+         * 转换一下klass
+         *
+         * @private
+         * @param  {(string|Array|Object)} klass css类
+         * @return {Array.<string>} css类数组
+         */
+        getClassList: function (klass) {
+            if (!klass) {
+                return [];
+            }
+
+            var klasses = [];
+            if (utils.isClass(klass, 'String')) {
+                klasses = klass.split(' ');
+            }
+            else if (utils.isPureObject(klass)) {
+                for (var k in klass) {
+                    if (klass[k]) {
+                        klasses.push(klass[k]);
+                    }
+                }
+            }
+            else if (utils.isArray(klass)) {
+                klasses = klass;
+            }
+
+            return klasses;
+        },
+
+        /**
+         * 给当前组件下的根级节点设置根级css类
+         *
+         * @private
+         * @param {Array.<string>} klasses css类
+         */
+        setClasses: function (klasses) {
+            utils.traverseNoChangeNodes(
+                this.startNode,
+                this.endNode,
+                function (curNode) {
+                    if (curNode.nodeType === 1) {
+                        curNode.classList.add.apply(curNode.classList, klasses);
+                    }
+                },
+                this
+            );
         },
 
         /**
@@ -102,11 +146,6 @@ module.exports = Base.extends(
             div.innerHTML = this.tpl;
             this.startNode = div.firstChild;
             this.endNode = div.lastChild;
-
-            // 当前组件层级的组建管理器
-            // this.componentManager = new ComponentManager();
-            // this.componentManager.setParent(this.tree.getTreeVar('componentManager'));
-            // this.componentManager.registeList(this.componentClasses);
 
             // 组件的作用域是和外部的作用域隔开的
             var previousTree = this.tree;
@@ -134,18 +173,32 @@ module.exports = Base.extends(
                 // 监听子组件的创建
                 this.childComponents.push(data);
             }, this);
-            this.tree.traverse();
 
             // 把组件节点放到 DOM 树中去
-            var parentNode = this.componentNode.parentNode;
-            utils.traverseNoChangeNodes(this.startNode, this.endNode, function (curNode) {
-                parentNode.insertBefore(curNode, this.componentNode);
-            }, this);
-            parentNode.removeChild(this.componentNode);
+            insertComponentNodes(this.componentNode, this.startNode, this.endNode);
 
-            this.addComponentClass();
+            this.tree.traverse();
+
+            // 设置组件特有的类
+            this.setData(
+                'classList',
+                ComponentManager.getCssClassName(this.constructor)
+            );
 
             this.afterMount();
+
+            // 把组件节点放到 DOM 树中去
+            function insertComponentNodes(componentNode, startNode, endNode) {
+                var parentNode = componentNode.parentNode;
+                utils.traverseNodes(
+                    startNode,
+                    endNode,
+                    function (curNode) {
+                        parentNode.insertBefore(curNode, componentNode);
+                    }
+                );
+                parentNode.removeChild(componentNode);
+            }
         },
 
         /**
@@ -255,7 +308,9 @@ module.exports = Base.extends(
         },
 
         /**
-         * 设置数据
+         * 设置数据。
+         *
+         * classList是一个特殊属性，用于设置组件的css类。
          *
          * @protected
          * @param {string|Object} name 如果是字符串，那么第二个就是要设置的值；
@@ -268,6 +323,10 @@ module.exports = Base.extends(
             }
             var scope = this.tree.rootScope;
             scope.set.call(scope, name, value);
+
+            if (name === 'classList') {
+                this.setClasses(value);
+            }
         },
 
         /**

@@ -1,7 +1,7 @@
-var Tree = require('dom-data-bind/src/trees/Tree');
+var Tree = require('vtpl/src/trees/Tree');
 var ComponentParser = require('./ComponentParser');
-var Event = require('dom-data-bind/src/Event');
-var utils = require('dom-data-bind/src/utils');
+var Event = require('vtpl/src/Event');
+var utils = require('vtpl/src/utils');
 var ComponentManager = require('./ComponentManager');
 
 module.exports = Tree.extends({
@@ -41,15 +41,14 @@ module.exports = Tree.extends({
      * @param {*} value 变量值
      */
     registeComponents: function (componentClasses) {
-        if (!utils.isPureObject(componentClasses)) {
+        if (!utils.isArray(componentClasses)) {
             return;
         }
 
         var componentManager = this.getTreeVar('componentManager');
-        for (var name in componentClasses) {
-            var componentClass = componentClasses[name];
-            // 此处占用了组件类上的name属性，外部不要用这个属性
-            componentClass.$name = name;
+
+        for (var i = 0, il = componentClasses.length; i < il; ++i) {
+            var componentClass = componentClasses[i];
             componentManager.registe(componentClass);
         }
     }

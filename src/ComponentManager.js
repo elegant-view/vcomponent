@@ -5,7 +5,7 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var utils = require('dom-data-bind/src/utils');
+var utils = require('vtpl/src/utils');
 
 function ComponentManager() {
     this.components = {};

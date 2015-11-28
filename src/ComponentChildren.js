@@ -3,7 +3,7 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var utils = require('dom-data-bind/src/utils');
+var utils = require('vtpl/src/utils');
 
 function ComponentChildren(startNode, endNode, scope, component) {
     this.div = document.createElement('div');

@@ -3,9 +3,9 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var Parser = require('dom-data-bind/src/parsers/Parser');
-var Tree = require('dom-data-bind/src/trees/Tree');
-var utils = require('dom-data-bind/src/utils');
+var Parser = require('vtpl/src/parsers/Parser');
+var Tree = require('vtpl/src/trees/Tree');
+var utils = require('vtpl/src/utils');
 
 module.exports = Parser.extends(
     {
@@ -44,11 +44,13 @@ module.exports = Parser.extends(
                         this.exprFns[expr] = utils.bind(calculateExpr, null, rawExpr, this.exprCalculater);
 
                         this.updateFns[expr] = this.updateFns[expr] || [];
-                        this.updateFns[expr].push(utils.bind(updateAttr, null, attr.nodeName));
+                        this.updateFns[expr].push(utils.bind(setAttrFn, null, attr.nodeName));
                     }
                 }
                 else {
-                    this.setLiteralAttrsFns.push(utils.bind(literalAttrFn, null, attr));
+                    this.setLiteralAttrsFns.push(
+                        utils.bind(setAttrFn, null, attr.nodeName, attr.nodeValue)
+                    );
                 }
             }
 
@@ -73,12 +75,18 @@ module.exports = Parser.extends(
 
             return true;
 
-            function literalAttrFn(attr, component) {
-                component.setAttr(attr.nodeName, attr.nodeValue);
-            }
-
-            function updateAttr(name, exprValue, component) {
-                component.setAttr(name, exprValue);
+            /**
+             * 设置组件属性。
+             * 由于HTML标签中不能写驼峰形式的属性名，
+             * 所以此处会将中横线形式的属性转换成驼峰形式。
+             *
+             * @inner
+             * @param {string} name      属性名
+             * @param {string} value     属性值
+             * @param {Component} component 组件
+             */
+            function setAttrFn(name, value, component) {
+                component.setAttr(utils.line2camel(name), value);
             }
 
             function calculateExpr(rawExpr, exprCalculater, scopeModel) {
@@ -127,16 +135,13 @@ module.exports = Parser.extends(
 
             this.component.setOutScope(this.scopeModel);
 
-            var me = this;
-            this.component.getTpl(function () {
-                me.component.mount();
+            this.component.mount();
 
-                for (var i = 0, il = me.setLiteralAttrsFns.length; i < il; i++) {
-                    me.setLiteralAttrsFns[i](me.component);
-                }
+            for (var i = 0, il = this.setLiteralAttrsFns.length; i < il; i++) {
+                this.setLiteralAttrsFns[i](this.component);
+            }
 
-                me.component.literalAttrReady();
-            });
+            this.component.literalAttrReady();
         },
 
         onChange: function () {

@@ -3,7 +3,7 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var Tree = require('dom-data-bind/src/trees/Tree');
+var Tree = require('vtpl/src/trees/Tree');
 
 module.exports = Tree.extends(
     {

@@ -1,6 +1,6 @@
-require('dom-data-bind');
+require('./ChildrenDirectiveParser');
 var ComponentTree = require('./ComponentTree');
-var domDataBind = require('dom-data-bind');
+var domDataBind = require('vtpl');
 
 module.exports = {
     Component: require('./Component'),

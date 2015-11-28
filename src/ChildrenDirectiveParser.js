@@ -3,7 +3,7 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var DirectiveParser = require('dom-data-bind/src/parsers/DirectiveParser');
+var DirectiveParser = require('vtpl/src/parsers/DirectiveParser');
 var ChildrenTree = require('./ChildrenTree');
 
 module.exports = DirectiveParser.extends(
