@@ -122,16 +122,10 @@ module.exports = Base.extends(
          * @param {Array.<string>} klasses css类
          */
         setClasses: function (klasses) {
-            utils.traverseNoChangeNodes(
-                this.startNode,
-                this.endNode,
-                function (curNode) {
-                    if (curNode.nodeType === 1) {
-                        curNode.classList.add.apply(curNode.classList, klasses);
-                    }
-                },
-                this
-            );
+            for (var i = 0, il = this.tree.tree.length; i < il; ++i) {
+                this.tree.tree[i].parser.setCssClass
+                    && this.tree.tree[i].parser.setCssClass(klasses);
+            }
         },
 
         /**
@@ -169,8 +163,8 @@ module.exports = Base.extends(
 
             this.tree.registeComponents(this.componentClasses);
 
+            // 监听子组件的创建
             this.tree.componentEvent.on('newcomponent', function (data) {
-                // 监听子组件的创建
                 this.childComponents.push(data);
             }, this);
 

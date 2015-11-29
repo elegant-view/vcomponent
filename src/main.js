@@ -1,4 +1,7 @@
 require('./ChildrenDirectiveParser');
+require('./ForDirectiveParser');
+require('./IfDirectiveParser');
+
 var ComponentTree = require('./ComponentTree');
 var domDataBind = require('vtpl');
 

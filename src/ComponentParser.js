@@ -3,31 +3,51 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var Parser = require('vtpl/src/parsers/Parser');
+var EventExprParser = require('vtpl/src/parsers/EventExprParser');
 var Tree = require('vtpl/src/trees/Tree');
 var utils = require('vtpl/src/utils');
 
-module.exports = Parser.extends(
+module.exports = EventExprParser.extends(
     {
 
         initialize: function (options) {
-            Parser.prototype.initialize.apply(this, arguments);
-
+            EventExprParser.prototype.initialize.apply(this, arguments);
             this.componentManager = this.tree.getTreeVar('componentManager');
-
-            this.node = options.node;
-
-            this.exprs = [];
-            this.exprFns = {};
-            this.updateFns = {};
-            this.exprOldValues = {};
+            this.isComponent = this.node.nodeType === 1
+                && this.node.tagName.toLowerCase().indexOf('ui-') === 0;
         },
 
         setComponentEvent: function (event) {
             this.componentEvent = event;
         },
 
+        setCssClass: function (classList) {
+            if (this.isComponent) {
+                this.component.setAttr('classList', classList);
+            }
+            else {
+                var classObj = {};
+                for (var i = 0, il = classList.length; i < il; ++i) {
+                    classObj[classList[i]] = true;
+                }
+                var classes = [];
+                for (var key in classObj) {
+                    classes.push(key);
+                }
+                this.node.className = classes.join(' ');
+            }
+        },
+
         collectExprs: function () {
+            if (this.isComponent) {
+                this.collectComponentExprs();
+            }
+            else {
+                EventExprParser.prototype.collectExprs.apply(this, arguments);
+            }
+        },
+
+        collectComponentExprs: function () {
             var curNode = this.node;
 
             var attributes = curNode.attributes;
@@ -131,17 +151,21 @@ module.exports = Parser.extends(
         },
 
         setScope: function (scopeModel) {
-            Parser.prototype.setScope.apply(this, arguments);
+            EventExprParser.prototype.setScope.apply(this, arguments);
 
-            this.component.setOutScope(this.scopeModel);
+            if (this.isComponent) {
+                this.component.setOutScope(this.scopeModel);
 
-            this.component.mount();
+                this.component.mount();
 
-            for (var i = 0, il = this.setLiteralAttrsFns.length; i < il; i++) {
-                this.setLiteralAttrsFns[i](this.component);
+                for (var i = 0, il = this.setLiteralAttrsFns.length; i < il; i++) {
+                    this.setLiteralAttrsFns[i](this.component);
+                }
+
+                this.component.literalAttrReady();
+
+                this.componentEvent && this.componentEvent.trigger('literalattrready', this.component);
             }
-
-            this.component.literalAttrReady();
         },
 
         onChange: function () {
@@ -165,24 +189,24 @@ module.exports = Parser.extends(
                 exprOldValues[expr] = exprValue;
             }
 
-            Parser.prototype.onChange.apply(this, arguments);
+            EventExprParser.prototype.onChange.apply(this, arguments);
         },
 
         goDark: function () {
-            this.component.goDark();
-            this.isGoDark = true;
+            this.components && this.component.goDark();
+            EventExprParser.prototype.goDark.apply(this, arguments);
         },
 
         restoreFromDark: function () {
-            this.component.restoreFromDark();
-            this.isGoDark = false;
+            this.components && this.component.restoreFromDark();
+            EventExprParser.prototype.restoreFromDark.apply(this, arguments);
         }
     },
     {
-        isProperNode: function (node, config) {
-            return node.nodeType === 1
-                && node.tagName.toLowerCase().indexOf('ui-') === 0;
-        },
+        // isProperNode: function (node, config) {
+        //     return node.nodeType === 1
+        //         && node.tagName.toLowerCase().indexOf('ui-') === 0;
+        // },
 
         $name: 'ComponentParser'
     }
