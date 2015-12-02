@@ -111,6 +111,10 @@ module.exports = EventExprParser.extends(
             }
 
             if (this.isComponent) {
+                if (name === 'classList') {
+                    value = this.componentOriginCssClassList.concat(DomUpdater.getClassList(value));
+                }
+
                 var scope = this.tree.rootScope;
                 scope.set(name, value);
 
@@ -121,7 +125,10 @@ module.exports = EventExprParser.extends(
                             parserObj.parser.setAttr('class', value);
                         }
                         else {
-                            parserObj.parser.setAttr('classList', value);
+                            parserObj.parser.setAttr(
+                                'classList',
+                                DomUpdater.getClassList(value)
+                            );
                         }
                     }
                 }
@@ -169,19 +176,19 @@ module.exports = EventExprParser.extends(
                         this.exprFns[expr] = utils.bind(calculateExpr, null, rawExpr, this.exprCalculater);
 
                         this.updateFns[expr] = this.updateFns[expr] || [];
-                        this.updateFns[expr].push(utils.bind(setAttrFn, null, attr.nodeName));
+                        this.updateFns[expr].push(utils.bind(setAttrFn, this, attr.nodeName));
                     }
                 }
                 else {
                     this.setLiteralAttrsFns.push(
-                        utils.bind(setAttrFn, null, attr.nodeName, attr.nodeValue)
+                        utils.bind(setAttrFn, this, attr.nodeName, attr.nodeValue, true)
                     );
                 }
             }
 
             if (!hasClass) {
                 this.setLiteralAttrsFns.push(
-                    utils.bind(setAttrFn, null, 'class-list', this.componentOriginCssClassList)
+                    utils.bind(setAttrFn, this, 'class-list', [])
                 );
             }
 
@@ -195,19 +202,18 @@ module.exports = EventExprParser.extends(
              * @inner
              * @param {string} name      属性名
              * @param {string} value     属性值
+             * @param {boolean} isLiteral 是否是常量属性
              * @param {Component} component 组件
              */
-            function setAttrFn(name, value) {
+            function setAttrFn(name, value, isLiteral) {
                 name = utils.line2camel(name);
-
-                // 如果是设置组件css类，就要加上组件自身的css类
                 if (name === 'classList') {
-                    var classList = me.componentOriginCssClassList;
-                    classList.push.apply(classList, DomUpdater.getClassList(value));
-                    value = utils.distinctArr(classList);
+                    value = this.componentOriginCssClassList.concat(DomUpdater.getClassList(value));
+                    if (isLiteral) {
+                        this.componentOriginCssClassList = value;
+                    }
                 }
-
-                me.setAttr(name, value);
+                this.setAttr(name, value);
             }
 
             function calculateExpr(rawExpr, exprCalculater, scopeModel) {
