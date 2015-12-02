@@ -6,6 +6,10 @@
 var EventExprParser = require('vtpl/src/parsers/EventExprParser');
 var Tree = require('vtpl/src/trees/Tree');
 var utils = require('vtpl/src/utils');
+var ComponentTree = require('./ComponentTree');
+var ComponentChildren = require('./ComponentChildren');
+var ComponentManager = require('./ComponentManager');
+var DomUpdater = require('vtpl/src/DomUpdater');
 
 module.exports = EventExprParser.extends(
     {
@@ -15,27 +19,28 @@ module.exports = EventExprParser.extends(
             this.componentManager = this.tree.getTreeVar('componentManager');
             this.isComponent = this.node.nodeType === 1
                 && this.node.tagName.toLowerCase().indexOf('ui-') === 0;
-        },
 
-        setComponentEvent: function (event) {
-            this.componentEvent = event;
-        },
-
-        setCssClass: function (classList) {
             if (this.isComponent) {
-                this.component.setAttr('classList', classList);
-            }
-            else {
-                var classObj = {};
-                for (var i = 0, il = classList.length; i < il; ++i) {
-                    classObj[classList[i]] = true;
+                var componentName = utils.line2camel(this.node.tagName.toLowerCase().replace('ui', ''));
+
+                var ComponentClass = this.componentManager.getClass(componentName);
+                if (!ComponentClass) {
+                    throw new Error('the component `' + componentName + '` is not registed!');
                 }
-                var classes = [];
-                for (var key in classObj) {
-                    classes.push(key);
-                }
-                this.node.className = classes.join(' ');
+                // 组件本身就应该有的css类名
+                this.componentOriginCssClassList = ComponentManager.getCssClassName(ComponentClass);
+
+                this.component = new ComponentClass();
+                this.component.parser = this;
+
+                this.mount(options.tree);
             }
+
+            /**
+             * DOM节点属性与更新属性的任务id的映射
+             * @type {Object}
+             */
+            this.attrToDomTaskIdMap = {};
         },
 
         collectExprs: function () {
@@ -47,14 +52,127 @@ module.exports = EventExprParser.extends(
             }
         },
 
+        mount: function (parentTree) {
+            this.component.beforeMount();
+
+            var div = document.createElement('div');
+            div.innerHTML = this.component.tpl;
+            var startNode = div.firstChild;
+            var endNode = div.lastChild;
+
+            this.startNode = startNode;
+            this.endNode = endNode;
+
+            // 组件的作用域是和外部的作用域隔开的
+            this.tree = new ComponentTree({
+                startNode: startNode,
+                endNode: endNode,
+                config: parentTree.config,
+                domUpdater: parentTree.domUpdater,
+                exprCalculater: parentTree.exprCalculater,
+
+                // componentChildren不能传给子级组件树，可以传给子级for树。
+                componentChildren: new ComponentChildren(
+                    this.node.firstChild,
+                    this.node.lastChild,
+                    parentTree.rootScope
+                )
+            });
+
+            this.tree.setParent(parentTree);
+
+            this.tree.registeComponents(this.component.componentClasses);
+
+            insertComponentNodes(this.node, startNode, endNode);
+
+            this.tree.traverse();
+
+            // 把组件节点放到 DOM 树中去
+            function insertComponentNodes(componentNode, startNode, endNode) {
+                var parentNode = componentNode.parentNode;
+                utils.traverseNodes(
+                    startNode,
+                    endNode,
+                    function (curNode) {
+                        parentNode.insertBefore(curNode, componentNode);
+                    }
+                );
+                parentNode.removeChild(componentNode);
+            }
+
+            this.component.afterMount();
+        },
+
+        /**
+         * 根据DOM节点的属性名字拿到一个任务id。
+         *
+         * @private
+         * @param  {string} attrName 属性名字
+         * @return {string}          任务id
+         */
+        getTaskId: function (attrName) {
+            var taskId = this.attrToDomTaskIdMap[attrName];
+            if (!taskId) {
+                this.attrToDomTaskIdMap[attrName] = this.domUpdater.generateTaskId();
+            }
+            return taskId;
+        },
+
+        /**
+         * 设置当前节点或者组件的属性
+         *
+         * @public
+         * @param {string} name 属性名
+         * @param {*} value 属性值
+         */
+        setAttr: function (name, value) {
+            if (name === 'ref') {
+                this.$$ref = value;
+                return;
+            }
+
+            if (this.isComponent) {
+                var scope = this.tree.rootScope;
+                scope.set(name, value);
+            }
+            else {
+                var taskId = this.getTaskId();
+                var me = this;
+                this.domUpdater.addTaskFn(taskId, function () {
+                    DomUpdater.setAttr(me.node, name, value);
+                });
+            }
+        },
+
+        /**
+         * 获取属性
+         *
+         * @public
+         * @param  {string} name 属性名
+         * @return {*}      属性值
+         */
+        getAttr: function (name) {
+            if (this.isComponent) {
+                return this.tree.rootScope.get(name);
+            }
+
+            return DomUpdater.getAttr(this.node, name);
+        },
+
         collectComponentExprs: function () {
+            var me = this;
             var curNode = this.node;
 
             var attributes = curNode.attributes;
             // 搜集不含有表达式的属性，然后在组件类创建好之后设置进组件
             this.setLiteralAttrsFns = [];
+
+            // 是否存在css类名的设置函数
+            var hasClass = false;
             for (var i = 0, il = attributes.length; i < il; i++) {
                 var attr = attributes[i];
+                hasClass = attr.nodeName === 'class-list';
+
                 var expr = attr.nodeValue;
                 if (this.config.getExprRegExp().test(expr)) {
                     this.exprs.push(expr);
@@ -74,23 +192,10 @@ module.exports = EventExprParser.extends(
                 }
             }
 
-            var componentName = this.node.tagName.toLowerCase()
-                .replace('ui', '')
-                .replace(/-[a-z]/g, function () {
-                    return arguments[0][1].toUpperCase();
-                });
-
-            var ComponentClass = this.componentManager.getClass(componentName);
-            if (!ComponentClass) {
-                throw new Error('the component `' + componentName + '` is not registed!');
-            }
-
-            this.component = new ComponentClass({
-                componentNode: this.node,
-                tree: this.tree
-            });
-            if (this.componentEvent) {
-                this.componentEvent.trigger('newcomponent', this.component);
+            if (!hasClass) {
+                this.setLiteralAttrsFns.push(
+                    utils.bind(setAttrFn, null, 'class-list', this.componentOriginCssClassList)
+                );
             }
 
             return true;
@@ -105,8 +210,17 @@ module.exports = EventExprParser.extends(
              * @param {string} value     属性值
              * @param {Component} component 组件
              */
-            function setAttrFn(name, value, component) {
-                component.setAttr(utils.line2camel(name), value);
+            function setAttrFn(name, value) {
+                name = utils.line2camel(name);
+
+                // 如果是设置组件css类，就要加上组件自身的css类
+                if (name === 'classList') {
+                    var classList = me.componentOriginCssClassList;
+                    classList.push.apply(classList, DomUpdater.getClassList(value));
+                    value = classList;
+                }
+
+                me.setAttr(name, value);
             }
 
             function calculateExpr(rawExpr, exprCalculater, scopeModel) {
@@ -128,11 +242,11 @@ module.exports = EventExprParser.extends(
          * @return {Node}
          */
         getStartNode: function () {
-            if (!this.component) {
-                return this.node;
+            if (this.isComponent) {
+                return this.startNode;
             }
 
-            return this.component.startNode;
+            return EventExprParser.prototype.getStartNode.call(this);
         },
 
         /**
@@ -143,29 +257,28 @@ module.exports = EventExprParser.extends(
          * @return {Node}
          */
         getEndNode: function () {
-            if (!this.component) {
-                return this.node;
+            if (this.isComponent) {
+                return this.endNode;
             }
 
-            return this.component.endNode;
+            return EventExprParser.prototype.getEndNode.call(this);
         },
 
-        setScope: function (scopeModel) {
+        setScope: function () {
+            this.scopeModel = this.tree.rootScope;
             EventExprParser.prototype.setScope.apply(this, arguments);
 
             if (this.isComponent) {
-                this.component.setOutScope(this.scopeModel);
-
-                this.component.mount();
-
                 for (var i = 0, il = this.setLiteralAttrsFns.length; i < il; i++) {
                     this.setLiteralAttrsFns[i](this.component);
                 }
 
                 this.component.literalAttrReady();
-
-                this.componentEvent && this.componentEvent.trigger('literalattrready', this.component);
             }
+        },
+
+        getScope: function () {
+            return this.tree.rootScope;
         },
 
         onChange: function () {
@@ -203,11 +316,6 @@ module.exports = EventExprParser.extends(
         }
     },
     {
-        // isProperNode: function (node, config) {
-        //     return node.nodeType === 1
-        //         && node.tagName.toLowerCase().indexOf('ui-') === 0;
-        // },
-
         $name: 'ComponentParser'
     }
 );

@@ -1,5 +1,4 @@
 var Tree = require('vtpl/src/trees/Tree');
-var ComponentParser = require('./ComponentParser');
 var Event = require('vtpl/src/Event');
 var utils = require('vtpl/src/utils');
 var ComponentManager = require('./ComponentManager');
@@ -21,10 +20,6 @@ module.exports = Tree.extends({
 
     createParser: function (ParserClass, options) {
         var instance = Tree.prototype.createParser.apply(this, arguments);
-
-        if (instance && ParserClass === ComponentParser) {
-            instance.parser.setComponentEvent(this.componentEvent);
-        }
 
         return instance;
     },
