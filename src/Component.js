@@ -4,9 +4,6 @@
  */
 
 var utils = require('vtpl/src/utils');
-var ComponentTree = require('./ComponentTree');
-var ComponentChildren = require('./ComponentChildren');
-var ComponentManager = require('./ComponentManager');
 var Base = require('vtpl/src/Base');
 
 module.exports = Base.extends(
@@ -28,6 +25,53 @@ module.exports = Base.extends(
         afterDestroy: function () {},
 
         literalAttrReady: function () {},
+
+        ref: function (ref) {
+            var parserTree = this.parser.tree.tree;
+
+            var ret;
+            walk(parserTree, function (parser) {
+                if (parser.isComponent && parser.$$ref === ref) {
+                    ret = parser.component;
+                    return true;
+                }
+            });
+            return ret;
+
+            function walk(parserTree, iteraterFn) {
+                for (var i = 0, il = parserTree.length; i < il; ++i) {
+                    var parserObj = parserTree[i];
+
+                    // 针对if指令的情况
+                    if (utils.isArray(parserObj)) {
+                        if (walk(parserObj, iteraterFn)) {
+                            return true;
+                        }
+                        continue;
+                    }
+
+                    // 针对for指令的情况
+                    if (utils.isArray(parserObj.trees)) {
+                        for (var j = 0, jl = parserObj.trees.length; j < jl; ++j) {
+                            if (walk(parserObj.trees[j].tree, iteraterFn)) {
+                                return true;
+                            }
+                        }
+                        continue;
+                    }
+
+                    if (iteraterFn(parserObj.parser)) {
+                        return true;
+                    }
+
+                    if (parserObj.children && parserObj.children.length) {
+                        if (walk(parserObj.children, iteraterFn)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        },
 
         /**
          * 组件模板。子类可以覆盖这个属性。
