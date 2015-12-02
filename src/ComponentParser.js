@@ -35,12 +35,6 @@ module.exports = EventExprParser.extends(
 
                 this.mount(options.tree);
             }
-
-            /**
-             * DOM节点属性与更新属性的任务id的映射
-             * @type {Object}
-             */
-            this.attrToDomTaskIdMap = {};
         },
 
         collectExprs: function () {
@@ -104,21 +98,6 @@ module.exports = EventExprParser.extends(
         },
 
         /**
-         * 根据DOM节点的属性名字拿到一个任务id。
-         *
-         * @private
-         * @param  {string} attrName 属性名字
-         * @return {string}          任务id
-         */
-        getTaskId: function (attrName) {
-            var taskId = this.attrToDomTaskIdMap[attrName];
-            if (!taskId) {
-                this.attrToDomTaskIdMap[attrName] = this.domUpdater.generateTaskId();
-            }
-            return taskId;
-        },
-
-        /**
          * 设置当前节点或者组件的属性
          *
          * @public
@@ -136,11 +115,7 @@ module.exports = EventExprParser.extends(
                 scope.set(name, value);
             }
             else {
-                var taskId = this.getTaskId();
-                var me = this;
-                this.domUpdater.addTaskFn(taskId, function () {
-                    DomUpdater.setAttr(me.node, name, value);
-                });
+                EventExprParser.prototype.setAttr.apply(this, arguments);
             }
         },
 
@@ -156,7 +131,7 @@ module.exports = EventExprParser.extends(
                 return this.tree.rootScope.get(name);
             }
 
-            return DomUpdater.getAttr(this.node, name);
+            return EventExprParser.prototype.getAttr(this, arguments);
         },
 
         collectComponentExprs: function () {
@@ -281,28 +256,32 @@ module.exports = EventExprParser.extends(
             return this.tree.rootScope;
         },
 
+        // scopeModel里面的值发生了变化
         onChange: function () {
             if (this.isGoDark) {
                 return;
             }
 
-            var exprs = this.exprs;
-            var exprOldValues = this.exprOldValues;
-            for (var i = 0, il = exprs.length; i < il; i++) {
-                var expr = exprs[i];
-                var exprValue = this.exprFns[expr](this.scopeModel);
+            if (this.isComponent) {
+                var exprs = this.exprs;
+                var exprOldValues = this.exprOldValues;
+                for (var i = 0, il = exprs.length; i < il; i++) {
+                    var expr = exprs[i];
+                    var exprValue = this.exprFns[expr](this.scopeModel);
 
-                if (this.dirtyCheck(expr, exprValue, exprOldValues[expr])) {
-                    var updateFns = this.updateFns[expr];
-                    for (var j = 0, jl = updateFns.length; j < jl; j++) {
-                        updateFns[j](exprValue, this.component);
+                    if (this.dirtyCheck(expr, exprValue, exprOldValues[expr])) {
+                        var updateFns = this.updateFns[expr];
+                        for (var j = 0, jl = updateFns.length; j < jl; j++) {
+                            updateFns[j](exprValue, this.component);
+                        }
                     }
+
+                    exprOldValues[expr] = exprValue;
                 }
-
-                exprOldValues[expr] = exprValue;
             }
-
-            EventExprParser.prototype.onChange.apply(this, arguments);
+            else {
+                EventExprParser.prototype.onChange.apply(this, arguments);
+            }
         },
 
         goDark: function () {
