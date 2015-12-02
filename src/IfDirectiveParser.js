@@ -22,6 +22,12 @@ module.exports = IfDirectiveParser.extends(
                     branch.setCssClass(classList);
                 }
             }
+        },
+
+        setAttr: function (name, value) {
+            if (name === 'class') {
+                this.setCssClass(value);
+            }
         }
     },
     {

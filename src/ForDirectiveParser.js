@@ -20,6 +20,12 @@ module.exports = ForDirectiveParser.extends(
             var tree = ForDirectiveParser.prototype.createTree.apply(this, arguments);
             setClasses(tree, this.$$classList);
             return tree;
+        },
+
+        setAttr: function (name, value) {
+            if (name === 'class') {
+                this.setCssClass(value);
+            }
         }
     },
     {

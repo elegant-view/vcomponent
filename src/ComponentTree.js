@@ -18,6 +18,13 @@ module.exports = Tree.extends({
         this.setTreeVar('componentManager', componentManager);
     },
 
+    setParent: function (parentTree) {
+        Tree.prototype.setParent.apply(this, arguments);
+
+        parentTree.rootScope.addChild(this.rootScope);
+        this.rootScope.setParent(parentTree.rootScope);
+    },
+
     createParser: function (ParserClass, options) {
         var instance = Tree.prototype.createParser.apply(this, arguments);
 

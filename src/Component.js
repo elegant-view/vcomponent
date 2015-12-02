@@ -27,50 +27,7 @@ module.exports = Base.extends(
         literalAttrReady: function () {},
 
         ref: function (ref) {
-            var parserTree = this.parser.tree.tree;
-
-            var ret;
-            walk(parserTree, function (parser) {
-                if (parser.isComponent && parser.$$ref === ref) {
-                    ret = parser.component;
-                    return true;
-                }
-            });
-            return ret;
-
-            function walk(parserTree, iteraterFn) {
-                for (var i = 0, il = parserTree.length; i < il; ++i) {
-                    var parserObj = parserTree[i];
-
-                    // 针对if指令的情况
-                    if (utils.isArray(parserObj)) {
-                        if (walk(parserObj, iteraterFn)) {
-                            return true;
-                        }
-                        continue;
-                    }
-
-                    // 针对for指令的情况
-                    if (utils.isArray(parserObj.trees)) {
-                        for (var j = 0, jl = parserObj.trees.length; j < jl; ++j) {
-                            if (walk(parserObj.trees[j].tree, iteraterFn)) {
-                                return true;
-                            }
-                        }
-                        continue;
-                    }
-
-                    if (iteraterFn(parserObj.parser)) {
-                        return true;
-                    }
-
-                    if (parserObj.children && parserObj.children.length) {
-                        if (walk(parserObj.children, iteraterFn)) {
-                            return true;
-                        }
-                    }
-                }
-            }
+            return this.parser.ref(ref);
         },
 
         /**
@@ -93,8 +50,11 @@ module.exports = Base.extends(
         },
 
         setData: function (name, value) {
-            var scope = this.parser.tree.rootScope;
-            scope.set(name, value);
+            this.parser.setAttr(name, value);
+        },
+
+        getData: function (name) {
+            return this.parser.getAttr(name);
         }
     },
     {

@@ -113,6 +113,18 @@ module.exports = EventExprParser.extends(
             if (this.isComponent) {
                 var scope = this.tree.rootScope;
                 scope.set(name, value);
+
+                if (name === 'classList') {
+                    for (var i = 0, il = this.tree.tree.length; i < il; ++i) {
+                        var parserObj = this.tree.tree[i];
+                        if (!parserObj.parser.isComponent) {
+                            parserObj.parser.setAttr('class', value);
+                        }
+                        else {
+                            parserObj.parser.setAttr('classList', value);
+                        }
+                    }
+                }
             }
             else {
                 EventExprParser.prototype.setAttr.apply(this, arguments);
@@ -192,7 +204,7 @@ module.exports = EventExprParser.extends(
                 if (name === 'classList') {
                     var classList = me.componentOriginCssClassList;
                     classList.push.apply(classList, DomUpdater.getClassList(value));
-                    value = classList;
+                    value = utils.distinctArr(classList);
                 }
 
                 me.setAttr(name, value);
@@ -292,6 +304,66 @@ module.exports = EventExprParser.extends(
         restoreFromDark: function () {
             this.components && this.component.restoreFromDark();
             EventExprParser.prototype.restoreFromDark.apply(this, arguments);
+        },
+
+        ref: function (ref) {
+            var parserTree = this.tree.tree;
+
+            var ret;
+            this.walk(parserTree, function (parser) {
+                if (parser.isComponent && parser.$$ref === ref) {
+                    ret = parser.component;
+                    return true;
+                }
+            });
+            return ret;
+        },
+
+        destroy: function () {
+            this.component.destroy();
+            EventExprParser.prototype.destroy.apply(this, arguments);
+        },
+
+        /**
+         * 遍历parserTree
+         *
+         * @private
+         * @param  {Tree} parserTree 树
+         * @param  {function(Parser):boolean} iteraterFn 迭代函数
+         * @return {boolean}
+         */
+        walk: function (parserTree, iteraterFn) {
+            for (var i = 0, il = parserTree.length; i < il; ++i) {
+                var parserObj = parserTree[i];
+
+                // 针对if指令的情况
+                if (utils.isArray(parserObj)) {
+                    if (this.walk(parserObj, iteraterFn)) {
+                        return true;
+                    }
+                    continue;
+                }
+
+                // 针对for指令的情况
+                if (utils.isArray(parserObj.trees)) {
+                    for (var j = 0, jl = parserObj.trees.length; j < jl; ++j) {
+                        if (this.walk(parserObj.trees[j].tree, iteraterFn)) {
+                            return true;
+                        }
+                    }
+                    continue;
+                }
+
+                if (iteraterFn(parserObj.parser)) {
+                    return true;
+                }
+
+                if (parserObj.children && parserObj.children.length) {
+                    if (this.walk(parserObj.children, iteraterFn)) {
+                        return true;
+                    }
+                }
+            }
         }
     },
     {
