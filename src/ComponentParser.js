@@ -47,7 +47,7 @@ module.exports = EventExprParser.extends(
         },
 
         mount: function (parentTree) {
-            this.component.beforeMount();
+            this.component.componentWillMount();
 
             var div = document.createElement('div');
             div.innerHTML = this.component.tpl;
@@ -93,8 +93,6 @@ module.exports = EventExprParser.extends(
                 );
                 parentNode.removeChild(componentNode);
             }
-
-            this.component.afterMount();
         },
 
         /**
@@ -113,12 +111,7 @@ module.exports = EventExprParser.extends(
             if (this.isComponent) {
                 if (name === 'classList') {
                     value = this.componentOriginCssClassList.concat(DomUpdater.getClassList(value));
-                }
 
-                var scope = this.tree.rootScope;
-                scope.set(name, value);
-
-                if (name === 'classList') {
                     for (var i = 0, il = this.tree.tree.length; i < il; ++i) {
                         var parserObj = this.tree.tree[i];
                         if (!parserObj.parser.isComponent) {
@@ -132,6 +125,9 @@ module.exports = EventExprParser.extends(
                         }
                     }
                 }
+
+                var scope = this.tree.rootScope;
+                scope.set(name, value);
             }
             else {
                 EventExprParser.prototype.setAttr.apply(this, arguments);
@@ -266,7 +262,7 @@ module.exports = EventExprParser.extends(
                     this.setLiteralAttrsFns[i](this.component);
                 }
 
-                this.component.literalAttrReady();
+                this.component.componentDidMount();
             }
         },
 
@@ -326,6 +322,7 @@ module.exports = EventExprParser.extends(
         },
 
         destroy: function () {
+            this.component.componentWillUnmount();
             this.component.destroy();
             EventExprParser.prototype.destroy.apply(this, arguments);
         },

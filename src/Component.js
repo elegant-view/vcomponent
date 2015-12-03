@@ -3,7 +3,6 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var utils = require('vtpl/src/utils');
 var Base = require('vtpl/src/Base');
 
 module.exports = Base.extends(
@@ -16,15 +15,11 @@ module.exports = Base.extends(
          */
         initialize: function () {},
 
-        beforeMount: function () {},
+        componentDidMount: function () {},
 
-        afterMount: function () {},
+        componentWillMount: function () {},
 
-        beforeDestroy: function () {},
-
-        afterDestroy: function () {},
-
-        literalAttrReady: function () {},
+        componentWillUnmount: function () {},
 
         ref: function (ref) {
             return this.parser.ref(ref);
