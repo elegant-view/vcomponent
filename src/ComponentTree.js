@@ -8,13 +8,11 @@ module.exports = Tree.extends({
     initialize: function (options) {
         Tree.prototype.initialize.apply(this, arguments);
 
-        this.componentEvent = new Event();
         if (options.componentChildren) {
             this.setTreeVar('componentChildren', options.componentChildren);
         }
 
         var componentManager = new ComponentManager();
-        componentManager.setParent(this.getTreeVar('componentManager'));
         this.setTreeVar('componentManager', componentManager);
     },
 

@@ -50,7 +50,10 @@ module.exports = EventExprParser.extends(
             this.component.componentWillMount();
 
             var div = document.createElement('div');
-            div.innerHTML = this.component.tpl;
+            var splitNode = DomUpdater.splitElement(this.node);
+            div.innerHTML = '<!-- ' + splitNode[0] + ' -->'
+                + this.component.tpl
+                + '<!-- /' + splitNode[1] + ' -->';
             var startNode = div.firstChild;
             var endNode = div.lastChild;
 
@@ -74,25 +77,10 @@ module.exports = EventExprParser.extends(
             });
 
             this.tree.setParent(parentTree);
+            this.tree.getTreeVar('componentManager', true)
+                .setParent(parentTree.getTreeVar('componentManager'));
 
             this.tree.registeComponents(this.component.componentClasses);
-
-            insertComponentNodes(this.node, startNode, endNode);
-
-            this.tree.traverse();
-
-            // 把组件节点放到 DOM 树中去
-            function insertComponentNodes(componentNode, startNode, endNode) {
-                var parentNode = componentNode.parentNode;
-                utils.traverseNodes(
-                    startNode,
-                    endNode,
-                    function (curNode) {
-                        parentNode.insertBefore(curNode, componentNode);
-                    }
-                );
-                parentNode.removeChild(componentNode);
-            }
         },
 
         /**
@@ -109,20 +97,16 @@ module.exports = EventExprParser.extends(
             }
 
             if (this.isComponent) {
-                if (name === 'classList') {
+                if (name === 'class') {
                     value = this.componentOriginCssClassList.concat(DomUpdater.getClassList(value));
 
                     for (var i = 0, il = this.tree.tree.length; i < il; ++i) {
                         var parserObj = this.tree.tree[i];
-                        if (!parserObj.parser.isComponent) {
-                            parserObj.parser.setAttr('class', value);
-                        }
-                        else {
-                            parserObj.parser.setAttr(
-                                'classList',
+                        parserObj.parser.setAttr
+                            && parserObj.parser.setAttr(
+                                'class',
                                 DomUpdater.getClassList(value)
                             );
-                        }
                     }
                 }
 
@@ -150,7 +134,6 @@ module.exports = EventExprParser.extends(
         },
 
         collectComponentExprs: function () {
-            var me = this;
             var curNode = this.node;
 
             var attributes = curNode.attributes;
@@ -184,8 +167,25 @@ module.exports = EventExprParser.extends(
 
             if (!hasClass) {
                 this.setLiteralAttrsFns.push(
-                    utils.bind(setAttrFn, this, 'class-list', [])
+                    utils.bind(setAttrFn, this, 'class', [])
                 );
+            }
+
+            this.tree.traverse();
+            insertComponentNodes(this.node, this.startNode, this.endNode);
+            this.node = null;
+
+            // 把组件节点放到 DOM 树中去
+            function insertComponentNodes(componentNode, startNode, endNode) {
+                var parentNode = componentNode.parentNode;
+                utils.traverseNodes(
+                    startNode,
+                    endNode,
+                    function (curNode) {
+                        parentNode.insertBefore(curNode, componentNode);
+                    }
+                );
+                parentNode.removeChild(componentNode);
             }
 
             return true;
@@ -203,7 +203,7 @@ module.exports = EventExprParser.extends(
              */
             function setAttrFn(name, value, isLiteral) {
                 name = utils.line2camel(name);
-                if (name === 'classList') {
+                if (name === 'class' && isLiteral) {
                     value = this.componentOriginCssClassList.concat(DomUpdater.getClassList(value));
                     if (isLiteral) {
                         this.componentOriginCssClassList = value;
@@ -259,7 +259,7 @@ module.exports = EventExprParser.extends(
 
             if (this.isComponent) {
                 for (var i = 0, il = this.setLiteralAttrsFns.length; i < il; i++) {
-                    this.setLiteralAttrsFns[i](this.component);
+                    this.setLiteralAttrsFns[i]();
                 }
 
                 this.component.componentDidMount();
@@ -286,7 +286,8 @@ module.exports = EventExprParser.extends(
                     if (this.dirtyCheck(expr, exprValue, exprOldValues[expr])) {
                         var updateFns = this.updateFns[expr];
                         for (var j = 0, jl = updateFns.length; j < jl; j++) {
-                            updateFns[j](exprValue, this.component);
+                            // updateFns[j](exprValue, this.component);
+                            updateFns[j](exprValue);
                         }
                     }
 

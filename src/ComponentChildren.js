@@ -5,7 +5,7 @@
 
 var utils = require('vtpl/src/utils');
 
-function ComponentChildren(startNode, endNode, scope, component) {
+function ComponentChildren(startNode, endNode, scope) {
     this.div = document.createElement('div');
     if (!startNode || !endNode) {
         this.div.innerHTML = '';
@@ -22,7 +22,6 @@ function ComponentChildren(startNode, endNode, scope, component) {
     }
 
     this.scope = scope;
-    this.component = component;
 }
 
 ComponentChildren.prototype.getTplHtml = function () {

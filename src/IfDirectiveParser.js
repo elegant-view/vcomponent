@@ -18,8 +18,8 @@ module.exports = IfDirectiveParser.extends(
         setCssClass: function (classList) {
             for (var i = 0, il = this.branches.length; i < il; ++i) {
                 var branch = this.branches[i];
-                for (var j = 0, jl = branch.length; j > jl; ++j) {
-                    branch.setCssClass(classList);
+                for (var j = 0, jl = branch.length; j < jl; ++j) {
+                    branch[j].parser.setAttr('class', classList);
                 }
             }
         },

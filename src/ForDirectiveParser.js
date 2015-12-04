@@ -35,7 +35,7 @@ module.exports = ForDirectiveParser.extends(
 
 function setClasses(tree, classList) {
     for (var j = 0, jl = tree.tree.length; j < jl; ++j) {
-        tree.tree[j].parser.setCssClass && tree.tree[j].parser.setCssClass(classList);
+        tree.tree[j].parser.setAttr('class', classList);
     }
 }
 
