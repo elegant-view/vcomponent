@@ -9,131 +9,36 @@ var utils = require('vtpl/src/utils');
 var ComponentTree = require('./ComponentTree');
 var ComponentChildren = require('./ComponentChildren');
 var ComponentManager = require('./ComponentManager');
-var DomUpdater = require('vtpl/src/DomUpdater');
 
 module.exports = EventExprParser.extends(
     {
 
         initialize: function (options) {
             EventExprParser.prototype.initialize.apply(this, arguments);
+
+            // TODO: 删掉
+            this.isComponent = true;
+
+            this.checker = utils.isPureObject(this.checker) ? this.checker : {};
             this.componentManager = this.tree.getTreeVar('componentManager');
-            this.isComponent = this.node.nodeType === 1
-                && this.node.tagName.toLowerCase().indexOf('ui-') === 0;
 
-            if (this.isComponent) {
-                var componentName = utils.line2camel(this.node.tagName.toLowerCase().replace('ui', ''));
+            var componentName = utils.line2camel(this.node.tagName.toLowerCase().replace('ui', ''));
 
-                var ComponentClass = this.componentManager.getClass(componentName);
-                if (!ComponentClass) {
-                    throw new Error('the component `' + componentName + '` is not registed!');
-                }
-                // 组件本身就应该有的css类名
-                this.componentOriginCssClassList = ComponentManager.getCssClassName(ComponentClass);
-
-                this.component = new ComponentClass();
-                this.component.parser = this;
-
-                this.mount(options.tree);
+            var ComponentClass = this.componentManager.getClass(componentName);
+            if (!ComponentClass) {
+                throw new Error('the component `' + componentName + '` is not registed!');
             }
+            // 组件本身就应该有的css类名
+            this.componentOriginCssClassList = ComponentManager.getCssClassName(ComponentClass);
+
+            this.component = new ComponentClass();
+            this.component.parser = this;
+            utils.extend(this.checker, this.component.checker);
+
+            this.mount(options.tree);
         },
 
         collectExprs: function () {
-            if (this.isComponent) {
-                this.collectComponentExprs();
-            }
-            else {
-                EventExprParser.prototype.collectExprs.apply(this, arguments);
-            }
-        },
-
-        mount: function (parentTree) {
-            this.component.componentWillMount();
-
-            var div = document.createElement('div');
-            var splitNode = DomUpdater.splitElement(this.node);
-            div.innerHTML = '<!-- ' + splitNode[0] + ' -->'
-                + this.component.tpl
-                + '<!-- /' + splitNode[1] + ' -->';
-            var startNode = div.firstChild;
-            var endNode = div.lastChild;
-
-            this.startNode = startNode;
-            this.endNode = endNode;
-
-            // 组件的作用域是和外部的作用域隔开的
-            this.tree = new ComponentTree({
-                startNode: startNode,
-                endNode: endNode,
-                config: parentTree.config,
-                domUpdater: parentTree.domUpdater,
-                exprCalculater: parentTree.exprCalculater,
-
-                // componentChildren不能传给子级组件树，可以传给子级for树。
-                componentChildren: new ComponentChildren(
-                    this.node.firstChild,
-                    this.node.lastChild,
-                    parentTree.rootScope
-                )
-            });
-
-            this.tree.setParent(parentTree);
-            this.tree.getTreeVar('componentManager', true)
-                .setParent(parentTree.getTreeVar('componentManager'));
-
-            this.tree.registeComponents(this.component.componentClasses);
-        },
-
-        /**
-         * 设置当前节点或者组件的属性
-         *
-         * @public
-         * @param {string} name 属性名
-         * @param {*} value 属性值
-         */
-        setAttr: function (name, value) {
-            if (name === 'ref') {
-                this.$$ref = value;
-                return;
-            }
-
-            if (this.isComponent) {
-                if (name === 'class') {
-                    value = this.componentOriginCssClassList.concat(DomUpdater.getClassList(value));
-
-                    for (var i = 0, il = this.tree.tree.length; i < il; ++i) {
-                        var parserObj = this.tree.tree[i];
-                        parserObj.parser.setAttr
-                            && parserObj.parser.setAttr(
-                                'class',
-                                DomUpdater.getClassList(value)
-                            );
-                    }
-                }
-
-                var scope = this.tree.rootScope;
-                scope.set(name, value);
-            }
-            else {
-                EventExprParser.prototype.setAttr.apply(this, arguments);
-            }
-        },
-
-        /**
-         * 获取属性
-         *
-         * @public
-         * @param  {string} name 属性名
-         * @return {*}      属性值
-         */
-        getAttr: function (name) {
-            if (this.isComponent) {
-                return this.tree.rootScope.get(name);
-            }
-
-            return EventExprParser.prototype.getAttr(this, arguments);
-        },
-
-        collectComponentExprs: function () {
             var curNode = this.node;
 
             var attributes = curNode.attributes;
@@ -150,7 +55,7 @@ module.exports = EventExprParser.extends(
                 if (this.config.getExprRegExp().test(expr)) {
                     this.exprs.push(expr);
                     if (!this.exprFns[expr]) {
-                        var rawExpr = getRawExpr(expr, this.config);
+                        var rawExpr = this.getRawExpr(expr);
                         this.exprCalculater.createExprFn(rawExpr);
                         this.exprFns[expr] = utils.bind(calculateExpr, null, rawExpr, this.exprCalculater);
 
@@ -204,7 +109,7 @@ module.exports = EventExprParser.extends(
             function setAttrFn(name, value, isLiteral) {
                 name = utils.line2camel(name);
                 if (name === 'class' && isLiteral) {
-                    value = this.componentOriginCssClassList.concat(DomUpdater.getClassList(value));
+                    value = this.componentOriginCssClassList.concat(this.tree.domUpdater.getClassList(value));
                     if (isLiteral) {
                         this.componentOriginCssClassList = value;
                     }
@@ -215,12 +120,93 @@ module.exports = EventExprParser.extends(
             function calculateExpr(rawExpr, exprCalculater, scopeModel) {
                 return exprCalculater.calculate(rawExpr, false, scopeModel);
             }
+        },
 
-            function getRawExpr(expr, config) {
-                return expr.replace(config.getExprRegExp(), function () {
-                    return arguments[1];
-                });
+        getRawExpr: function (expr) {
+            return expr.replace(this.config.getExprRegExp(), function () {
+                return arguments[1];
+            });
+        },
+
+        mount: function (parentTree) {
+            this.component.componentWillMount();
+
+            var div = document.createElement('div');
+            var splitNode = parentTree.domUpdater.splitElement(this.node);
+            div.innerHTML = '<!-- ' + splitNode[0] + ' -->'
+                + this.component.tpl
+                + '<!-- ' + splitNode[1] + ' -->';
+            var startNode = div.firstChild;
+            var endNode = div.lastChild;
+
+            this.startNode = startNode;
+            this.endNode = endNode;
+
+            // 组件的作用域是和外部的作用域隔开的
+            this.tree = new ComponentTree({
+                startNode: startNode,
+                endNode: endNode,
+                config: parentTree.config,
+                domUpdater: parentTree.domUpdater,
+                exprCalculater: parentTree.exprCalculater,
+
+                // componentChildren不能传给子级组件树，可以传给子级for树。
+                componentChildren: new ComponentChildren(
+                    this.node.firstChild,
+                    this.node.lastChild,
+                    parentTree.rootScope
+                )
+            });
+
+            this.tree.setParent(parentTree);
+            this.tree.getTreeVar('componentManager', true)
+                .setParent(parentTree.getTreeVar('componentManager'));
+
+            this.tree.registeComponents(this.component.componentClasses);
+        },
+
+        /**
+         * 设置当前节点或者组件的属性
+         *
+         * @public
+         * @param {string} name 属性名
+         * @param {*} value 属性值
+         * @return {boolean}
+         */
+        setAttr: function (name, value) {
+            if (name === 'ref') {
+                this.$$ref = value;
+                return true;
             }
+
+            if (name === 'class') {
+                value = this.componentOriginCssClassList.concat(this.tree.domUpdater.getClassList(value));
+
+                for (var i = 0, il = this.tree.tree.length; i < il; ++i) {
+                    var parserObj = this.tree.tree[i];
+                    parserObj.parser.setAttr
+                        && parserObj.parser.setAttr(
+                            'class',
+                            this.tree.domUpdater.getClassList(value)
+                        );
+                }
+            }
+
+            var scope = this.tree.rootScope;
+            scope.set(name, value);
+
+            return true;
+        },
+
+        /**
+         * 获取属性
+         *
+         * @public
+         * @param  {string} name 属性名
+         * @return {*}      属性值
+         */
+        getAttr: function (name) {
+            return this.tree.rootScope.get(name);
         },
 
         /**
@@ -231,11 +217,7 @@ module.exports = EventExprParser.extends(
          * @return {Node}
          */
         getStartNode: function () {
-            if (this.isComponent) {
-                return this.startNode;
-            }
-
-            return EventExprParser.prototype.getStartNode.call(this);
+            return this.startNode;
         },
 
         /**
@@ -246,24 +228,17 @@ module.exports = EventExprParser.extends(
          * @return {Node}
          */
         getEndNode: function () {
-            if (this.isComponent) {
-                return this.endNode;
-            }
-
-            return EventExprParser.prototype.getEndNode.call(this);
+            return this.endNode;
         },
 
         setScope: function () {
-            this.scopeModel = this.tree.rootScope;
-            EventExprParser.prototype.setScope.apply(this, arguments);
-
-            if (this.isComponent) {
-                for (var i = 0, il = this.setLiteralAttrsFns.length; i < il; i++) {
-                    this.setLiteralAttrsFns[i]();
-                }
-
-                this.component.componentDidMount();
+            for (var i = 0, il = this.setLiteralAttrsFns.length; i < il; i++) {
+                this.setLiteralAttrsFns[i]();
             }
+
+            EventExprParser.prototype.setScope.call(this, this.tree.rootScope);
+
+            this.component.componentDidMount();
         },
 
         getScope: function () {
@@ -276,37 +251,34 @@ module.exports = EventExprParser.extends(
                 return;
             }
 
-            if (this.isComponent) {
-                var exprs = this.exprs;
-                var exprOldValues = this.exprOldValues;
-                for (var i = 0, il = exprs.length; i < il; i++) {
-                    var expr = exprs[i];
-                    var exprValue = this.exprFns[expr](this.scopeModel);
+            var exprs = this.exprs;
+            var exprOldValues = this.exprOldValues;
+            for (var i = 0, il = exprs.length; i < il; i++) {
+                var expr = exprs[i];
+                var exprValue = this.exprFns[expr](this.scopeModel);
 
-                    if (this.dirtyCheck(expr, exprValue, exprOldValues[expr])) {
-                        var updateFns = this.updateFns[expr];
-                        for (var j = 0, jl = updateFns.length; j < jl; j++) {
-                            // updateFns[j](exprValue, this.component);
-                            updateFns[j](exprValue);
-                        }
-                    }
-
-                    exprOldValues[expr] = exprValue;
+                // 此处既可以做脏检测，防止不必要的更新，也可以防止onChange的死循环。
+                var checkerFn = this.checker[name];
+                if (!utils.isFunction(checkerFn)) {
+                    checkerFn = defaultCheckerFn;
                 }
-            }
-            else {
-                EventExprParser.prototype.onChange.apply(this, arguments);
+                if (!checkerFn(expr, exprValue, exprOldValues[expr])) {
+                    exprOldValues[expr] = exprValue;
+
+                    var updateFns = this.updateFns[expr];
+                    for (var j = 0, jl = updateFns.length; j < jl; j++) {
+                        updateFns[j](exprValue);
+                    }
+                }
             }
         },
 
         goDark: function () {
-            this.components && this.component.goDark();
-            EventExprParser.prototype.goDark.apply(this, arguments);
+            this.component.goDark();
         },
 
         restoreFromDark: function () {
-            this.components && this.component.restoreFromDark();
-            EventExprParser.prototype.restoreFromDark.apply(this, arguments);
+            this.component.restoreFromDark();
         },
 
         ref: function (ref) {
@@ -314,7 +286,7 @@ module.exports = EventExprParser.extends(
 
             var ret;
             this.walk(parserTree, function (parser) {
-                if (parser.isComponent && parser.$$ref === ref) {
+                if (parser.$$ref === ref) {
                     ret = parser.component;
                     return true;
                 }
@@ -371,8 +343,24 @@ module.exports = EventExprParser.extends(
         }
     },
     {
-        $name: 'ComponentParser'
+        $name: 'ComponentParser',
+
+        /**
+         * 只处理组件
+         *
+         * @static
+         * @param {Node} node DOM节点
+         * @return {boolean}
+         */
+        isProperNode: function (node) {
+            return node.nodeType === 1
+                && node.tagName.toLowerCase().indexOf('ui-') === 0;
+        }
     }
 );
 
 Tree.registeParser(module.exports);
+
+function defaultCheckerFn(expr, exprValue, exprOldValue) {
+    return exprValue === exprOldValue;
+}

@@ -51,6 +51,63 @@ module.exports = Tree.extends({
             var componentClass = componentClasses[i];
             componentManager.registe(componentClass);
         }
+    },
+
+    /**
+     * 根据DOM节点找到对应的解析器对象，主要用于debug。
+     *
+     * @public
+     * @param  {Node} node dom节点
+     * @return {(Parser|undefined)}  解析器对象
+     */
+    parser: function (node) {
+        var ret;
+        walkParsers(this.tree, function (parser) {
+            if (node === parser.node
+                || node === parser.startNode
+                || node === parser.endNode
+            ) {
+                ret = parser;
+                return true;
+            }
+        });
+        return ret;
+
+        function walkParsers(parsers, iteraterFn) {
+            for (var i = 0, il = parsers.length; i < il; ++i) {
+                var parserObj = parsers[i];
+                if (iteraterFn(parserObj.parser)) {
+                    return true;
+                }
+
+                // for指令
+                if (parserObj.parser.trees && parserObj.parser.trees) {
+                    for (var j = 0, jl = parserObj.parser.trees.length; j < jl; ++j) {
+                        if (walkParsers(parserObj.parser.trees[j].tree, iteraterFn)) {
+                            return true;
+                        }
+                    }
+                }
+                // if指令
+                else if (parserObj.parser.branches) {
+                    for (j = 0, jl = parserObj.parser.branches; j < jl; ++j) {
+                        if (walkParsers(parserObj.parser.branches[j], iteraterFn)) {
+                            return true;
+                        }
+                    }
+                }
+                // 组件
+                else if (parserObj.parser.isComponent) {
+                    if (walkParsers(parserObj.parser.tree.tree, iteraterFn)) {
+                        return true;
+                    }
+                }
+
+                if (walkParsers(parserObj.children, iteraterFn)) {
+                    return true;
+                }
+            }
+        }
     }
 }, {
     $name: 'ComponentTree'
