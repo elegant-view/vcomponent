@@ -12,17 +12,23 @@ function ComponentManager() {
 }
 
 /**
- * 注册组件。
+ * 批量注册组件
  *
  * @public
- * @param  {Constructor} ComponentClass 组件类
- * @param  {string=} name           组件名，可选
+ * @param  {Array.<Class>} componentClasses 组件类数组
  */
-ComponentManager.prototype.registe = function (ComponentClass) {
-    var name = ComponentClass.$name;
-    this.components[name] = ComponentClass;
-    this.mountStyle(ComponentClass);
+ComponentManager.prototype.register = function (componentClasses) {
+    if (!utils.isArray(componentClasses)) {
+        return;
+    }
+    for (var i = 0, il = componentClasses.length; i < il; ++i) {
+        var ComponentClass = componentClasses[i];
+        var name = ComponentClass.$name;
+        this.components[name] = ComponentClass;
+        this.mountStyle(ComponentClass);
+    }
 };
+
 
 /**
  * 根据名字获取组件类。在模板解析的过程中会调用这个方法。
