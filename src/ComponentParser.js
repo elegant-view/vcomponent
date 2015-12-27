@@ -69,13 +69,6 @@ module.exports = ExprParser.extends(
             this.registerComponents();
         },
 
-        registerComponents: function () {
-            var componentManager = this.tree.getTreeVar('componentManager');
-            var curComponentManager = new ComponentManager();
-            curComponentManager.setParent(componentManager);
-            curComponentManager.register(this.$component.componentClasses);
-        },
-
         collectExprs: function () {
             var config = this.tree.getTreeVar('config');
             var curNode = this.node;
@@ -97,8 +90,6 @@ module.exports = ExprParser.extends(
             this.tree.traverse();
             insertComponentNodes(this.node, this.startNode, this.endNode);
             this.node = null;
-
-            return true;
 
             // 把组件节点放到 DOM 树中去
             function insertComponentNodes(componentNode, startNode, endNode) {
@@ -125,7 +116,7 @@ module.exports = ExprParser.extends(
             this.tree.rootScope.set('props', this.$component.props.get());
             this.tree.rootScope.set('state', this.$component.state.get());
 
-            // 过一遍字面量形式的props
+            // 过一遍props
             this.renderPropsToDom();
 
             // 如果父级tree中的数据发生变化，就可能会影响到当前组件中的props表达式的计算值，
@@ -143,6 +134,9 @@ module.exports = ExprParser.extends(
             this.$component.props.on('change', function () {
                 this.tree.rootScope.set('props', this.$component.props.get());
             }, this);
+
+            // 拿着父级数据初始化一下
+            this.renderToDom(this.$$props, this.$$propsOldValue, this.tree.$parent.rootScope);
         },
 
         /**
@@ -181,10 +175,6 @@ module.exports = ExprParser.extends(
             var me = this;
             var domUpdater = this.tree.getTreeVar('domUpdater');
             this.$component.props.iterate(function (name, value) {
-                if (name === 'ref') {
-                    return;
-                }
-
                 if (name === 'class') {
                     for (var curNode = me.startNode;
                         curNode && !curNode.isAfter(me.endNode);
@@ -279,6 +269,13 @@ module.exports = ExprParser.extends(
                     }
                 }
             }
+        },
+
+        registerComponents: function () {
+            var componentManager = this.tree.getTreeVar('componentManager');
+            var curComponentManager = new ComponentManager();
+            curComponentManager.setParent(componentManager);
+            curComponentManager.register(this.$component.componentClasses);
         },
 
         destroy: function () {

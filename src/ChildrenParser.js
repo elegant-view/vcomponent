@@ -1,10 +1,11 @@
 /**
- * @file children解析器
+ * @file 给ExprParser加上处理children的能力
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
 var ExprParser = require('vtpl/src/parsers/ExprParser');
 var Tree = require('vtpl/src/trees/Tree');
+var utils = require('vtpl/src/utils');
 
 module.exports = ExprParser.trait(
     {
@@ -25,11 +26,15 @@ module.exports = ExprParser.trait(
 
                 var parentNode = this.node.getParentNode();
                 parentNode.insertBefore(this.startNode, this.node);
+                var delayFns = [];
                 for (var curNode = value.startNode;
                     curNode && !curNode.isAfter(value.endNode);
                     curNode = curNode.getNextSibling()
                 ) {
-                    parentNode.insertBefore(curNode, this.node);
+                    delayFns.push(utils.bind(parentNode.insertBefore, parentNode, curNode, this.node));
+                }
+                for (var i = 0, il = delayFns.length; i < il; ++i) {
+                    delayFns[i]();
                 }
                 parentNode.insertBefore(this.endNode, this.node);
                 this.node.remove();

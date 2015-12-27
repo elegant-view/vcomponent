@@ -9,9 +9,27 @@ var BaseComponent = VComponent.Component.extends(
     }
 );
 
-testBase();
-testNest();
-testAttr();
+// testBase();
+// testNest();
+// testAttr();
+testChildren();
+
+function testChildren() {
+    var ChildrenComponent = VComponent.Component.extends(
+        {
+            tpl: '<div>${props.children}</div><p>${props.title}</p>'
+        },
+        {
+            $name: 'Children'
+        }
+    );
+    var vcomponent = new VComponent({
+        startNode: getNode('children'),
+        endNode: getNode('children')
+    });
+    vcomponent.registerComponents([ChildrenComponent]);
+    vcomponent.render();
+}
 
 function testAttr() {
     var AttrComponent = VComponent.Component.extends(
@@ -24,8 +42,8 @@ function testAttr() {
     );
 
     var vcomponent = new VComponent({
-        startNode: document.getElementById('attr'),
-        endNode: document.getElementById('attr')
+        startNode: getNode('attr'),
+        endNode: getNode('attr')
     });
     vcomponent.registerComponents([AttrComponent]);
     vcomponent.render();
@@ -52,8 +70,8 @@ function testNest() {
     );
 
     var vcomponent = new VComponent({
-        startNode: document.getElementById('nest'),
-        endNode: document.getElementById('nest')
+        startNode: getNode('nest'),
+        endNode: getNode('nest')
     });
     vcomponent.registerComponents([OuterComponent, InnerComponent]);
     vcomponent.render();
@@ -62,11 +80,17 @@ function testNest() {
 
 function testBase() {
     var vcomponent = new VComponent({
-        startNode: document.getElementById('base'),
-        endNode: document.getElementById('base')
+        startNode: getNode('base'),
+        endNode: getNode('base')
     });
     vcomponent.registerComponents([BaseComponent]);
     vcomponent.render();
     console.log(vcomponent.$vtpl.$nodesManager);
+}
+
+function getNode(id) {
+    var node = document.getElementById(id);
+    node.style.display = 'block';
+    return node;
 }
 
