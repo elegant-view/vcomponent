@@ -1,4 +1,3 @@
-
 var VComponent = require('../src/main');
 
 var BaseComponent = VComponent.Component.extends(

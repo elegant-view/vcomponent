@@ -11,7 +11,6 @@
 var ExprParser = require('vtpl/src/parsers/ExprParser');
 var Tree = require('vtpl/src/trees/Tree');
 var utils = require('vtpl/src/utils');
-var ComponentChildren = require('./ComponentChildren');
 var ComponentManager = require('./ComponentManager');
 var Node = require('vtpl/src/nodes/Node');
 
@@ -35,7 +34,7 @@ module.exports = ExprParser.extends(
             this.$$ref = null;
 
             // 组件本身就应该有的css类名
-            this.$component.props.set('classList', this.$$componentCssClassName);
+            this.setProp('class', this.$$componentCssClassName);
 
             this.mount(options.tree);
         },
@@ -57,15 +56,14 @@ module.exports = ExprParser.extends(
                 startNode: this.startNode,
                 endNode: this.endNode
             });
+
             // 记录下children
-            this.tree.setTreeVar(
-                'componentChildren',
-                new ComponentChildren(
-                    this.node.getFirstChild(),
-                    this.node.getLastChild(),
-                    parentTree.rootScope
-                )
-            );
+            this.setProp('children', {
+                $$type: 'CHILDREN',
+                startNode: this.node.getFirstChild(),
+                endNode: this.node.getLastChild(),
+                parentTree: parentTree
+            });
 
             this.tree.setParent(parentTree);
             this.registerComponents();
@@ -104,9 +102,6 @@ module.exports = ExprParser.extends(
 
             // 把组件节点放到 DOM 树中去
             function insertComponentNodes(componentNode, startNode, endNode) {
-                if (!componentNode.getParentNode()) {
-                    debugger
-                }
                 var parentNode = componentNode.getParentNode();
 
                 var delayFns = [];
@@ -221,7 +216,11 @@ module.exports = ExprParser.extends(
 
             if (name === 'class') {
                 var classList = Node.getClassList(value);
-                this.$component.props.set('class', this.$$componentCssClassName.concat(classList || []));
+                classList = this.$$componentCssClassName.concat(classList || []);
+                classList = utils.distinctArr(classList, function (cls) {
+                    return cls;
+                });
+                this.$component.props.set('class', classList);
                 return;
             }
 

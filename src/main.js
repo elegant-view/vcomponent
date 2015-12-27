@@ -4,9 +4,9 @@
  */
 
 require('./ComponentParser');
+require('./ChildrenParser');
 
 var ComponentManager = require('./ComponentManager');
-var utils = require('vtpl/src/utils');
 var VTpl = require('vtpl');
 
 function VComponent(options) {
