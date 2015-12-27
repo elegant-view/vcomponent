@@ -31,9 +31,11 @@ module.exports = ExprParser.extends(
             this.$component.$$parser = this;
             this.$$propsOldValue = {};
             this.$$props = {};
+            this.$$componentCssClassName = this.getCssClassName(ComponentClass);
+            this.$$ref = null;
 
             // 组件本身就应该有的css类名
-            this.$component.props.set('classList', ComponentManager.getCssClassName(ComponentClass));
+            this.$component.props.set('classList', this.$$componentCssClassName);
 
             this.mount(options.tree);
         },
@@ -77,21 +79,20 @@ module.exports = ExprParser.extends(
         },
 
         collectExprs: function () {
+            var config = this.tree.getTreeVar('config');
             var curNode = this.node;
-
             var attributes = curNode.getAttributes();
-
             for (var i = 0, il = attributes.length; i < il; i++) {
                 var attr = attributes[i];
 
                 var attrValue = attr.nodeValue;
                 var attrName = attr.nodeName;
-                if (this.config.getExprRegExp().test(attrValue)) {
-                    var updateFn = utils.bind(this.setAttr, this, attrName);
+                if (config.getExprRegExp().test(attrValue)) {
+                    var updateFn = utils.bind(this.setProp, this, attrName);
                     this.addExpr(this.$$props, attrValue, updateFn, attrName);
                 }
                 else {
-                    this.$component.props.set(attrName, attrValue);
+                    this.setProp(attrName, attrValue);
                 }
             }
 
@@ -103,16 +104,20 @@ module.exports = ExprParser.extends(
 
             // 把组件节点放到 DOM 树中去
             function insertComponentNodes(componentNode, startNode, endNode) {
+                if (!componentNode.getParentNode()) {
+                    debugger
+                }
                 var parentNode = componentNode.getParentNode();
 
                 var delayFns = [];
-                Node.iterate(startNode, endNode, function (curNode) {
-                    var next = curNode.getNextSibling();
-                    delayFns.push(function () {
+                for (var curNode = startNode;
+                    curNode && !curNode.isAfter(endNode);
+                    curNode = curNode.getNextSibling()
+                ) {
+                    delayFns.push(utils.bind(function (curNode) {
                         parentNode.insertBefore(curNode, componentNode);
-                    });
-                    return next;
-                });
+                    }, null, curNode));
+                }
                 for (var i = 0, il = delayFns.length; i < il; ++i) {
                     delayFns[i]();
                 }
@@ -122,13 +127,16 @@ module.exports = ExprParser.extends(
         },
 
         linkScope: function () {
-            // 过一遍字面量形式的props
-            this.$component.props.iterate(function (value, name) {
-                this.setAttr(name, value);
-            }, this);
+            this.tree.rootScope.set('props', this.$component.props.get());
+            this.tree.rootScope.set('state', this.$component.state.get());
 
+            // 过一遍字面量形式的props
+            this.renderPropsToDom();
+
+            // 如果父级tree中的数据发生变化，就可能会影响到当前组件中的props表达式的计算值，
+            // 所以此处监听一下变化，在发生变化的时候更新一下this.$component.props
             this.tree.$parent.rootScope.on('change', function () {
-                this.renderToDom(this.$$props, this.$$propsOldValue, this.$component.props);
+                this.renderToDom(this.$$props, this.$$propsOldValue, this.tree.$parent.rootScope);
             }, this);
 
             // state发生了改变
@@ -139,9 +147,18 @@ module.exports = ExprParser.extends(
             // props发生了改变（props是在this.$$props[expr].exprFn中被改变的）
             this.$component.props.on('change', function () {
                 this.tree.rootScope.set('props', this.$component.props.get());
-            });
+            }, this);
         },
 
+        /**
+         * 添加表达式
+         *
+         * @protected
+         * @param {Object} mountObj 表达式挂靠的对象
+         * @param {string} expr     原始表达式字符串
+         * @param {function(*)} updateFn 根据表达式计算值更新DOM的函数
+         * @param {string} attrName 要更新的prop名
+         */
         addExpr: function (mountObj, expr, updateFn, attrName) {
             if (!mountObj[expr]) {
                 var pureExprFn = this.createExprFn(expr);
@@ -149,7 +166,7 @@ module.exports = ExprParser.extends(
                 mountObj[expr] = {
                     exprFn: function (scopeModel) {
                         var exprValue = pureExprFn(scopeModel);
-                        me.$component.props.set(attrName, exprValue);
+                        me.setProp(attrName, exprValue);
                         return exprValue;
                     },
                     updateFns: [updateFn]
@@ -161,47 +178,54 @@ module.exports = ExprParser.extends(
         },
 
         /**
-         * 设置当前节点或者组件的属性
+         * 处理某些需要直接反应到DOM上的props，比如css class。
          *
-         * @public
-         * @param {string} name 属性名
-         * @param {*} value 属性值
-         * @return {boolean}
+         * @private
          */
-        setAttr: function (name, value) {
-            if (name === 'ref') {
-                this.$$ref = value;
-                return true;
-            }
-
-            if (name === 'class') {
-                value = this.componentOriginCssClassList.concat(this.tree.domUpdater.getClassList(value));
-
-                for (var i = 0, il = this.tree.tree.length; i < il; ++i) {
-                    var parserObj = this.tree.tree[i];
-                    parserObj.parser.setAttr
-                        && parserObj.parser.setAttr(
-                            'class',
-                            this.tree.domUpdater.getClassList(value)
-                        );
+        renderPropsToDom: function () {
+            var me = this;
+            var domUpdater = this.tree.getTreeVar('domUpdater');
+            this.$component.props.iterate(function (name, value) {
+                if (name === 'ref') {
+                    return;
                 }
-            }
 
-            var scope = this.tree.rootScope;
-            scope.set(name, value);
-
-            return true;
+                if (name === 'class') {
+                    for (var curNode = me.startNode;
+                        curNode && !curNode.isAfter(me.endNode);
+                        curNode = curNode.getNextSibling()
+                    ) {
+                        var taskId = domUpdater.generateNodeAttrUpdateId();
+                        domUpdater.addTaskFn(taskId, utils.bind(function (curNode) {
+                            curNode.attr('class', value);
+                        }, null, curNode));
+                    }
+                }
+            });
         },
 
         /**
-         * 获取属性
+         * 设置prop，不会更新DOM
          *
          * @public
-         * @param  {string} name 属性名
-         * @return {*}      属性值
+         * @param {string} name  prop名字
+         * @param {*} value prop值
          */
-        getAttr: function (name) {
-            return this.tree.rootScope.get(name);
+        setProp: function (name, value) {
+            name = utils.line2camel(name);
+
+            if (name === 'ref') {
+                this.$$ref = value;
+                return;
+            }
+
+            if (name === 'class') {
+                var classList = Node.getClassList(value);
+                this.$component.props.set('class', this.$$componentCssClassName.concat(classList || []));
+                return;
+            }
+
+            this.$component.props.set(name, value);
         },
 
         /**
@@ -258,19 +282,6 @@ module.exports = ExprParser.extends(
             }
         },
 
-        ref: function (ref) {
-            var parserTree = this.tree.tree;
-
-            var ret;
-            this.walk(parserTree, function (parser) {
-                if (parser.$$ref === ref) {
-                    ret = parser.component;
-                    return true;
-                }
-            });
-            return ret;
-        },
-
         destroy: function () {
             this.$component.componentWillUnmount();
             this.$component.destroy();
@@ -317,6 +328,26 @@ module.exports = ExprParser.extends(
                     }
                 }
             }
+        },
+
+        /**
+         * 获取组件css类名
+         *
+         * @private
+         * @param {Class} ComponentClass 组件类
+         * @return {string} 组件css类名
+         */
+        getCssClassName: function (ComponentClass) {
+            var name = [];
+            for (var curCls = ComponentClass; curCls; curCls = curCls.$superClass) {
+                name.push(utils.camel2line(curCls.$name));
+
+                // 最多到组件基类
+                if (curCls.$name === 'Component') {
+                    break;
+                }
+            }
+            return name;
         }
     },
     {

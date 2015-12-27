@@ -21,6 +21,8 @@ module.exports = Base.extends(
 
             this.props.set(this.getDefaultProps());
             this.state.set(this.getInitialState());
+
+            this.refs = {};
         },
 
         getInitialState: function () {

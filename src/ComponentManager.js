@@ -75,10 +75,6 @@ ComponentManager.prototype.mountStyle = function (ComponentClass) {
         if (style) {
             var styleNode = document.createElement('style');
             styleNode.setAttribute('id', styleNodeId);
-            styleNode.innerHTML = style.replace(
-                /#root#/g,
-                '.' + ComponentManager.getCssClassName(ComponentClass).join('.')
-            );
             document.head.appendChild(styleNode);
         }
     }
