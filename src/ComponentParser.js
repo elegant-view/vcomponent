@@ -174,13 +174,13 @@ module.exports = ExprParser.extends(
         renderPropsToDom: function () {
             var me = this;
             var domUpdater = this.tree.getTreeVar('domUpdater');
-            this.$component.props.iterate(function (name, value) {
+            this.$component.props.iterate(function (value, name) {
                 if (name === 'class') {
                     for (var curNode = me.startNode;
                         curNode && !curNode.isAfter(me.endNode);
                         curNode = curNode.getNextSibling()
                     ) {
-                        var taskId = domUpdater.generateNodeAttrUpdateId();
+                        var taskId = domUpdater.generateNodeAttrUpdateId(curNode, name);
                         domUpdater.addTaskFn(taskId, utils.bind(function (curNode) {
                             curNode.attr('class', value);
                         }, null, curNode));

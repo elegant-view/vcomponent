@@ -9,9 +9,9 @@ var BaseComponent = VComponent.Component.extends(
     }
 );
 
-// testBase();
-// testNest();
-// testAttr();
+testBase();
+testNest();
+testAttr();
 testChildren();
 
 function testChildren() {
