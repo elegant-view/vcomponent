@@ -1,9 +1,11 @@
 /**
- * @file 组件基类
+ * @file 组件基类。
+ *       以`ui-`开头的标签都是组件标签。
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
 var Base = require('vtpl/src/Base');
+var ScopeModel = require('vtpl/src/ScopeModel');
 
 module.exports = Base.extends(
     {
@@ -13,7 +15,23 @@ module.exports = Base.extends(
          *
          * @protected
          */
-        initialize: function () {},
+        initialize: function () {
+            this.props = new ScopeModel();
+            this.state = new ScopeModel();
+
+            this.props.set(this.getDefaultProps());
+            this.state.set(this.getInitialState());
+
+            this.refs = {};
+        },
+
+        getInitialState: function () {
+            return {};
+        },
+
+        getDefaultProps: function () {
+            return {};
+        },
 
         componentDidMount: function () {},
 

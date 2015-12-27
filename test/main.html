@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <style type="text/css">
+    body>div {
+        display: none;
+    }
+    </style>
+</head>
+<body>
+<div id="base">
+    <ui-base></ui-base>
+</div>
+<div id="attr">
+    <ui-attr attr="你好">
+    </ui-attr>
+</div>
+<div id="nest">
+    <ui-outer test-attr="nest你好"></ui-outer>
+</div>
+<div id="children">
+    <!-- var: name="yibuyisheng" -->
+    <ui-children title="${name}">
+        <div>some contents in `children`. ${name}</div>
+    </ui-children>
+</div>
+<script type="text/javascript" src="../dist/test/main.js"></script>
+</body>
+</html>
