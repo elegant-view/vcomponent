@@ -9,15 +9,17 @@ var BaseComponent = VComponent.Component.extends(
     }
 );
 
-testBase();
-testNest();
-testAttr();
+// testBase();
+// testNest();
+// testAttr();
 testChildren();
 
 function testChildren() {
     var ChildrenComponent = VComponent.Component.extends(
         {
-            tpl: '<div>${props.children}</div><p>${props.title}</p>'
+            getTemplate() {
+                return '<div>${props.children}</div><p>${props.title}</p>';
+            }
         },
         {
             $name: 'Children'
@@ -83,9 +85,26 @@ function testBase() {
         startNode: getNode('base'),
         endNode: getNode('base')
     });
+    vcomponent.$vtpl.setData({name: 'zhangsan'});
     vcomponent.registerComponents([BaseComponent]);
     vcomponent.render();
-    console.log(vcomponent.$vtpl.$nodesManager);
+
+    let uiBaseParser = vcomponent.$vtpl.$tree.$parsers[1];
+    let uiBase = uiBaseParser.$component;
+    if (uiBase.props.get('testProp') !== 'test the prop') {
+        throw new Error('props设置有点问题');
+    }
+
+    if (uiBase.props.get('testExprProp') !== 'zhangsan') {
+        throw new Error('props设置有点问题');
+    }
+
+    vcomponent.$vtpl.setData({name: 'zhangsan1'});
+    if (uiBase.props.get('testExprProp') !== 'zhangsan1') {
+        throw new Error('props设置有点问题');
+    }
+
+    console.log(vcomponent.$vtpl);
 }
 
 function getNode(id) {

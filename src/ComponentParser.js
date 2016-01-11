@@ -46,7 +46,7 @@ module.exports = ExprParser.extends(
             var div = nodesManager.createElement('div');
             var tagName = this.node.getTagName();
             div.setInnerHTML(
-                '<!-- ' + tagName + ' -->' + this.$component.tpl + '<!-- /' + tagName + ' -->'
+                '<!-- ' + tagName + ' -->' + this.$component.getTemplate() + '<!-- /' + tagName + ' -->'
             );
 
             this.startNode = div.getFirstChild();
@@ -78,10 +78,12 @@ module.exports = ExprParser.extends(
 
                 var attrValue = attr.nodeValue;
                 var attrName = attr.nodeName;
+                // 对于含有表达式的prop，把表达式记录下来，并且生成相应的表达式值计算函数和prop更新函数。
                 if (config.getExprRegExp().test(attrValue)) {
                     var updateFn = utils.bind(this.setProp, this, attrName);
                     this.addExpr(this.$$props, attrValue, updateFn, attrName);
                 }
+                // 对于字面量prop，直接设置到$component.props里面去
                 else {
                     this.setProp(attrName, attrValue);
                 }
@@ -90,6 +92,8 @@ module.exports = ExprParser.extends(
             this.tree.traverse();
             insertComponentNodes(this.node, this.startNode, this.endNode);
             this.node = null;
+
+            this.$component.componentDidMount();
 
             // 把组件节点放到 DOM 树中去
             function insertComponentNodes(componentNode, startNode, endNode) {
@@ -116,27 +120,25 @@ module.exports = ExprParser.extends(
             this.tree.rootScope.set('props', this.$component.props.get());
             this.tree.rootScope.set('state', this.$component.state.get());
 
-            // 过一遍props
-            this.renderPropsToDom();
-
-            // 如果父级tree中的数据发生变化，就可能会影响到当前组件中的props表达式的计算值，
-            // 所以此处监听一下变化，在发生变化的时候更新一下this.$component.props
-            this.tree.$parent.rootScope.on('change', function () {
-                this.renderToDom(this.$$props, this.$$propsOldValue, this.tree.$parent.rootScope);
-            }, this);
-
-            // state发生了改变
-            this.$component.state.on('change', function () {
-                this.tree.rootScope.set('state', this.$component.state.get());
-            }, this);
-
-            // props发生了改变（props是在this.$$props[expr].exprFn中被改变的）
-            this.$component.props.on('change', function () {
-                this.tree.rootScope.set('props', this.$component.props.get());
-            }, this);
-
-            // 拿着父级数据初始化一下
+            // 到此处可以计算一下$$props里面存放的表达式的值了，对于计算出来的值，放到$component.props里面去
             this.renderToDom(this.$$props, this.$$propsOldValue, this.tree.$parent.rootScope);
+
+            // 在父级数据变化的时候更新$component.props
+            this.tree.$parent.rootScope.on('change', () => {
+                this.renderToDom(this.$$props, this.$$propsOldValue, this.tree.$parent.rootScope);
+            });
+
+            // 在$component.props数据变化的时候更新一下this.tree.rootScope，以便触发组件内的界面更新
+            this.$component.props.on('change', () => {
+                this.tree.rootScope.set('props', this.$component.props.get());
+            });
+
+            // $component.state只能够在组件内部被修改，反映组件的状态。
+            // 当$component.state被用户改变的时候，应该触发this.tree.rootScope的change事件，
+            // 以便触发组件内的界面更新
+            this.$component.state.on('change', () => {
+                this.tree.rootScope.set('state', this.$component.state.get());
+            });
         },
 
         /**
@@ -199,6 +201,8 @@ module.exports = ExprParser.extends(
         setProp: function (name, value) {
             name = utils.line2camel(name);
 
+            value = this.$component.componentWillReceiveProps(name, value);
+
             if (name === 'ref') {
                 this.$$ref = value;
                 return;
@@ -241,34 +245,6 @@ module.exports = ExprParser.extends(
 
         getScope: function () {
             return this.tree.rootScope;
-        },
-
-        // scopeModel里面的值发生了变化
-        onChange: function () {
-            if (this.isGoDark) {
-                return;
-            }
-
-            var exprs = this.exprs;
-            var exprOldValues = this.exprOldValues;
-            for (var i = 0, il = exprs.length; i < il; i++) {
-                var expr = exprs[i];
-                var exprValue = this.exprFns[expr](this.scopeModel);
-
-                // 此处既可以做脏检测，防止不必要的更新，也可以防止onChange的死循环。
-                var checkerFn = this.checker[name];
-                if (!utils.isFunction(checkerFn)) {
-                    checkerFn = defaultCheckerFn;
-                }
-                if (!checkerFn(expr, exprValue, exprOldValues[expr])) {
-                    exprOldValues[expr] = exprValue;
-
-                    var updateFns = this.updateFns[expr];
-                    for (var j = 0, jl = updateFns.length; j < jl; j++) {
-                        updateFns[j](exprValue);
-                    }
-                }
-            }
         },
 
         registerComponents: function () {
@@ -370,6 +346,3 @@ module.exports = ExprParser.extends(
 
 Tree.registeParser(module.exports);
 
-function defaultCheckerFn(expr, exprValue, exprOldValue) {
-    return exprValue === exprOldValue;
-}

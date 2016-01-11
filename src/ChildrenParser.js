@@ -11,8 +11,7 @@ module.exports = ExprParser.trait(
     {
 
         /**
-         * 对于props.children，只会在初始化的时候设置一次，后面是不会变动的（也不允许变动）。
-         * 所以`value && value.$$type === 'CHILDREN'`分支只会在初始化的时候走一次。
+         * 此处增加处理children的情况
          *
          * @protected
          * @param {nodes/Node} node  节点
@@ -20,10 +19,16 @@ module.exports = ExprParser.trait(
          */
         setTextNodeValue: function (node, value) {
             if (value && value.$$type === 'CHILDREN') {
+                // 如果之前创建了这种子树，直接销毁掉。
+                if (this.$$childrenTree) {
+                    this.$$childrenTree.destroy();
+                }
+
                 var nodesManager = this.tree.getTreeVar('nodesManager');
                 this.startNode = nodesManager.createComment('children');
                 this.endNode = nodesManager.createComment('/children');
 
+                // 将children节点插入到dom树里面去
                 var parentNode = this.node.getParentNode();
                 parentNode.insertBefore(this.startNode, this.node);
                 var delayFns = [];
@@ -37,9 +42,11 @@ module.exports = ExprParser.trait(
                     delayFns[i]();
                 }
                 parentNode.insertBefore(this.endNode, this.node);
+                // 移除之前的文本节点，这个节点现在已经没有用了。
                 this.node.remove();
                 this.node = null;
 
+                // 创建子树
                 this.$$childrenTree = new Tree({
                     startNode: this.startNode,
                     endNode: this.endNode

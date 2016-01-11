@@ -13,7 +13,7 @@ module.exports = Base.extends(
         /**
          * 组件初始化
          *
-         * @protected
+         * @private
          */
         initialize: function () {
             this.props = new ScopeModel();
@@ -25,12 +25,24 @@ module.exports = Base.extends(
             this.refs = {};
         },
 
+        render: function () {
+            return '';
+        },
+
         getInitialState: function () {
             return {};
         },
 
         getDefaultProps: function () {
             return {};
+        },
+
+        componentWillReceiveProps: function (name, nextValue) {
+            return nextValue;
+        },
+
+        shouldComponentUpdate: function (nextProps, nextState) {
+            return true;
         },
 
         componentDidMount: function () {},
@@ -42,14 +54,6 @@ module.exports = Base.extends(
         ref: function (ref) {
             return this.parser.ref(ref);
         },
-
-        /**
-         * 组件模板。子类可以覆盖这个属性。
-         *
-         * @protected
-         * @type {String}
-         */
-        tpl: '',
 
         /**
          * 销毁
