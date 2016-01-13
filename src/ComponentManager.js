@@ -23,7 +23,7 @@ ComponentManager.prototype.register = function (componentClasses) {
     }
     for (var i = 0, il = componentClasses.length; i < il; ++i) {
         var ComponentClass = componentClasses[i];
-        var name = ComponentClass.$name;
+        var name = ComponentClass.name || ComponentClass.$name;
         this.components[name] = ComponentClass;
         this.mountStyle(ComponentClass);
     }
@@ -92,18 +92,18 @@ ComponentManager.prototype.mountStyle = function (ComponentClass) {
  * @param {Constructor} ComponentClass 组件类
  * @return {Array.<string>} 合成类名数组
  */
-ComponentManager.getCssClassName = function (ComponentClass) {
-    var name = [];
-    for (var curCls = ComponentClass; curCls; curCls = curCls.$superClass) {
-        name.push(utils.camel2line(curCls.$name));
+// ComponentManager.getCssClassName = function (ComponentClass) {
+//     var name = [];
+//     for (var curCls = ComponentClass; curCls; curCls = curCls.$superClass) {
+//         name.push(utils.camel2line(curCls.name || curCls.$name));
 
-        // 最多到组件基类
-        if (curCls.$name === 'Component') {
-            break;
-        }
-    }
-    return name;
-};
+//         // 最多到组件基类
+//         if (curCls.$name === 'Component') {
+//             break;
+//         }
+//     }
+//     return name;
+// };
 
 
 module.exports = ComponentManager;

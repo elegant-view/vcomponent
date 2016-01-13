@@ -4,8 +4,8 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var Base = require('vtpl/src/Base');
-var ScopeModel = require('vtpl/src/ScopeModel');
+import Base from 'vtpl/src/Base';
+import ScopeModel from 'vtpl/src/ScopeModel';
 
 module.exports = Base.extends(
     {
@@ -25,7 +25,7 @@ module.exports = Base.extends(
             this.refs = {};
         },
 
-        render: function () {
+        getTemplate: function () {
             return '';
         },
 

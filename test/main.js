@@ -1,18 +1,38 @@
-var VComponent = require('../src/main');
+import VComponent from '../src/main';
 
 var BaseComponent = VComponent.Component.extends(
     {
-        tpl: 'base tpl'
+        getTemplate() {
+            return 'base tpl';
+        }
     },
     {
         $name: 'Base'
     }
 );
 
+testES6ClassExtention();
 // testBase();
 // testNest();
 // testAttr();
-testChildren();
+// testChildren();
+
+function testES6ClassExtention() {
+    class Label extends VComponent.Component {
+        getTemplate() {
+            return 'template';
+        }
+    }
+
+    let Button = VComponent.Component.extends({}, {$name: 'Button'});
+
+    var vcomponent = new VComponent({
+        startNode: getNode('es6ClassExtention'),
+        endNode: getNode('es6ClassExtention')
+    });
+    vcomponent.registerComponents([Label]);
+    vcomponent.render();
+}
 
 function testChildren() {
     var ChildrenComponent = VComponent.Component.extends(
@@ -31,12 +51,15 @@ function testChildren() {
     });
     vcomponent.registerComponents([ChildrenComponent]);
     vcomponent.render();
+    console.log(vcomponent);
 }
 
 function testAttr() {
     var AttrComponent = VComponent.Component.extends(
         {
-            tpl: '<div title="${props.attr}">${props.attr}</div>'
+            getTemplate() {
+                return '<div title="${props.attr}">${props.attr}</div>';
+            }
         },
         {
             $name: 'Attr'
@@ -55,7 +78,9 @@ function testAttr() {
 function testNest() {
     var InnerComponent = VComponent.Component.extends(
         {
-            tpl: '<div>${props.testAttr}</div>'
+            getTemplate() {
+                return '<div>${props.testAttr}</div>';
+            }
         },
         {
             $name: 'Inner'
@@ -64,7 +89,9 @@ function testNest() {
 
     var OuterComponent = VComponent.Component.extends(
         {
-            tpl: '<ui-inner test-attr="${props.testAttr}"></ui-inner>'
+            getTemplate() {
+                return '<ui-inner test-attr="${props.testAttr}"></ui-inner>';
+            }
         },
         {
             $name: 'Outer'
