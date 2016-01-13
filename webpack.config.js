@@ -1,3 +1,5 @@
+var path = require('path');
+
 module.exports = {
     entry: {
         'main.js': ['./src/main.js'],
@@ -7,13 +9,20 @@ module.exports = {
         path: __dirname,
         filename: './dist/[name]'
     },
-    loaders: [{
-        test: /\.js?$/,
-        exclude: /(node_modules|bower_components)/,
-        loader: 'babel',
-        query: {
-            presets: ['es2015']
+    module: {
+        loaders: [{
+            test: /\.js$/,
+            include: [
+                path.resolve(__dirname, 'src'),
+                path.resolve(__dirname, 'test')
+            ],
+            loader: 'babel-loader',
+            query: {
+                presets: ['es2015']
+            }
+        }],
+        resolve: {
+            extensions: ['', '.js']
         }
-    }]
-
+    }
 };
