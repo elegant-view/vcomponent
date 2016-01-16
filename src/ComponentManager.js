@@ -5,7 +5,7 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-var utils = require('vtpl/src/utils');
+import utils from './utils';
 
 function ComponentManager() {
     this.components = {};
@@ -67,11 +67,12 @@ ComponentManager.prototype.setParent = function (componentManager) {
  * @param {组件类} ComponentClass 组件类
  */
 ComponentManager.prototype.mountStyle = function (ComponentClass) {
-    var styleNodeId = 'component-' + ComponentClass.$name;
+    var componentName = ComponentClass.$name || ComponentClass.name;
+    var styleNodeId = 'component-' + componentName;
 
     // 判断一下，避免重复添加css
     if (!document.getElementById(styleNodeId)) {
-        var style = ComponentClass.getStyle();
+        var style = (ComponentClass.getStyle instanceof Function && ComponentClass.getStyle()) || '';
         if (style) {
             var styleNode = document.createElement('style');
             styleNode.setAttribute('id', styleNodeId);
@@ -80,8 +81,8 @@ ComponentManager.prototype.mountStyle = function (ComponentClass) {
     }
 
     // 将父类的css样式也加上去。父类很可能没注册，如果此处不加上去，样式可能就会缺一块。
-    if (ComponentClass.$name !== 'Component') {
-        this.mountStyle(ComponentClass.$superClass);
+    if (componentName !== 'Component') {
+        this.mountStyle(utils.getSuper(ComponentClass));
     }
 };
 

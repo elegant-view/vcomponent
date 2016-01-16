@@ -10,7 +10,7 @@
 
 import ExprParser from 'vtpl/src/parsers/ExprParser';
 import Tree from 'vtpl/src/trees/Tree';
-import utils from 'vtpl/src/utils';
+import utils from './utils';
 import ComponentManager from './ComponentManager';
 import Node from 'vtpl/src/nodes/Node';
 
@@ -40,8 +40,6 @@ module.exports = ExprParser.extends(
         },
 
         mount(parentTree) {
-            this.$component.componentWillMount();
-
             var nodesManager = parentTree.getTreeVar('nodesManager');
             var div = nodesManager.createElement('div');
             var tagName = this.node.getTagName();
@@ -93,8 +91,6 @@ module.exports = ExprParser.extends(
             insertComponentNodes(this.node, this.startNode, this.endNode);
             this.node = null;
 
-            this.$component.componentDidMount();
-
             // 把组件节点放到 DOM 树中去
             function insertComponentNodes(componentNode, startNode, endNode) {
                 var parentNode = componentNode.getParentNode();
@@ -123,12 +119,17 @@ module.exports = ExprParser.extends(
             this.tree.rootScope.set('state', this.$component.state.get());
 
             // 在父级数据变化的时候更新$component.props
-            this.tree.$parent.rootScope.on('change', () => {
-                this.renderToDom(this.$$props, this.$$propsOldValue, this.tree.$parent.rootScope);
+            this.tree.$parent.rootScope.on('change', (model, changes) => {
+                this.renderToDom(
+                    this.$$props,
+                    this.$$propsOldValue,
+                    this.tree.$parent.rootScope,
+                    changes
+                );
             });
 
             // 在$component.props数据变化的时候更新一下this.tree.rootScope，以便触发组件内的界面更新
-            this.$component.props.on('change', () => {
+            this.$component.props.on('change', (model, changes) => {
                 this.tree.rootScope.set('props', this.$component.props.get());
             });
 
@@ -139,7 +140,7 @@ module.exports = ExprParser.extends(
             // $component.state只能够在组件内部被修改，反映组件的状态。
             // 当$component.state被用户改变的时候，应该触发this.tree.rootScope的change事件，
             // 以便触发组件内的界面更新
-            this.$component.state.on('change', () => {
+            this.$component.state.on('change', (model, changes) => {
                 this.tree.rootScope.set('state', this.$component.state.get());
             });
         },
@@ -155,7 +156,10 @@ module.exports = ExprParser.extends(
          */
         addExpr(mountObj, expr, updateFn, attrName) {
             if (!mountObj[expr]) {
-                var pureExprFn = this.createExprFn(expr);
+                var calculaterObj = this.createExprFn(expr);
+                this.addParamName2ExprMap(calculaterObj.paramNames, expr);
+
+                var pureExprFn = calculaterObj.fn;
                 var me = this;
                 mountObj[expr] = {
                     exprFn(scopeModel) {
@@ -205,8 +209,6 @@ module.exports = ExprParser.extends(
          */
         setProp(name, value) {
             name = utils.line2camel(name);
-
-            value = this.$component.componentWillReceiveProps(name, value);
 
             if (name === 'ref') {
                 this.$$ref = value;
@@ -272,15 +274,20 @@ module.exports = ExprParser.extends(
          */
         getCssClassName(ComponentClass) {
             var name = [];
-            for (var curCls = ComponentClass; curCls; curCls = curCls.$superClass) {
-                name.push(utils.camel2line(curCls.name || curCls.$name));
+            for (var curCls = ComponentClass; curCls; curCls = utils.getSuper(curCls)) {
+                let curName = curCls.name || curCls.$name;
+                name.push(utils.camel2line(curName));
 
                 // 最多到组件基类
-                if (curCls.$name === 'Component') {
+                if (curName === 'Component') {
                     break;
                 }
             }
             return name;
+        },
+
+        getChildNodes() {
+            return [];
         }
     },
     {

@@ -3,11 +3,12 @@
  * @author  yibuyisheng(yibuyisheng@163.com)
  */
 
-require('./ComponentParser');
-require('./ChildrenParser');
+import './ComponentParser';
+import './ChildrenParser';
 
-var ComponentManager = require('./ComponentManager');
-var VTpl = require('vtpl');
+import ComponentManager from './ComponentManager';
+import VTpl from 'vtpl';
+import Component from './Component';
 
 function VComponent(options) {
     this.$vtpl = new VTpl(options);
@@ -41,6 +42,6 @@ VComponent.prototype.destroy = function () {
     this.$vtpl.destroy();
 };
 
-VComponent.Component = require('./Component');
+VComponent.Component = Component;
 
-module.exports = VComponent;
+export default VComponent;

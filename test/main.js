@@ -1,108 +1,66 @@
 import VComponent from '../src/main';
 
-var BaseComponent = VComponent.Component.extends(
-    {
-        getTemplate() {
-            return 'base tpl';
-        }
-    },
-    {
-        $name: 'Base'
+class Base extends VComponent.Component {
+    getTemplate() {
+        return 'base tpl';
     }
-);
-
-testES6ClassExtention();
-// testBase();
-// testNest();
-// testAttr();
-// testChildren();
-
-function testES6ClassExtention() {
-    class Label extends VComponent.Component {
-        getTemplate() {
-            return 'template';
-        }
-    }
-
-    let Button = VComponent.Component.extends({}, {$name: 'Button'});
-
-    var vcomponent = new VComponent({
-        startNode: getNode('es6ClassExtention'),
-        endNode: getNode('es6ClassExtention')
-    });
-    vcomponent.registerComponents([Label]);
-    vcomponent.render();
 }
 
+class Children extends VComponent.Component {
+    getTemplate() {
+        return '<div>${props.children}</div><p>${props.title}</p>';
+    }
+}
+
+class Attr extends VComponent.Component {
+    getTemplate() {
+        return '<div title="${props.attr}">${props.attr}</div>';
+    }
+}
+
+class Inner extends VComponent.Component {
+    getTemplate() {
+        return '<div>${props.testAttr}</div>';
+    }
+}
+
+class Outer extends VComponent.Component {
+    getTemplate() {
+        return '<ui-inner test-attr="${props.testAttr}"></ui-inner>';
+    }
+}
+
+testBase();
+testNest();
+testAttr();
+testChildren();
+
 function testChildren() {
-    var ChildrenComponent = VComponent.Component.extends(
-        {
-            getTemplate() {
-                return '<div>${props.children}</div><p>${props.title}</p>';
-            }
-        },
-        {
-            $name: 'Children'
-        }
-    );
-    var vcomponent = new VComponent({
+    let vcomponent = new VComponent({
         startNode: getNode('children'),
         endNode: getNode('children')
     });
-    vcomponent.registerComponents([ChildrenComponent]);
+    vcomponent.registerComponents([Children]);
     vcomponent.render();
     console.log(vcomponent);
 }
 
 function testAttr() {
-    var AttrComponent = VComponent.Component.extends(
-        {
-            getTemplate() {
-                return '<div title="${props.attr}">${props.attr}</div>';
-            }
-        },
-        {
-            $name: 'Attr'
-        }
-    );
-
-    var vcomponent = new VComponent({
+    let vcomponent = new VComponent({
         startNode: getNode('attr'),
         endNode: getNode('attr')
     });
-    vcomponent.registerComponents([AttrComponent]);
+    vcomponent.registerComponents([Attr]);
     vcomponent.render();
     console.log(vcomponent);
 }
 
 function testNest() {
-    var InnerComponent = VComponent.Component.extends(
-        {
-            getTemplate() {
-                return '<div>${props.testAttr}</div>';
-            }
-        },
-        {
-            $name: 'Inner'
-        }
-    );
-
-    var OuterComponent = VComponent.Component.extends(
-        {
-            getTemplate() {
-                return '<ui-inner test-attr="${props.testAttr}"></ui-inner>';
-            }
-        },
-        {
-            $name: 'Outer'
-        }
-    );
-
     var vcomponent = new VComponent({
         startNode: getNode('nest'),
         endNode: getNode('nest')
     });
-    vcomponent.registerComponents([OuterComponent, InnerComponent]);
+    vcomponent.registerComponents([Outer, Inner]);
     vcomponent.render();
     console.log(vcomponent, vcomponent.$vtpl.$tree.$parsers[0].constructor.$name);
 }
@@ -113,7 +71,7 @@ function testBase() {
         endNode: getNode('base')
     });
     vcomponent.$vtpl.setData({name: 'zhangsan'});
-    vcomponent.registerComponents([BaseComponent]);
+    vcomponent.registerComponents([Base]);
     vcomponent.render();
 
     let uiBaseParser = vcomponent.$vtpl.$tree.$parsers[1];

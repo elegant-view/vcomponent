@@ -7,7 +7,9 @@ module.exports = {
     },
     output: {
         path: __dirname,
-        filename: './dist/[name]'
+        filename: './dist/[name]',
+        // library: 'vcomponent/main',
+        // libraryTarget: 'amd'
     },
     module: {
         loaders: [{

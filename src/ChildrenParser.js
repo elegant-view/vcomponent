@@ -17,7 +17,7 @@ module.exports = ExprParser.trait(
          * @param {nodes/Node} node  节点
          * @param {*} value 节点值
          */
-        setTextNodeValue: function (node, value) {
+        setTextNodeValue(node, value) {
             if (value && value.$$type === 'CHILDREN') {
                 // 如果之前创建了这种子树，直接销毁掉。
                 if (this.$$childrenTree) {
@@ -62,7 +62,7 @@ module.exports = ExprParser.trait(
             }
         },
 
-        getStartNode: function () {
+        getStartNode() {
             if (this.node) {
                 return this.node;
             }
@@ -70,12 +70,16 @@ module.exports = ExprParser.trait(
             return this.startNode;
         },
 
-        getEndNode: function () {
+        getEndNode() {
             if (this.node) {
                 return this.node;
             }
 
             return this.endNode;
+        },
+
+        destroy() {
+            
         }
     }
 );
