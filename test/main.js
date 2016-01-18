@@ -1,32 +1,50 @@
-import VComponent from '../src/main';
+import vc from 'vcomponent/src/main';
 
-class Base extends VComponent.Component {
+const {VComponent, Component} = vc;
+
+class Base extends Component {
     getTemplate() {
         return 'base tpl';
     }
 }
 
-class Children extends VComponent.Component {
+class Children extends Component {
     getTemplate() {
         return '<div>${props.children}</div><p>${props.title}</p>';
     }
 }
 
-class Attr extends VComponent.Component {
+class Attr extends Component {
     getTemplate() {
         return '<div title="${props.attr}">${props.attr}</div>';
     }
 }
 
-class Inner extends VComponent.Component {
+class Inner extends Component {
     getTemplate() {
         return '<div>${props.testAttr}</div>';
     }
 }
 
-class Outer extends VComponent.Component {
+class Outer extends Component {
     getTemplate() {
         return '<ui-inner test-attr="${props.testAttr}"></ui-inner>';
+    }
+}
+
+class DirtyChecker extends Component {
+    getTemplate() {
+        return '${state.timer}';
+    }
+
+    ready() {
+        setInterval(() => {
+            this.setState('timer', new Date().getTime());
+        }, 1000);
+    }
+
+    shouldUpdate() {
+        return true;
     }
 }
 
@@ -34,6 +52,18 @@ testBase();
 testNest();
 testAttr();
 testChildren();
+testDirtyChecker();
+
+function testDirtyChecker() {
+    let vcomponent = new VComponent({
+        startNode: getNode('dirtyChecker'),
+        endNode: getNode('dirtyChecker')
+    });
+    vcomponent.registerComponents([DirtyChecker]);
+    vcomponent.render();
+    vcomponent.destroy();
+    console.log(vcomponent);
+}
 
 function testChildren() {
     let vcomponent = new VComponent({

@@ -1,9 +1,34 @@
-import utils from 'vtpl/src/utils';
+/**
+ * @file 扩展一下`vtpl/src/utils`
+ * @author yibuyisheng(yibuyisheng@163.com)
+ */
 
-let exportObj = {
-    getSuper(cls) {
-        return cls.__proto__ || Object.getPrototypeOf(cls);
-    }
-};
+let utils = require('vtpl/src/utils');
 
-export default utils.extend(utils, exportObj);
+module.exports = utils.extend(utils, {
+    getSuper: Object.getPrototypeOf
+        ? function (cls) {
+            return Object.getPrototypeOf(cls);
+        }
+        : function (cls) {
+            return cls.__proto__ || (
+                cls.constructor
+                    ? cls.constructor.prototype
+                    : Object.prototype
+            );
+        }
+});
+
+// exports.getSuper = Object.getPrototypeOf
+//     ? function (cls) {
+//         return Object.getPrototypeOf(cls);
+//     }
+//     : function (cls) {
+//         return cls.__proto__ || (
+//             cls.constructor
+//                 ? cls.constructor.prototype
+//                 : Object.prototype
+//         );
+//     };
+
+// export * from 'vtpl/src/utils';

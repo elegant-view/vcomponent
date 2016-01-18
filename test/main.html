@@ -23,6 +23,35 @@
         <div>some contents in `children`. ${name}</div>
     </ui-children>
 </div>
-<script type="text/javascript" src="../dist/test/main.js"></script>
+<div id="dirtyChecker">
+    <ui-dirty-checker></ui-dirty-checker>
+</div>
+<script type="text/javascript" src="../node_modules/esl/src/esl.js"></script>
+<script type="text/javascript">
+require.config({
+    "baseUrl": "../src",
+    "paths": {},
+    "packages": [
+        {
+            "name": "vtpl",
+            "location": "../node_modules/vtpl/",
+            "main": "src/main"
+        },
+        {
+            "name": "vcomponent",
+            "location": "../",
+            "main": "src/main"
+        },
+        {
+            "name": "test",
+            "location": "../test",
+            "main": "main"
+        }
+    ]
+});
+</script>
+<script type="text/javascript">
+    require(['test']);
+</script>
 </body>
 </html>

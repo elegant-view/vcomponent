@@ -5,107 +5,91 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-import utils from './utils';
+import {isArray, getSuper} from './utils';
 
-function ComponentManager() {
-    this.components = {};
-}
-
-/**
- * 批量注册组件
- *
- * @public
- * @param  {Array.<Class>} componentClasses 组件类数组
- */
-ComponentManager.prototype.register = function (componentClasses) {
-    if (!utils.isArray(componentClasses)) {
-        return;
-    }
-    for (var i = 0, il = componentClasses.length; i < il; ++i) {
-        var ComponentClass = componentClasses[i];
-        var name = ComponentClass.name || ComponentClass.$name;
-        this.components[name] = ComponentClass;
-        this.mountStyle(ComponentClass);
-    }
-};
-
-
-/**
- * 根据名字获取组件类。在模板解析的过程中会调用这个方法。
- *
- * @public
- * @param  {string} name 组件名
- * @return {ComponentClass}  组件类
- */
-ComponentManager.prototype.getClass = function (name) {
-    var component = this.components[name];
-    if (component) {
-        return component;
+export default class ComponentManager {
+    constructor() {
+        this.components = {};
     }
 
-    if (this.parent) {
-        component = this.parent.getClass(name);
-    }
-
-    return component;
-};
-
-/**
- * 设置父级组件管理器
- *
- * @public
- * @param {ComponentManger} componentManager 组件管理器
- */
-ComponentManager.prototype.setParent = function (componentManager) {
-    this.parent = componentManager;
-};
-
-/**
- * 将组件的样式挂载上去
- *
- * @private
- * @param {组件类} ComponentClass 组件类
- */
-ComponentManager.prototype.mountStyle = function (ComponentClass) {
-    var componentName = ComponentClass.$name || ComponentClass.name;
-    var styleNodeId = 'component-' + componentName;
-
-    // 判断一下，避免重复添加css
-    if (!document.getElementById(styleNodeId)) {
-        var style = (ComponentClass.getStyle instanceof Function && ComponentClass.getStyle()) || '';
-        if (style) {
-            var styleNode = document.createElement('style');
-            styleNode.setAttribute('id', styleNodeId);
-            document.head.appendChild(styleNode);
+    /**
+     * 批量注册组件
+     *
+     * @public
+     * @param  {Array.<Class>} componentClasses 组件类数组
+     */
+    register(componentClasses) {
+        if (!isArray(componentClasses)) {
+            return;
+        }
+        for (let i = 0, il = componentClasses.length; i < il; ++i) {
+            let ComponentClass = componentClasses[i];
+            let name = ComponentClass.name;
+            this.components[name] = ComponentClass;
+            this.mountStyle(ComponentClass);
         }
     }
 
-    // 将父类的css样式也加上去。父类很可能没注册，如果此处不加上去，样式可能就会缺一块。
-    if (componentName !== 'Component') {
-        this.mountStyle(utils.getSuper(ComponentClass));
+
+    /**
+     * 根据名字获取组件类。在模板解析的过程中会调用这个方法。
+     *
+     * @public
+     * @param  {string} name 组件名
+     * @return {ComponentClass}  组件类
+     */
+    getClass(name) {
+        let component = this.components[name];
+        if (component) {
+            return component;
+        }
+
+        if (this.parent) {
+            component = this.parent.getClass(name);
+        }
+
+        return component;
     }
-};
 
-/**
- * 获取组件的css类名。规则是根据继承关系，进行类名拼接，从而使子组件类的css具有更高优先级。
- *
- * @static
- * @param {Constructor} ComponentClass 组件类
- * @return {Array.<string>} 合成类名数组
- */
-// ComponentManager.getCssClassName = function (ComponentClass) {
-//     var name = [];
-//     for (var curCls = ComponentClass; curCls; curCls = curCls.$superClass) {
-//         name.push(utils.camel2line(curCls.name || curCls.$name));
+    /**
+     * 设置父级组件管理器
+     *
+     * @public
+     * @param {ComponentManger} componentManager 组件管理器
+     */
+    setParent(componentManager) {
+        this.parent = componentManager;
+    }
 
-//         // 最多到组件基类
-//         if (curCls.$name === 'Component') {
-//             break;
-//         }
-//     }
-//     return name;
-// };
+    /**
+     * 将组件的样式挂载上去
+     *
+     * @private
+     * @param {组件类} ComponentClass 组件类
+     */
+    mountStyle(ComponentClass) {
+        let componentName = ComponentClass.name;
+        let styleNodeId = 'component-' + componentName;
 
+        // 判断一下，避免重复添加css
+        if (!document.getElementById(styleNodeId)) {
+            let style = (ComponentClass.getStyle instanceof Function && ComponentClass.getStyle()) || '';
+            if (style) {
+                let styleNode = document.createElement('style');
+                styleNode.setAttribute('id', styleNodeId);
+                document.head.appendChild(styleNode);
+            }
+        }
 
-module.exports = ComponentManager;
+        // 将父类的css样式也加上去。父类很可能没注册，如果此处不加上去，样式可能就会缺一块。
+        if (componentName !== 'Component') {
+            this.mountStyle(getSuper(ComponentClass));
+        }
+    }
+
+    // TODO
+    destroy() {
+
+    }
+}
 
