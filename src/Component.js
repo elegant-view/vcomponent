@@ -8,7 +8,6 @@
 import ScopeModel from 'vtpl/src/ScopeModel';
 import componentState from './componentState';
 import log from 'vtpl/src/log';
-import Event from 'vtpl/src/Event';
 
 export default class Component {
     constructor() {
@@ -16,8 +15,6 @@ export default class Component {
         this.state = new ScopeModel();
 
         this.refs = {};
-
-        this.$$event = new Event();
     }
 
     getTemplate() {

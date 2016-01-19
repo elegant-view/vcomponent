@@ -38,11 +38,12 @@ class ComponentParser extends ExprParser {
         // 组件本身就有的css类名
         this.setProp('class', this.$$componentCssClassName);
 
+        this.$$parentTree = options.tree;
         this.mount(options.tree);
     }
 
-    mount(parentTree) {
-        var nodesManager = parentTree.getTreeVar('nodesManager');
+    mount() {
+        var nodesManager = this.$$parentTree.getTreeVar('nodesManager');
         var div = nodesManager.createElement('div');
         var tagName = this.node.getTagName();
         div.setInnerHTML(
@@ -62,17 +63,21 @@ class ComponentParser extends ExprParser {
             $$type: 'CHILDREN',
             startNode: this.node.getFirstChild(),
             endNode: this.node.getLastChild(),
-            parentTree: parentTree
+            parentTree: this.$$parentTree
         });
 
-        this.tree.setParent(parentTree);
+        this.tree.setParent(this.$$parentTree);
         this.registerComponents();
 
+        // 设置默认脏检测器，接管this.tree下面（也就是当前组件下面，子孙组件外面）所有表达式的脏检测。
         let dirtyChecker = new DirtyChecker();
         this.tree.setTreeVar('dirtyChecker', dirtyChecker);
         dirtyChecker.setDefaultChecker((expr, exprValue, exprOldValue) => {
             return this.$component.shouldUpdate(expr, exprValue, exprOldValue);
         });
+
+        // 用于存放当前组件下的子组件
+        this.tree.setTreeVar('childComponents', this.$component.refs);
     }
 
     collectExprs() {
@@ -98,6 +103,12 @@ class ComponentParser extends ExprParser {
         this.tree.traverse();
         insertComponentNodes(this.node, this.startNode, this.endNode);
         this.node = null;
+
+        if (this.$$ref) {
+            // 把当前组件存放到父组件的treeVar里面去
+            let childComponents = this.$$parentTree.getTreeVar('childComponents');
+            childComponents[this.$$ref] = this.$component;
+        }
 
         // 把组件节点放到 DOM 树中去
         function insertComponentNodes(componentNode, startNode, endNode) {

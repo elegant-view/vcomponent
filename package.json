@@ -4,7 +4,8 @@
   "description": "",
   "main": "src/main.js",
   "scripts": {
-    "dev": "./node_modules/webpack-dev-server/bin/webpack-dev-server.js --progress --colors --port=9000"
+    "dev": "edp webserver",
+    "dev-bak": "./node_modules/webpack-dev-server/bin/webpack-dev-server.js --progress --colors --port=9000"
   },
   "author": "",
   "license": "ISC",

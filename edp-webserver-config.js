@@ -1,5 +1,5 @@
 /* eslint-disable */
-exports.port = 8848;
+exports.port = 7000;
 exports.directoryIndexes = true;
 exports.documentRoot = __dirname;
 exports.getLocations = function () {

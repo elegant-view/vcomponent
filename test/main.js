@@ -10,7 +10,21 @@ class Base extends Component {
 
 class Children extends Component {
     getTemplate() {
-        return '<div>${props.children}</div><p>${props.title}</p>';
+        return '<div>${props.children}</div><p>${props.title}</p><ui-child-ref ref="child"></ui-child-ref>';
+    }
+
+    ready() {
+        console.log('children refs:', this.refs);
+    }
+}
+
+class ChildRef extends Component {
+    getTemplate() {
+        return 'child ... <ui-base ref="base"></ui-base>';
+    }
+
+    ready() {
+        console.log('childref refs:', this.refs);
     }
 }
 
@@ -48,11 +62,11 @@ class DirtyChecker extends Component {
     }
 }
 
-testBase();
-testNest();
-testAttr();
+// testBase();
+// testNest();
+// testAttr();
 testChildren();
-testDirtyChecker();
+// testDirtyChecker();
 
 function testDirtyChecker() {
     let vcomponent = new VComponent({
@@ -61,7 +75,9 @@ function testDirtyChecker() {
     });
     vcomponent.registerComponents([DirtyChecker]);
     vcomponent.render();
-    vcomponent.destroy();
+    setTimeout(function () {
+        vcomponent.destroy();
+    }, 3000);
     console.log(vcomponent);
 }
 
@@ -70,7 +86,7 @@ function testChildren() {
         startNode: getNode('children'),
         endNode: getNode('children')
     });
-    vcomponent.registerComponents([Children]);
+    vcomponent.registerComponents([Children, Base, ChildRef]);
     vcomponent.render();
     console.log(vcomponent);
 }
