@@ -1,5 +1,6 @@
 /**
- * @file 给ExprParser加上处理children的能力
+ * @file 给ExprParser加上处理组件props.children的能力；
+ *       给ExprParser加上记录子孙的功能。
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
@@ -77,6 +78,27 @@ ExprParser.prototype.getEndNode = function getEndNode() {
     return this.endNode;
 };
 
+let destroyOld = ExprParser.prototype.destroy;
 ExprParser.prototype.destroy = function destroy() {
     // TODO: destroy the `childrenTree`
+
+    if (this.$$ref) {
+        let children = this.tree.getTreeVar('children');
+        children[this.$$ref] = null;
+        delete children[this.$$ref];
+    }
+
+    destroyOld.call(this);
+};
+
+let setAttrOld = ExprParser.prototype.setAttr;
+ExprParser.prototype.setAttr = function setAttr(node, attrName, attrValue) {
+    if (attrName === 'ref') {
+        this.$$ref = attrValue;
+        let children = this.tree.getTreeVar('children');
+        children[attrValue] = this.node;
+    }
+    else {
+        setAttrOld.call(this, node, attrName, attrValue);
+    }
 };

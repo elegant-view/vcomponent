@@ -4,16 +4,17 @@
  */
 
 import ComponentParser from './ComponentParser';
-import ChildrenParser from './ChildrenParser';
+import ExprParserEnhance from './ExprParserEnhance';
 
 import ComponentManager from './ComponentManager';
 import VTpl from 'vtpl';
 import Component from './Component';
 
-class VComponent {
+export class VComponent {
     constructor(options) {
         this.$vtpl = new VTpl(options);
         this.$vtpl.$tree.setTreeVar('componentManager', new ComponentManager());
+        this.$vtpl.$tree.setTreeVar('children', {});
     }
 
     render() {
@@ -44,4 +45,4 @@ class VComponent {
     }
 }
 
-export default {VComponent, Component};
+export {VComponent, Component};

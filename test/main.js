@@ -1,6 +1,4 @@
-import vc from 'vcomponent/src/main';
-
-const {VComponent, Component} = vc;
+import {VComponent, Component} from 'vcomponent/src/main';
 
 class Base extends Component {
     getTemplate() {
@@ -20,7 +18,7 @@ class Children extends Component {
 
 class ChildRef extends Component {
     getTemplate() {
-        return 'child ... <ui-base ref="base"></ui-base>';
+        return '<p ref="haha">child ... </p><ui-base ref="base"></ui-base>';
     }
 
     ready() {
@@ -62,11 +60,32 @@ class DirtyChecker extends Component {
     }
 }
 
+class CssClass extends Component {
+    getTemplate() {
+        return '<div></div>';
+    }
+
+    static getStyle() {
+        return 'body {color: black;}';
+    }
+}
+
 // testBase();
 // testNest();
 // testAttr();
-testChildren();
+// testChildren();
 // testDirtyChecker();
+testCssClass();
+
+function testCssClass() {
+    let vcomponent = new VComponent({
+        startNode: getNode('class'),
+        endNode: getNode('class')
+    });
+    vcomponent.registerComponents([CssClass]);
+    vcomponent.render();
+    console.log(vcomponent);
+}
 
 function testDirtyChecker() {
     let vcomponent = new VComponent({

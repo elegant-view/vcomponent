@@ -77,7 +77,7 @@ class ComponentParser extends ExprParser {
         });
 
         // 用于存放当前组件下的子组件
-        this.tree.setTreeVar('childComponents', this.$component.refs);
+        this.tree.setTreeVar('children', this.$component.refs);
     }
 
     collectExprs() {
@@ -103,12 +103,6 @@ class ComponentParser extends ExprParser {
         this.tree.traverse();
         insertComponentNodes(this.node, this.startNode, this.endNode);
         this.node = null;
-
-        if (this.$$ref) {
-            // 把当前组件存放到父组件的treeVar里面去
-            let childComponents = this.$$parentTree.getTreeVar('childComponents');
-            childComponents[this.$$ref] = this.$component;
-        }
 
         // 把组件节点放到 DOM 树中去
         function insertComponentNodes(componentNode, startNode, endNode) {
@@ -149,12 +143,18 @@ class ComponentParser extends ExprParser {
 
         // 在$component.props数据变化的时候更新一下this.tree.rootScope，以便触发组件内的界面更新
         this.$component.props.on('change', (model, changes) => {
+            // 这句代码会引起控件内树的更新
             this.tree.rootScope.set('props', this.$component.props.get());
+
+            // 来自于props的css类，应该要放在子元素节点上面去
+            this.renderPropsToDom();
         });
 
         // 到此处可以计算一下$$props里面存放的表达式的值了，对于计算出来的值，放到$component.props里面去。
         // 这一句代码一定要放在上一段代码的后面，为啥呢？因为此处引起的变化要反映到子树中去，这才叫做`renderToDom`。
         this.renderToDom(this.$$props, this.$$propsOldValue, this.tree.$parent.rootScope);
+
+        this.renderPropsToDom();
 
         // $component.state只能够在组件内部被修改，反映组件的状态。
         // 当$component.state被用户改变的时候，应该触发this.tree.rootScope的change事件，
@@ -235,6 +235,9 @@ class ComponentParser extends ExprParser {
 
         if (name === 'ref') {
             this.$$ref = value;
+            // 把当前组件存放到父组件的treeVar里面去
+            let childComponents = this.$$parentTree.getTreeVar('children');
+            childComponents[this.$$ref] = this.$component;
             return;
         }
 
@@ -257,6 +260,9 @@ class ComponentParser extends ExprParser {
      * @return {Node}
      */
     getStartNode() {
+        if (this.node) {
+            return this.node;
+        }
         return this.startNode;
     }
 
@@ -268,6 +274,10 @@ class ComponentParser extends ExprParser {
      * @return {Node}
      */
     getEndNode() {
+        // 如果node还存在，说明组件标签还没有被模板所替换，此时的结束节点还应该是node
+        if (this.node) {
+            return this.node;
+        }
         return this.endNode;
     }
 
