@@ -62,7 +62,7 @@ class DirtyChecker extends Component {
 
 class CssClass extends Component {
     getTemplate() {
-        return '<div></div>';
+        return '<!-- for: ${[1,2,3]} as ${item} --><div><span>${item}</span></div><!-- /for -->';
     }
 
     static getStyle() {
@@ -70,11 +70,11 @@ class CssClass extends Component {
     }
 }
 
-// testBase();
-// testNest();
-// testAttr();
-// testChildren();
-// testDirtyChecker();
+testBase();
+testNest();
+testAttr();
+testChildren();
+testDirtyChecker();
 testCssClass();
 
 function testCssClass() {
