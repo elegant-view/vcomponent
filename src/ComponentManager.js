@@ -24,6 +24,9 @@ export default class ComponentManager {
         }
         for (let i = 0, il = componentClasses.length; i < il; ++i) {
             let ComponentClass = componentClasses[i];
+            if (!ComponentClass) {
+                throw new Error('the `ComponentClass` passed in is undefined, please check your code.');
+            }
             let name = ComponentClass.name;
             this.components[name] = ComponentClass;
             this.mountStyle(ComponentClass);
@@ -77,6 +80,7 @@ export default class ComponentManager {
             if (style) {
                 let styleNode = document.createElement('style');
                 styleNode.setAttribute('id', styleNodeId);
+                styleNode.innerText = style;
                 document.head.appendChild(styleNode);
             }
         }

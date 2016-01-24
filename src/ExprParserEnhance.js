@@ -8,16 +8,16 @@ import ExprParser from 'vtpl/src/parsers/ExprParser';
 import Tree from 'vtpl/src/trees/Tree';
 import {bind} from 'vtpl/src/utils';
 
-let setTextNodeValueOld = ExprParser.prototype.setTextNodeValue;
+let setAttrOld = ExprParser.prototype.setAttr;
 
 /**
  * 此处增加处理children的情况
  *
  * @protected
- * @param {nodes/Node} node  节点
- * @param {*} value 节点值
+ * @param {string} attrName  属性名
+ * @param {string|Object} value 值
  */
-ExprParser.prototype.setTextNodeValue = function setTextNodeValue(node, value) {
+ExprParser.prototype.setAttr = function setTextNodeValue(attrName, value) {
     if (value && value.$$type === 'CHILDREN') {
         // 如果之前创建了这种子树，直接销毁掉。
         if (this.$$childrenTree) {
@@ -57,8 +57,13 @@ ExprParser.prototype.setTextNodeValue = function setTextNodeValue(node, value) {
 
         this.$$childrenTree.traverse();
     }
+    else if (attrName === 'ref') {
+        this.$$ref = value;
+        let children = this.tree.getTreeVar('children');
+        children[value] = this.node;
+    }
     else {
-        setTextNodeValueOld.call(this, node, value);
+        setAttrOld.call(this, attrName, value);
     }
 };
 
@@ -89,16 +94,4 @@ ExprParser.prototype.destroy = function destroy() {
     }
 
     destroyOld.call(this);
-};
-
-let setAttrOld = ExprParser.prototype.setAttr;
-ExprParser.prototype.setAttr = function setAttr(node, attrName, attrValue) {
-    if (attrName === 'ref') {
-        this.$$ref = attrValue;
-        let children = this.tree.getTreeVar('children');
-        children[attrValue] = this.node;
-    }
-    else {
-        setAttrOld.call(this, node, attrName, attrValue);
-    }
 };

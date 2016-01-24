@@ -19,7 +19,7 @@ exports.getLocations = function () {
         },
         {
             location: /\/$/,
-            handler: home( 'index.html' )
+            handler: home( 'test/main.html' )
         },
         {
             location: /^\/redirect-local/,

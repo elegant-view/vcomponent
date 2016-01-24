@@ -30,12 +30,21 @@ export default class Component {
     ready() {}
 
     setState(...args) {
-        if (this.$$state !== componentState.READY) {
-            return log.warn(`don't set state data when the component 's state is not \`READY\``);
+        if (this.$$state !== componentState.READY
+            && this.$$state !== componentState.BEFORE_RENDER
+        ) {
+            return log.warn(`don't set state data when the component 's state is not \`READY\` or \`BEFORE_RENDER\``);
+        }
+
+        // 如果当前setState调用是在beforeRender里面，则静默改变state
+        if (this.$$state === componentState.BEFORE_RENDER && args.length < 3) {
+            args.push(true);
         }
 
         this.state.set(...args);
     }
+
+    beforeRender() {}
 
     static getStyle() {
         return '';

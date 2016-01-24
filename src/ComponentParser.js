@@ -100,7 +100,7 @@ class ComponentParser extends ExprParser {
             }
         }
 
-        this.tree.traverse();
+        this.tree.compile();
         insertComponentNodes(this.node, this.startNode, this.endNode);
         this.node = null;
 
@@ -128,44 +128,60 @@ class ComponentParser extends ExprParser {
     }
 
     linkScope() {
+        this.tree.link();
+
         this.tree.rootScope.set('props', this.$component.props.get());
         this.tree.rootScope.set('state', this.$component.state.get());
 
         // 在父级数据变化的时候更新$component.props
-        this.tree.$parent.rootScope.on('change', (model, changes) => {
-            this.renderToDom(
-                this.$$props,
-                this.$$propsOldValue,
-                this.tree.$parent.rootScope,
-                changes
-            );
+        this.listenToChange(this.tree.$parent.rootScope, event => {
+            this.renderToDom(event.changes);
         });
 
         // 在$component.props数据变化的时候更新一下this.tree.rootScope，以便触发组件内的界面更新
-        this.$component.props.on('change', (model, changes) => {
-            // 这句代码会引起控件内树的更新
-            this.tree.rootScope.set('props', this.$component.props.get());
+        this.$component.props.on('change', event => {
+            this.$component.$$state = componentState.BEFORE_RENDER;
+            this.$component.beforeRender();
+            this.$component.$$state = componentState.READY;
 
-            // 来自于props的css类，应该要放在子元素节点上面去
-            this.renderPropsToDom();
+            // 这句代码会引起控件内树的更新
+            this.tree.rootScope.set({
+                props: this.$component.props.get(),
+                state: this.$component.state.get()
+            });
         });
 
         // 到此处可以计算一下$$props里面存放的表达式的值了，对于计算出来的值，放到$component.props里面去。
         // 这一句代码一定要放在上一段代码的后面，为啥呢？因为此处引起的变化要反映到子树中去，这才叫做`renderToDom`。
-        this.renderToDom(this.$$props, this.$$propsOldValue, this.tree.$parent.rootScope);
-
-        this.renderPropsToDom();
+        this.renderToDom();
 
         // $component.state只能够在组件内部被修改，反映组件的状态。
         // 当$component.state被用户改变的时候，应该触发this.tree.rootScope的change事件，
         // 以便触发组件内的界面更新
-        this.$component.state.on('change', (model, changes) => {
+        this.$component.state.on('change', event => {
+            this.$component.$$state = componentState.BEFORE_RENDER;
+            this.$component.beforeRender();
+            this.$component.$$state = componentState.READY;
+
             this.tree.rootScope.set('state', this.$component.state.get());
         });
 
         // 到此处，组件应该就初始化完毕了。
         this.$component.$$state = componentState.READY;
         this.$component.ready();
+    }
+
+    renderToDom(changes) {
+        if (this.isGoDark) {
+            return;
+        }
+
+        this.renderChanges(
+            this.$$props,
+            this.$$propsOldValue,
+            this.tree.$parent.rootScope,
+            changes
+        );
     }
 
     /**
@@ -195,31 +211,6 @@ class ComponentParser extends ExprParser {
         }
         else {
             mountObj[expr].updateFns.push(updateFn);
-        }
-    }
-
-    /**
-     * 处理某些需要直接反应到DOM上的props，比如css class。
-     *
-     * @private
-     */
-    renderPropsToDom() {
-        var me = this;
-        var domUpdater = this.tree.getTreeVar('domUpdater');
-        this.$component.props.iterate(function (value, name) {
-            if (name === 'class') {
-                for (var curNode = me.startNode;
-                    curNode && !curNode.isAfter(me.endNode);
-                    curNode = curNode.getNextSibling()
-                ) {
-                    var taskId = domUpdater.generateNodeAttrUpdateId(curNode, name);
-                    domUpdater.addTaskFn(taskId, bind(setClass, null, curNode, value));
-                }
-            }
-        });
-
-        function setClass(curNode, classes) {
-            curNode.attr('class', classes);
         }
     }
 
@@ -286,10 +277,15 @@ class ComponentParser extends ExprParser {
     }
 
     registerComponents() {
-        var componentManager = this.tree.getTreeVar('componentManager');
+        var componentManager = this.$$parentTree.getTreeVar('componentManager');
         var curComponentManager = new ComponentManager();
         curComponentManager.setParent(componentManager);
-        curComponentManager.register(this.$component.componentClasses);
+
+        if (this.$component.getComponentClasses instanceof Function) {
+            curComponentManager.register(this.$component.getComponentClasses());
+        }
+
+        this.tree.setTreeVar('componentManager', curComponentManager);
     }
 
     destroy() {
@@ -321,6 +317,16 @@ class ComponentParser extends ExprParser {
 
     getChildNodes() {
         return [];
+    }
+
+    goDark() {
+        this.tree.goDark();
+        this.isGoDark = true;
+    }
+
+    restoreFromDark() {
+        this.tree.restoreFromDark();
+        this.isGoDark = false;
     }
 
      /**

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <style type="text/css">
+    body>div {
+        display: none;
+    }
+    </style>
+</head>
+<body>
+<div id="base"><ui-base test-prop="test the prop" test-expr-prop="${name}"></ui-base><ui-base test-prop="test the prop" test-expr-prop="${name}"></ui-base></div>
+<div id="attr">
+    <ui-attr attr="你好">
+    </ui-attr>
+</div>
+<div id="nest">
+    <ui-outer test-attr="nest你好"></ui-outer>
+</div>
+<div id="children">
+    <!-- var: name="yibuyisheng" -->
+    <ui-children title="${name}">
+        <div>some contents in `children`. ${name}</div>
+    </ui-children>
+</div>
+<div id="dirtyChecker">
+    <ui-dirty-checker></ui-dirty-checker>
+</div>
+<div id="class">
+    <ui-css-class class="haha"></ui-css-class>
+    <ui-css-class class="heihei"></ui-css-class>
+</div>
+<script type="text/javascript" src="../node_modules/esl/src/esl.js"></script>
+<script type="text/javascript">
+require.config({
+    "baseUrl": "../src",
+    "paths": {},
+    "packages": [
+        {
+            "name": "vtpl",
+            "location": "../node_modules/vtpl/",
+            "main": "src/main"
+        },
+        {
+            "name": "vcomponent",
+            "location": "../",
+            "main": "src/main"
+        },
+        {
+            "name": "test",
+            "location": "../test",
+            "main": "main"
+        }
+    ]
+});
+</script>
+<script type="text/javascript">
+    require(['test/main-ui']);
+</script>
+</body>
+</html>
