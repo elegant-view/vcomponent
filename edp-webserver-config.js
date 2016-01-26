@@ -5,12 +5,11 @@ exports.documentRoot = __dirname;
 exports.getLocations = function () {
     return [
         {
-            location: /.+\.js$/,
+            location: /(src|test)\/.+\.js$/,
             handler: babel(
                 {
                     presets: [require("babel-preset-es2015")],
                     plugins: [require("babel-plugin-transform-es2015-modules-amd")]
-                    // plugins: [require('babel-plugin-transform-es2015-modules-umd')]
                 },
                 {
                     babel: require('babel-core')
