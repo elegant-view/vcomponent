@@ -3,32 +3,22 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-let utils = require('vtpl/src/utils');
+import {isArray, line2camel, camel2line, distinctArr, bind, forEach, isClass, type} from 'vtpl/src/utils';
 
-module.exports = utils.extend(utils, {
-    getSuper: Object.getPrototypeOf
-        ? function (cls) {
-            return Object.getPrototypeOf(cls);
-        }
-        : function (cls) {
-            return cls.__proto__ || (
-                cls.constructor
-                    ? cls.constructor.prototype
-                    : Object.prototype
-            );
-        }
-});
+let getSuper;
+if (Object.getPrototypeOf) {
+    getSuper = function (cls) {
+        return Object.getPrototypeOf(cls);
+    };
+}
+else {
+    getSuper = function (cls) {
+        return cls.__proto__ || (
+            cls.constructor
+                ? cls.constructor.prototype
+                : Object.prototype
+        );
+    };
+}
 
-// exports.getSuper = Object.getPrototypeOf
-//     ? function (cls) {
-//         return Object.getPrototypeOf(cls);
-//     }
-//     : function (cls) {
-//         return cls.__proto__ || (
-//             cls.constructor
-//                 ? cls.constructor.prototype
-//                 : Object.prototype
-//         );
-//     };
-
-// export * from 'vtpl/src/utils';
+export {getSuper, isArray, line2camel, camel2line, distinctArr, bind, forEach, isClass, type};

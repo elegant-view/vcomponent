@@ -6,15 +6,15 @@ exports.getLocations = function () {
     return [
         {
             location: /(src|test)\/.+\.js$/,
-            handler: babel(
-                {
-                    presets: [require("babel-preset-es2015")],
-                    plugins: [require("babel-plugin-transform-es2015-modules-amd")]
-                },
-                {
-                    babel: require('babel-core')
-                }
-            )
+            handler: babel({
+                "stage": 0,
+                "modules": "amd",
+                "compact": false,
+                "ast": false,
+                "blacklist": ["strict"],
+                "externalHelpers": true,
+                "sourceMaps": "inline"
+            })
         },
         {
             location: /\/$/,

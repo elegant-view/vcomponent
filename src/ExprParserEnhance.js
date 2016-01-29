@@ -7,6 +7,7 @@
 import ExprParser from 'vtpl/src/parsers/ExprParser';
 import Tree from 'vtpl/src/trees/Tree';
 import {bind} from 'vtpl/src/utils';
+import Children from './data/Children';
 
 let setAttrOld = ExprParser.prototype.setAttr;
 
@@ -18,7 +19,7 @@ let setAttrOld = ExprParser.prototype.setAttr;
  * @param {string|Object} value 值
  */
 ExprParser.prototype.setAttr = function setTextNodeValue(attrName, value) {
-    if (value && value.$$type === 'CHILDREN') {
+    if (value && value instanceof Children) {
         // 如果之前创建了这种子树，直接销毁掉。
         if (this.$$childrenTree) {
             this.$$childrenTree.destroy();
@@ -32,8 +33,8 @@ ExprParser.prototype.setAttr = function setTextNodeValue(attrName, value) {
         var parentNode = this.node.getParentNode();
         parentNode.insertBefore(this.startNode, this.node);
         var delayFns = [];
-        for (var curNode = value.startNode;
-            curNode && !curNode.isAfter(value.endNode);
+        for (var curNode = value.getStartNode();
+            curNode && !curNode.isAfter(value.getEndNode());
             curNode = curNode.getNextSibling()
         ) {
             delayFns.push(bind(parentNode.insertBefore, parentNode, curNode, this.node));
@@ -51,9 +52,9 @@ ExprParser.prototype.setAttr = function setTextNodeValue(attrName, value) {
             startNode: this.startNode,
             endNode: this.endNode
         });
-        this.$$childrenTree.setParent(value.parentTree);
-        this.$$childrenTree.rootScope.setParent(value.parentTree.rootScope);
-        value.parentTree.rootScope.addChild(this.$$childrenTree.rootScope);
+        this.$$childrenTree.setParent(value.getParentTree());
+        this.$$childrenTree.rootScope.setParent(value.getParentTree().rootScope);
+        value.getParentTree().rootScope.addChild(this.$$childrenTree.rootScope);
 
         this.$$childrenTree.traverse();
     }

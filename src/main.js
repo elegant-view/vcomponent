@@ -21,6 +21,10 @@ export class VComponent {
         this.$vtpl.render();
     }
 
+    setData(...args) {
+        this.$vtpl.setData(...args);
+    }
+
     /**
      * 注册组件类
      * 设置绑定在树上面的额外变量。这些变量有如下特性：
@@ -33,12 +37,12 @@ export class VComponent {
      * @param {*} value 变量值
      */
     registerComponents(componentClasses) {
-        var componentManager = this.$vtpl.$tree.getTreeVar('componentManager');
+        let componentManager = this.$vtpl.$tree.getTreeVar('componentManager');
         componentManager.register(componentClasses);
     }
 
     destroy() {
-        var componentManager = this.$vtpl.$tree.getTreeVar('componentManager');
+        let componentManager = this.$vtpl.$tree.getTreeVar('componentManager');
         componentManager.destroy();
 
         this.$vtpl.destroy();

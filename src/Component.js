@@ -5,16 +5,21 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-import ScopeModel from 'vtpl/src/ScopeModel';
 import componentState from './componentState';
 import log from 'vtpl/src/log';
+import {isClass, type} from './utils';
 
 export default class Component {
     constructor() {
-        this.props = new ScopeModel();
-        this.state = new ScopeModel();
-
         this.refs = {};
+
+        // 在parser里面维护
+        this.$$state = null;
+        // 在parser里面设置
+        this.$$scopeModel = null;
+
+        this.state = {};
+        this.props = {};
     }
 
     getTemplate() {
@@ -26,6 +31,7 @@ export default class Component {
     shouldUpdate(expr, exprValue, exprOldValue) {
         return exprOldValue !== exprValue;
     }
+    propsChange() {}
 
     ready() {}
 
@@ -41,10 +47,25 @@ export default class Component {
             args.push(true);
         }
 
-        this.state.set(...args);
-    }
+        let state = this.$$scopeModel.get('state');
+        set(...args);
+        this.$$scopeModel.set({state});
 
-    beforeRender() {}
+        function set(name, value) {
+            if (isClass(name, 'String')) {
+                state[name] = value;
+            }
+            else if (type(name) === 'object') {
+                for (let key in name) {
+                    if (!name.hasOwnProperty(key)) {
+                        continue;
+                    }
+
+                    state[key] = name[key];
+                }
+            }
+        }
+    }
 
     static getStyle() {
         return '';

@@ -7,6 +7,8 @@
     <script src="../node_modules/jasmine-core/lib/jasmine-core/jasmine-html.js"></script>
     <script src="../node_modules/jasmine-core/lib/jasmine-core/boot.js"></script>
 
+    <script src="../external/babel-support.js"></script>
+
     <script type="text/javascript" src="../node_modules/esl/src/esl.js"></script>
 </head>
 <body>
@@ -17,8 +19,7 @@
         "packages": [
             {
                 "name": "test",
-                "location": "../test",
-                "main": "main"
+                "location": "../test"
             },
             {
                 "name": "vtpl",
@@ -41,7 +42,7 @@
     });
     </script>
     <script type="text/javascript">
-    require(['test/main']);
+    require(['test']);
     </script>
 </body>
 </html>

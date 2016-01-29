@@ -1,69 +1,130 @@
-import ExprParserEnhance from 'vcomponent/src/ExprParserEnhance';
-import ComponentParser from 'vcomponent/src/ComponentParser';
-import Tree from 'vtpl/src/trees/Tree';
-import vtpl from 'vtpl/src/main';
-import NodesManager from 'vtpl/src/nodes/NodesManager';
-import DomUpdater from 'vtpl/src/DomUpdater';
-import ExprCalculater from 'vtpl/src/ExprCalculater';
-import Config from 'vtpl/src/Config';
+import {VComponent, Component} from 'vcomponent/src/main';
 
 export default function () {
     describe('ComponentParserSpec', () => {
-        let nodesManager;
-        let domUpdater;
         let node;
-        let config = new Config();
-        let exprCalculater;
-
         beforeEach(() => {
-            nodesManager = new NodesManager();
-            domUpdater = new DomUpdater();
-            domUpdater.start();
-            node = nodesManager.createElement('div');
-            exprCalculater = new ExprCalculater();
+            node = document.createElement('div');
         });
-
         afterEach(() => {
-            nodesManager.destroy();
-            domUpdater.destroy();
-            exprCalculater.destroy();
-            exprCalculater.destroy();
+            node = null;
         });
 
-        // it('simple list', done => {
-        //     node.setInnerHTML('<!-- for: students as student -->${student.name}<!-- /for -->');
-        //     let tree = new Tree({startNode: node, endNode: node});
-        //     setTreeVar(tree);
-        //     tree.compile();
-        //     tree.rootScope.set({students: [
-        //         {
-        //             name: 'yibuyisheng1'
-        //         },
-        //         {
-        //             name: 'yibuyisheng2'
-        //         }
-        //     ]});
-        //     tree.link();
-        //     setTimeout(() => {
-        //         expect(node.$node.innerText.replace(/\s*/g, '')).toBe('yibuyisheng1yibuyisheng2');
+        it('base', done => {
+            class Base extends Component {
+                getTemplate() {
+                    return 'base';
+                }
+            }
 
-        //         tree.rootScope.set({students: [
-        //             {
-        //                 name: 'yibuyisheng3'
-        //             }
-        //         ]});
-        //         setTimeout(() => {
-        //             expect(node.$node.innerText.replace(/\s*/g, '')).toBe('yibuyisheng3');
-        //             done();
-        //         }, 70);
-        //     }, 70);
-        // });
+            node.innerHTML = '<ui-base></ui-base>';
+            let vc = new VComponent({startNode: node, endNode: node});
+            vc.registerComponents([Base]);
+            vc.render();
 
-        function setTreeVar(tree) {
-            tree.setTreeVar('nodesManager', nodesManager);
-            tree.setTreeVar('config', config);
-            tree.setTreeVar('exprCalculater', exprCalculater);
-            tree.setTreeVar('domUpdater', domUpdater);
-        }
+            setTimeout(() => {
+                expect(node.innerText).toBe('base');
+                done();
+            }, 70);
+        });
+
+        it('props', done => {
+            class Test extends Component {
+                getTemplate() {
+                    return '${props.name}';
+                }
+            }
+
+            node.innerHTML = '<ui-test name="yibuyisheng"></ui-test>';
+            let vc = new VComponent({startNode: node, endNode: node});
+            vc.registerComponents([Test]);
+            vc.render();
+
+            setTimeout(() => {
+                expect(node.innerText).toBe('yibuyisheng');
+                done();
+            }, 70);
+        });
+
+        it('children', done => {
+            class Test extends Component {
+                getTemplate() {
+                    return '${props.children}';
+                }
+            }
+
+            node.innerHTML = '<ui-test>yibuyisheng</ui-test>';
+            let vc = new VComponent({startNode: node, endNode: node});
+            vc.registerComponents([Test]);
+            vc.render();
+
+            setTimeout(() => {
+                expect(node.innerText).toBe('yibuyisheng');
+                done();
+            }, 70);
+        });
+
+        it('css class', done => {
+            class Test extends Component {
+                getTemplate() {
+                    return '<div class="${props.class}"></div>';
+                }
+            }
+
+            node.innerHTML = '<ui-test></ui-test>';
+            let vc = new VComponent({startNode: node, endNode: node});
+            vc.registerComponents([Test]);
+            vc.render();
+
+            setTimeout(() => {
+                expect(node.firstElementChild.getAttribute('class')).toBe('test component');
+                done();
+            }, 70);
+        });
+
+        it('out data', done => {
+            class Test extends Component {
+                getTemplate() {
+                    return '${props.name}';
+                }
+            }
+
+            node.innerHTML = '<ui-test name="${outerName}"></ui-test>';
+            let vc = new VComponent({startNode: node, endNode: node});
+            vc.registerComponents([Test]);
+            vc.render();
+
+            vc.setData({
+                outerName: 'yibuyisheng'
+            });
+            setTimeout(() => {
+                expect(node.innerText).toBe('yibuyisheng');
+                done();
+            }, 70);
+        });
+
+        it('out function', done => {
+            let counter = 1;
+            class Test extends Component {
+                propsChange() {
+                    if (counter === 0) {
+                        expect(this.props.function).toBe(fn);
+                        done();
+                    }
+                    counter--;
+                }
+            }
+
+            node.innerHTML = '<ui-test function="${outerFunction}"></ui-test>';
+            let vc = new VComponent({startNode: node, endNode: node});
+            vc.registerComponents([Test]);
+            vc.render();
+
+            vc.setData({
+                outerFunction: fn
+            });
+
+            function fn() {}
+        });
     });
 }
