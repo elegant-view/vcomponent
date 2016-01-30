@@ -94,6 +94,9 @@ class ComponentParser extends ExprParser {
             // 对于含有表达式的prop，把表达式记录下来，并且生成相应的表达式值计算函数和prop更新函数。
             if (config.getExprRegExp().test(attrValue)) {
                 exprWacther.addExpr(attrValue);
+                exprWacther.setExprEqualsFn(attrValue, bind(this.shouldUpdate, this));
+                exprWacther.setExprCloneFn(attrValue, bind(this.cloneExpressionObject, this));
+
                 let updateFns = this.$$updatePropFns[attrValue] || [];
                 updateFns.push(bind(this.setProp, this, attrName));
                 this.$$updatePropFns[attrValue] = updateFns;
@@ -110,16 +113,16 @@ class ComponentParser extends ExprParser {
 
         // 把组件节点放到 DOM 树中去
         function insertComponentNodes(componentNode, startNode, endNode) {
-            var parentNode = componentNode.getParentNode();
+            let parentNode = componentNode.getParentNode();
 
-            var delayFns = [];
-            for (var curNode = startNode;
+            let delayFns = [];
+            for (let curNode = startNode;
                 curNode && !curNode.isAfter(endNode);
                 curNode = curNode.getNextSibling()
             ) {
                 delayFns.push(bind(insert, null, curNode));
             }
-            for (var i = 0, il = delayFns.length; i < il; ++i) {
+            for (let i = 0, il = delayFns.length; i < il; ++i) {
                 delayFns[i]();
             }
 
@@ -246,8 +249,8 @@ class ComponentParser extends ExprParser {
     }
 
     registerComponents() {
-        var componentManager = this.tree.getTreeVar('componentManager');
-        var curComponentManager = new ComponentManager();
+        let componentManager = this.tree.getTreeVar('componentManager');
+        let curComponentManager = new ComponentManager();
         curComponentManager.setParent(componentManager);
 
         if (this.$component.getComponentClasses instanceof Function) {
@@ -312,15 +315,14 @@ class ComponentParser extends ExprParser {
      * @return {boolean}
      */
     static isProperNode(node) {
-        var nodeType = node.getNodeType();
+        let nodeType = node.getNodeType();
         if (nodeType !== Node.ELEMENT_NODE) {
             return false;
         }
 
-        var tagName = node.getTagName();
+        let tagName = node.getTagName();
         return tagName.indexOf('ui-') === 0;
     }
 }
 
-Tree.registeParser(ComponentParser);
 export default ComponentParser;

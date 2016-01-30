@@ -13,6 +13,7 @@ import Component from './Component';
 export class VComponent {
     constructor(options) {
         this.$vtpl = new VTpl(options);
+        this.$vtpl.registerParser(ComponentParser);
         this.$vtpl.$tree.setTreeVar('componentManager', new ComponentManager());
         this.$vtpl.$tree.setTreeVar('children', {});
     }

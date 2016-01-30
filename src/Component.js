@@ -8,6 +8,8 @@
 import componentState from './componentState';
 import log from 'vtpl/src/log';
 import {isClass, type} from './utils';
+import deepEqual from 'vtpl/src/deepEqual';
+import clone from 'vtpl/src/clone';
 
 export default class Component {
     constructor() {
@@ -29,8 +31,14 @@ export default class Component {
     destroy() {}
 
     shouldUpdate(expr, exprValue, exprOldValue) {
-        return exprOldValue !== exprValue;
+        // 默认深比较
+        return deepEqual(exprOldValue, exprValue);
     }
+
+    cloneExpressionObject(expr, expressionObject) {
+        return clone(expressionObject);
+    }
+
     propsChange() {}
 
     ready() {}

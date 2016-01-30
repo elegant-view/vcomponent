@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/main.js",
   "scripts": {
-    "dev": "edp webserver",
+    "dev": "./node_modules/edp/bin/edp-cli webserver",
     "dev-bak": "./node_modules/webpack-dev-server/bin/webpack-dev-server.js --progress --colors --port=9000"
   },
   "author": "",
@@ -17,8 +17,11 @@
     "babel-loader": "^6.2.1",
     "babel-plugin-transform-es2015-modules-amd": "^6.4.3",
     "babel-preset-es2015": "^6.3.13",
-    "esl": "github:ecomfe/esl",
+    "edp": "^1.1.1",
+    "edp-webserver": "^1.2.5",
+    "esl": "ecomfe/esl",
     "jasmine": "^2.4.1",
+    "jasmine-core": "^2.4.1",
     "webpack": "^1.12.11",
     "webpack-dev-server": "^1.14.1"
   }
