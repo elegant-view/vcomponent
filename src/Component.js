@@ -28,9 +28,6 @@ export default class Component {
 
     destroy() {}
 
-    shouldUpdate(expr, exprValue, exprOldValue) {
-        return exprOldValue !== exprValue;
-    }
     propsChange() {}
 
     ready() {}
