@@ -25,21 +25,21 @@ ExprParser.prototype.setAttr = function setTextNodeValue(attrName, value) {
             this.$$childrenTree.destroy();
         }
 
-        var nodesManager = this.tree.getTreeVar('nodesManager');
+        let nodesManager = this.tree.getTreeVar('nodesManager');
         this.startNode = nodesManager.createComment('children');
         this.endNode = nodesManager.createComment('/children');
 
         // 将children节点插入到dom树里面去
-        var parentNode = this.node.getParentNode();
+        let parentNode = this.node.getParentNode();
         parentNode.insertBefore(this.startNode, this.node);
-        var delayFns = [];
-        for (var curNode = value.getStartNode();
+        let delayFns = [];
+        for (let curNode = value.getStartNode();
             curNode && !curNode.isAfter(value.getEndNode());
             curNode = curNode.getNextSibling()
         ) {
             delayFns.push(bind(parentNode.insertBefore, parentNode, curNode, this.node));
         }
-        for (var i = 0, il = delayFns.length; i < il; ++i) {
+        for (let i = 0, il = delayFns.length; i < il; ++i) {
             delayFns[i]();
         }
         parentNode.insertBefore(this.endNode, this.node);
@@ -56,7 +56,9 @@ ExprParser.prototype.setAttr = function setTextNodeValue(attrName, value) {
         this.$$childrenTree.rootScope.setParent(value.getParentTree().rootScope);
         value.getParentTree().rootScope.addChild(this.$$childrenTree.rootScope);
 
-        this.$$childrenTree.traverse();
+        this.$$childrenTree.compile();
+        this.$$childrenTree.link();
+        this.$$childrenTree.initRender();
     }
     else if (attrName === 'ref') {
         this.$$ref = value;

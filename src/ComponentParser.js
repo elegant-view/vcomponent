@@ -9,7 +9,6 @@
  */
 
 import ExprParser from 'vtpl/src/parsers/ExprParser';
-import Tree from 'vtpl/src/trees/Tree';
 import {line2camel, bind, getSuper, camel2line, distinctArr, forEach} from './utils';
 import ComponentManager from './ComponentManager';
 import Node from 'vtpl/src/nodes/Node';
@@ -54,7 +53,7 @@ class ComponentParser extends ExprParser {
         this.startNode = div.getFirstChild();
         this.endNode = div.getLastChild();
 
-        this.$$componentTree = new Tree({
+        this.$$componentTree = this.tree.createTree({
             startNode: this.startNode,
             endNode: this.endNode
         });
@@ -161,13 +160,14 @@ class ComponentParser extends ExprParser {
             this.setProp(key, value);
         });
 
-        // 到此处，组件应该就初始化完毕了。
-        this.$component.$$state = componentState.READY;
-
         forEach(this.$$updatePropFns, (updateFns, expr) => {
             forEach(updateFns, fn => fn(exprWacther.calculate(expr)));
         });
 
+        this.$$componentTree.initRender();
+
+        // 到此处，组件应该就初始化完毕了。
+        this.$component.$$state = componentState.READY;
         this.$component.ready();
     }
 
@@ -190,7 +190,7 @@ class ComponentParser extends ExprParser {
         }
 
         if (name === 'class') {
-            var classList = Node.getClassList(value);
+            let classList = Node.getClassList(value);
             classList = this.$$componentCssClassName.concat(classList || []);
             classList = distinctArr(classList, cls => cls);
 
@@ -206,9 +206,7 @@ class ComponentParser extends ExprParser {
             scopeModel.set('props', props);
 
             if (this.$component
-                && (this.$component.$$state === componentState.READY
-                    || this.$component.$$state === componentState.BEGIN_LINK
-                )
+                && (this.$component.$$state === componentState.READY)
             ) {
                 this.$component.propsChange();
             }
@@ -274,8 +272,8 @@ class ComponentParser extends ExprParser {
      * @return {string} 组件css类名
      */
     getCssClassName(ComponentClass) {
-        var name = [];
-        for (var curCls = ComponentClass; curCls; curCls = getSuper(curCls)) {
+        let name = [];
+        for (let curCls = ComponentClass; curCls; curCls = getSuper(curCls)) {
             let curName = curCls.name;
             name.push(camel2line(curName));
 
