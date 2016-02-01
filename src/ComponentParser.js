@@ -43,15 +43,15 @@ class ComponentParser extends ExprParser {
     // 必须在组件创建之后
     createComponentTree() {
         let nodesManager = this.tree.getTreeVar('nodesManager');
-        let div = nodesManager.createElement('div');
+        let fragment = nodesManager.createDocumentFragment();
         let tagName = this.node.getTagName();
 
-        div.setInnerHTML(
+        fragment.setInnerHTML(
             `<!-- ${tagName} -->${this.$component.getTemplate()}<!-- /${tagName} -->`
         );
 
-        this.startNode = div.getFirstChild();
-        this.endNode = div.getLastChild();
+        this.startNode = fragment.getFirstChild();
+        this.endNode = fragment.getLastChild();
 
         this.$$componentTree = this.tree.createTree({
             startNode: this.startNode,
@@ -112,6 +112,9 @@ class ComponentParser extends ExprParser {
 
         // 把组件节点放到 DOM 树中去
         function insertComponentNodes(componentNode, startNode, endNode) {
+            if (componentNode.getTagName() === 'ui-trow') {
+                debugger
+            }
             let parentNode = componentNode.getParentNode();
 
             let delayFns = [];
