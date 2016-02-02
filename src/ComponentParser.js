@@ -106,15 +106,14 @@ class ComponentParser extends ExprParser {
             }
         }
 
+        // 子树先compile完，再把整棵树插入到DOM中
         this.$$componentTree.compile();
         insertComponentNodes(this.node, this.startNode, this.endNode);
+
         this.node = null;
 
         // 把组件节点放到 DOM 树中去
         function insertComponentNodes(componentNode, startNode, endNode) {
-            if (componentNode.getTagName() === 'ui-trow') {
-                debugger
-            }
             let parentNode = componentNode.getParentNode();
 
             let delayFns = [];
