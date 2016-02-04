@@ -98,3 +98,23 @@ ExprParser.prototype.destroy = function destroy() {
 
     destroyOld.call(this);
 };
+
+let goDarkOld = ExprParser.prototype.goDark;
+ExprParser.prototype.goDark = function goDark() {
+    if (this.$$childrenTree) {
+        this.$$childrenTree.goDark();
+    }
+    else {
+        goDarkOld.call(this);
+    }
+};
+
+let restoreFromDarkOld = ExprParser.prototype.restoreFromDark;
+ExprParser.prototype.restoreFromDark = function restoreFromDark() {
+    if (this.$$childrenTree) {
+        this.$$childrenTree.restoreFromDark();
+    }
+    else {
+        restoreFromDarkOld.call(this);
+    }
+};
