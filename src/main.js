@@ -26,6 +26,11 @@ export class VComponent {
         this.$vtpl.setData(...args);
     }
 
+    getData(...args) {
+        let scope = this.$vtpl.$tree.rootScope;
+        return scope.get(...args);
+    }
+
     /**
      * 注册组件类
      * 设置绑定在树上面的额外变量。这些变量有如下特性：
@@ -47,6 +52,11 @@ export class VComponent {
         componentManager.destroy();
 
         this.$vtpl.destroy();
+    }
+
+    ref(name) {
+        let children = this.$vtpl.$tree.getTreeVar('children') || {};
+        return children[name];
     }
 }
 

@@ -104,14 +104,10 @@ export default function () {
         });
 
         it('out function', done => {
-            let counter = 1;
             class Test extends Component {
                 propsChange() {
-                    if (counter === 0) {
-                        expect(this.props.function).toBe(fn);
-                        done();
-                    }
-                    counter--;
+                    expect(this.props.function).toBe(fn);
+                    done();
                 }
             }
 

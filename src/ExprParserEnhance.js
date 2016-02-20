@@ -118,3 +118,5 @@ ExprParser.prototype.restoreFromDark = function restoreFromDark() {
         restoreFromDarkOld.call(this);
     }
 };
+
+export default ExprParser;

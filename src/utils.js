@@ -8,16 +8,12 @@ import {isArray, line2camel, camel2line, distinctArr, bind, forEach, isClass, ty
 let getSuper;
 if (Object.getPrototypeOf) {
     getSuper = function (cls) {
-        return Object.getPrototypeOf(cls);
+        return Object.getPrototypeOf(cls.prototype).constructor;
     };
 }
 else {
     getSuper = function (cls) {
-        return cls.__proto__ || (
-            cls.constructor
-                ? cls.constructor.prototype
-                : Object.prototype
-        );
+        return cls.prototype.__proto__.constructor;
     };
 }
 

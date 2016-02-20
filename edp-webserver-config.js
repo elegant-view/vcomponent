@@ -12,8 +12,7 @@ exports.getLocations = function () {
                 "compact": false,
                 "ast": false,
                 "blacklist": ["strict"],
-                "externalHelpers": true,
-                "sourceMaps": "inline"
+                "externalHelpers": false
             })
         },
         {
