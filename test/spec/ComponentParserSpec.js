@@ -122,5 +122,53 @@ export default function () {
 
             function fn() {}
         });
+
+        it('rest props 1', done => {
+            class Test extends Component {
+                ready() {
+                    expect(this.props.name).toBe('zhangsan');
+                    done();
+                }
+
+                propsChange() {
+                    done(new Error('should not change props'));
+                }
+            }
+
+            node.innerHTML = '<ui-test name="zhangsan" d-rest="${restObj}"></ui-test>';
+            let vc = new VComponent({startNode: node, endNode: node});
+            vc.registerComponents([Test]);
+            vc.render();
+
+            vc.setData({
+                restObj: {
+                    name: 'yibuyisheng'
+                }
+            });
+        });
+
+        it('rest props 2', done => {
+            class Test extends Component {
+                ready() {
+                    expect(this.props.name).toBe('zhangsan');
+                }
+
+                propsChange() {
+                    expect(this.props.name2).toBe('yibuyisheng');
+                    done();
+                }
+            }
+
+            node.innerHTML = '<ui-test name="zhangsan" d-rest="${restObj}"></ui-test>';
+            let vc = new VComponent({startNode: node, endNode: node});
+            vc.registerComponents([Test]);
+            vc.render();
+
+            vc.setData({
+                restObj: {
+                    name2: 'yibuyisheng'
+                }
+            });
+        });
     });
 }

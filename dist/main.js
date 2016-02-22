@@ -40,7 +40,30 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ([
+/******/ ((function(modules) {
+	// Check all modules for deduplicated modules
+	for(var i in modules) {
+		if(Object.prototype.hasOwnProperty.call(modules, i)) {
+			switch(typeof modules[i]) {
+			case "function": break;
+			case "object":
+				// Module can be created from a template
+				modules[i] = (function(_m) {
+					var args = _m.slice(1), fn = modules[_m[0]];
+					return function (a,b,c) {
+						fn.apply(this, [a,b,c].concat(args));
+					};
+				}(modules[i]));
+				break;
+			default:
+				// Module is a copy of another module
+				modules[i] = modules[modules[i]];
+				break;
+			}
+		}
+	}
+	return modules;
+}([
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -60,19 +83,19 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _ComponentParser2 = _interopRequireDefault(_ComponentParser);
 
-	var _ExprParserEnhance = __webpack_require__(15);
+	var _ExprParserEnhance = __webpack_require__(17);
 
 	var _ExprParserEnhance2 = _interopRequireDefault(_ExprParserEnhance);
 
-	var _ComponentManager = __webpack_require__(11);
+	var _ComponentManager = __webpack_require__(12);
 
 	var _ComponentManager2 = _interopRequireDefault(_ComponentManager);
 
-	var _vtpl = __webpack_require__(20);
+	var _vtpl = __webpack_require__(23);
 
 	var _vtpl2 = _interopRequireDefault(_vtpl);
 
-	var _Component = __webpack_require__(31);
+	var _Component = __webpack_require__(36);
 
 	var _Component2 = _interopRequireDefault(_Component);
 
@@ -155,6 +178,8 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	Object.defineProperty(exports, "__esModule", {
@@ -167,19 +192,19 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _utils = __webpack_require__(10);
 
-	var _ComponentManager = __webpack_require__(11);
+	var _ComponentManager = __webpack_require__(12);
 
 	var _ComponentManager2 = _interopRequireDefault(_ComponentManager);
 
-	var _Node = __webpack_require__(9);
+	var _Node = __webpack_require__(13);
 
 	var _Node2 = _interopRequireDefault(_Node);
 
-	var _componentState = __webpack_require__(12);
+	var _componentState = __webpack_require__(14);
 
 	var _componentState2 = _interopRequireDefault(_componentState);
 
-	var _Children = __webpack_require__(13);
+	var _Children = __webpack_require__(15);
 
 	var _Children2 = _interopRequireDefault(_Children);
 
@@ -260,9 +285,16 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            // 用于存放当前组件下的子组件
 	            this.$$componentTree.setTreeVar('children', this.$component.refs);
 	        }
+
+	        /**
+	         * d-rest是一个特殊属性
+	         */
+
 	    }, {
 	        key: 'collectExprs',
 	        value: function collectExprs() {
+	            var _this2 = this;
+
 	            this.createComponent();
 	            this.createComponentTree();
 	            this.registerComponents();
@@ -277,10 +309,14 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            var exprWacther = this.tree.getExprWatcher();
 	            var curNode = this.node;
 	            var attributes = curNode.getAttributes();
+	            var attrs = {};
 	            for (var i = 0, il = attributes.length; i < il; i++) {
 	                var attr = attributes[i];
 	                var attrValue = attr.nodeValue;
 	                var attrName = attr.nodeName;
+
+	                attrs[attrName] = true;
+
 	                // 对于含有表达式的prop，把表达式记录下来，并且生成相应的表达式值计算函数和prop更新函数。
 	                if (config.getExprRegExp().test(attrValue)) {
 	                    exprWacther.addExpr(attrValue);
@@ -288,7 +324,9 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	                    exprWacther.setExprCloneFn(attrValue, (0, _utils.bind)(this.cloneExpressionObject, this));
 
 	                    var updateFns = this.$$updatePropFns[attrValue] || [];
-	                    updateFns.push((0, _utils.bind)(this.setProp, this, attrName));
+	                    attrName === 'd-rest' ? updateFns.push(function (value) {
+	                        return _this2.setRestProps(value, attrs);
+	                    }) : updateFns.push((0, _utils.bind)(this.setProp, this, attrName));
 	                    this.$$updatePropFns[attrValue] = updateFns;
 	                }
 	                // 对于字面量prop，直接设置到$component.props里面去
@@ -325,7 +363,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'linkScope',
 	        value: function linkScope() {
-	            var _this2 = this;
+	            var _this3 = this;
 
 	            var exprWacther = this.tree.getExprWatcher();
 
@@ -335,11 +373,11 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            this.tree.rootScope.addChild(this.$$componentTree.rootScope);
 
 	            exprWacther.on('change', function (event) {
-	                if (_this2.isGoDark) {
+	                if (_this3.isGoDark) {
 	                    return;
 	                }
 
-	                var updateFns = _this2.$$updatePropFns[event.expr];
+	                var updateFns = _this3.$$updatePropFns[event.expr];
 	                if (updateFns && updateFns.length) {
 	                    (0, _utils.forEach)(updateFns, function (fn) {
 	                        return fn(event.newValue);
@@ -350,12 +388,12 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'initRender',
 	        value: function initRender() {
-	            var _this3 = this;
+	            var _this4 = this;
 
 	            var exprWacther = this.tree.getExprWatcher();
 	            // 初始化一下界面
 	            (0, _utils.forEach)(this.$component.props, function (value, key) {
-	                _this3.setProp(key, value);
+	                _this4.setProp(key, value);
 	            });
 
 	            (0, _utils.forEach)(this.$$updatePropFns, function (updateFns, expr) {
@@ -369,6 +407,19 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            // 到此处，组件应该就初始化完毕了。
 	            this.$component.$$state = _componentState2.default.READY;
 	            this.$component.ready();
+	        }
+	    }, {
+	        key: 'setRestProps',
+	        value: function setRestProps(value, attrs) {
+	            if (!value || (typeof value === 'undefined' ? 'undefined' : _typeof(value)) !== 'object') {
+	                return;
+	            }
+
+	            for (var key in value) {
+	                if (!(key in attrs)) {
+	                    this.setProp(key, value[key]);
+	                }
+	            }
 	        }
 
 	        /**
@@ -2210,7 +2261,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	});
 	exports.type = exports.isClass = exports.forEach = exports.bind = exports.distinctArr = exports.camel2line = exports.line2camel = exports.isArray = exports.getSuper = undefined;
 
-	var _utils = __webpack_require__(4);
+	var _utils = __webpack_require__(11);
 
 	var getSuper = undefined; /**
 	                           * @file 扩展一下`vtpl/src/utils`
@@ -2239,6 +2290,8 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 11 */
+4,
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2368,7 +2421,9 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = ComponentManager;
 
 /***/ },
-/* 12 */
+/* 13 */
+9,
+/* 14 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -2389,7 +2444,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 13 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2400,7 +2455,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _Data2 = __webpack_require__(14);
+	var _Data2 = __webpack_require__(16);
 
 	var _Data3 = _interopRequireDefault(_Data2);
 
@@ -2465,7 +2520,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Children;
 
 /***/ },
-/* 14 */
+/* 16 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -2511,7 +2566,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Data;
 
 /***/ },
-/* 15 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2524,13 +2579,13 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _ExprParser2 = _interopRequireDefault(_ExprParser);
 
-	var _Tree = __webpack_require__(16);
+	var _Tree = __webpack_require__(18);
 
 	var _Tree2 = _interopRequireDefault(_Tree);
 
-	var _utils = __webpack_require__(4);
+	var _utils = __webpack_require__(11);
 
-	var _Children = __webpack_require__(13);
+	var _Children = __webpack_require__(15);
 
 	var _Children2 = _interopRequireDefault(_Children);
 
@@ -2648,7 +2703,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = _ExprParser2.default;
 
 /***/ },
-/* 16 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -2673,7 +2728,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _Node2 = _interopRequireDefault(_Node);
 
-	var _ExprWatcher = __webpack_require__(17);
+	var _ExprWatcher = __webpack_require__(19);
 
 	var _ExprWatcher2 = _interopRequireDefault(_ExprWatcher);
 
@@ -3016,7 +3071,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Tree;
 
 /***/ },
-/* 17 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3033,15 +3088,15 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _Event3 = _interopRequireDefault(_Event2);
 
-	var _clone = __webpack_require__(18);
+	var _clone = __webpack_require__(20);
 
 	var _clone2 = _interopRequireDefault(_clone);
 
-	var _deepEqual = __webpack_require__(19);
+	var _deepEqual = __webpack_require__(22);
 
 	var _deepEqual2 = _interopRequireDefault(_deepEqual);
 
-	var _Data = __webpack_require__(14);
+	var _Data = __webpack_require__(21);
 
 	var _Data2 = _interopRequireDefault(_Data);
 
@@ -3322,7 +3377,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = ExprWatcher;
 
 /***/ },
-/* 18 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3339,7 +3394,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _utils = __webpack_require__(4);
 
-	var _Data = __webpack_require__(14);
+	var _Data = __webpack_require__(21);
 
 	var _Data2 = _interopRequireDefault(_Data);
 
@@ -3406,7 +3461,9 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 19 */
+/* 21 */
+16,
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3423,7 +3480,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _utils = __webpack_require__(4);
 
-	var _Data = __webpack_require__(14);
+	var _Data = __webpack_require__(21);
 
 	var _Data2 = _interopRequireDefault(_Data);
 
@@ -3493,7 +3550,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 20 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3507,45 +3564,45 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _ForDirectiveParser = __webpack_require__(21);
+	var _ForDirectiveParser = __webpack_require__(24);
 
 	var _ForDirectiveParser2 = _interopRequireDefault(_ForDirectiveParser);
 
-	var _IfDirectiveParser = __webpack_require__(23);
+	var _IfDirectiveParser = __webpack_require__(26);
 
 	var _IfDirectiveParser2 = _interopRequireDefault(_IfDirectiveParser);
 
-	var _DirectiveParser = __webpack_require__(22);
+	var _DirectiveParser = __webpack_require__(25);
 
 	var _DirectiveParser2 = _interopRequireDefault(_DirectiveParser);
 
-	var _ExprParser = __webpack_require__(2);
+	var _ExprParser = __webpack_require__(27);
 
 	var _ExprParser2 = _interopRequireDefault(_ExprParser);
 
-	var _VarDirectiveParser = __webpack_require__(24);
+	var _VarDirectiveParser = __webpack_require__(28);
 
 	var _VarDirectiveParser2 = _interopRequireDefault(_VarDirectiveParser);
 
-	var _Tree = __webpack_require__(16);
+	var _Tree = __webpack_require__(29);
 
 	var _Tree2 = _interopRequireDefault(_Tree);
 
-	var _ExprCalculater = __webpack_require__(25);
+	var _ExprCalculater = __webpack_require__(30);
 
 	var _ExprCalculater2 = _interopRequireDefault(_ExprCalculater);
 
-	var _DomUpdater = __webpack_require__(27);
+	var _DomUpdater = __webpack_require__(32);
 
 	var _DomUpdater2 = _interopRequireDefault(_DomUpdater);
 
 	var _utils = __webpack_require__(4);
 
-	var _Config = __webpack_require__(28);
+	var _Config = __webpack_require__(33);
 
 	var _Config2 = _interopRequireDefault(_Config);
 
-	var _NodesManager = __webpack_require__(29);
+	var _NodesManager = __webpack_require__(34);
 
 	var _NodesManager2 = _interopRequireDefault(_NodesManager);
 
@@ -3668,7 +3725,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = VTpl;
 
 /***/ },
-/* 21 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3683,7 +3740,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _DirectiveParser2 = __webpack_require__(22);
+	var _DirectiveParser2 = __webpack_require__(25);
 
 	var _DirectiveParser3 = _interopRequireDefault(_DirectiveParser2);
 
@@ -3938,7 +3995,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = ForDirectiveParser;
 
 /***/ },
-/* 22 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -4059,7 +4116,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = DirectiveParser;
 
 /***/ },
-/* 23 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -4072,7 +4129,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _DirectiveParser2 = __webpack_require__(22);
+	var _DirectiveParser2 = __webpack_require__(25);
 
 	var _DirectiveParser3 = _interopRequireDefault(_DirectiveParser2);
 
@@ -4384,7 +4441,9 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = IfDirectiveParser;
 
 /***/ },
-/* 24 */
+/* 27 */
+2,
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -4395,7 +4454,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _DirectiveParser2 = __webpack_require__(22);
+	var _DirectiveParser2 = __webpack_require__(25);
 
 	var _DirectiveParser3 = _interopRequireDefault(_DirectiveParser2);
 
@@ -4512,7 +4571,9 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = VarDirectiveParser;
 
 /***/ },
-/* 25 */
+/* 29 */
+18,
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -4528,7 +4589,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _utils = __webpack_require__(4);
 
-	var _log = __webpack_require__(26);
+	var _log = __webpack_require__(31);
 
 	var _log2 = _interopRequireDefault(_log);
 
@@ -4674,7 +4735,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 26 */
+/* 31 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -4714,7 +4775,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	/* eslint-enable no-console */
 
 /***/ },
-/* 27 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -4882,7 +4943,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = DomUpdater;
 
 /***/ },
-/* 28 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -5031,7 +5092,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Config;
 
 /***/ },
-/* 29 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -5050,7 +5111,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _Node2 = _interopRequireDefault(_Node);
 
-	var _Fragment = __webpack_require__(30);
+	var _Fragment = __webpack_require__(35);
 
 	var _Fragment2 = _interopRequireDefault(_Fragment);
 
@@ -5147,7 +5208,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = NodesManager;
 
 /***/ },
-/* 30 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -5165,7 +5226,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _Node2 = _interopRequireDefault(_Node);
 
-	var _log = __webpack_require__(26);
+	var _log = __webpack_require__(31);
 
 	var _log2 = _interopRequireDefault(_log);
 
@@ -5273,7 +5334,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Fragment;
 
 /***/ },
-/* 31 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -5289,21 +5350,21 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _componentState = __webpack_require__(12);
+	var _componentState = __webpack_require__(14);
 
 	var _componentState2 = _interopRequireDefault(_componentState);
 
-	var _log = __webpack_require__(26);
+	var _log = __webpack_require__(37);
 
 	var _log2 = _interopRequireDefault(_log);
 
 	var _utils = __webpack_require__(10);
 
-	var _deepEqual = __webpack_require__(19);
+	var _deepEqual = __webpack_require__(38);
 
 	var _deepEqual2 = _interopRequireDefault(_deepEqual);
 
-	var _clone = __webpack_require__(18);
+	var _clone = __webpack_require__(39);
 
 	var _clone2 = _interopRequireDefault(_clone);
 
@@ -5352,6 +5413,9 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        key: 'ready',
 	        value: function ready() {}
 	    }, {
+	        key: 'getComponentClasses',
+	        value: function getComponentClasses() {}
+	    }, {
 	        key: 'setState',
 	        value: function setState() {
 	            if (this.$$state !== _componentState2.default.READY) {
@@ -5388,5 +5452,11 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	exports.default = Component;
 
-/***/ }
-/******/ ])});;
+/***/ },
+/* 37 */
+31,
+/* 38 */
+22,
+/* 39 */
+20
+/******/ ])))});;

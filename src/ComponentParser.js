@@ -71,6 +71,9 @@ class ComponentParser extends ExprParser {
         this.$$componentTree.setTreeVar('children', this.$component.refs);
     }
 
+    /**
+     * d-rest是一个特殊属性
+     */
     collectExprs() {
         this.createComponent();
         this.createComponentTree();
@@ -86,10 +89,14 @@ class ComponentParser extends ExprParser {
         let exprWacther = this.tree.getExprWatcher();
         let curNode = this.node;
         let attributes = curNode.getAttributes();
+        let attrs = {};
         for (let i = 0, il = attributes.length; i < il; i++) {
             let attr = attributes[i];
             let attrValue = attr.nodeValue;
             let attrName = attr.nodeName;
+
+            attrs[attrName] = true;
+
             // 对于含有表达式的prop，把表达式记录下来，并且生成相应的表达式值计算函数和prop更新函数。
             if (config.getExprRegExp().test(attrValue)) {
                 exprWacther.addExpr(attrValue);
@@ -97,7 +104,9 @@ class ComponentParser extends ExprParser {
                 exprWacther.setExprCloneFn(attrValue, bind(this.cloneExpressionObject, this));
 
                 let updateFns = this.$$updatePropFns[attrValue] || [];
-                updateFns.push(bind(this.setProp, this, attrName));
+                attrName === 'd-rest'
+                    ? updateFns.push(value => this.setRestProps(value, attrs))
+                    : updateFns.push(bind(this.setProp, this, attrName));
                 this.$$updatePropFns[attrValue] = updateFns;
             }
             // 对于字面量prop，直接设置到$component.props里面去
@@ -171,6 +180,18 @@ class ComponentParser extends ExprParser {
         // 到此处，组件应该就初始化完毕了。
         this.$component.$$state = componentState.READY;
         this.$component.ready();
+    }
+
+    setRestProps(value, attrs) {
+        if (!value || typeof value !== 'object') {
+            return;
+        }
+
+        for (let key in value) {
+            if (!(key in attrs)) {
+                this.setProp(key, value[key]);
+            }
+        }
     }
 
     /**

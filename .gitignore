@@ -1,3 +1,5 @@
 node_modules
 dom-component
 .vscode
+.idea
+npm-debug.log
