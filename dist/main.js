@@ -2672,6 +2672,16 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            return this.endNode;
 	        }
 	    }, {
+	        key: 'getTaskId',
+	        value: function getTaskId(attrName) {
+	            var node = this.node;
+	            if (this.$$childrenTree) {
+	                node = this.startNode;
+	            }
+
+	            return this.tree.getTreeVar('domUpdater').generateNodeAttrUpdateId(node, attrName);
+	        }
+	    }, {
 	        key: 'destroy',
 	        value: function destroy() {
 	            // TODO: destroy the `childrenTree`

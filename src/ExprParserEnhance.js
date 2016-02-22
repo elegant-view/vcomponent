@@ -86,6 +86,15 @@ export default class ExprParserEnhance extends ExprParser {
         return this.endNode;
     }
 
+    getTaskId(attrName) {
+        let node = this.node;
+        if (this.$$childrenTree) {
+            node = this.startNode;
+        }
+
+        return this.tree.getTreeVar('domUpdater').generateNodeAttrUpdateId(node, attrName);
+    }
+
     destroy() {
         // TODO: destroy the `childrenTree`
 
