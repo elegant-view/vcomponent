@@ -108,7 +108,9 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        _classCallCheck(this, VComponent);
 
 	        this.$vtpl = new _vtpl2.default(options);
+	        this.$vtpl.registerParser(_ExprParserEnhance2.default);
 	        this.$vtpl.registerParser(_ComponentParser2.default);
+
 	        this.$vtpl.$tree.setTreeVar('componentManager', new _ComponentManager2.default());
 	        this.$vtpl.$tree.setTreeVar('children', {});
 	    }
@@ -2579,13 +2581,17 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
 
-	var _ExprParser = __webpack_require__(2);
+	var _ExprParser2 = __webpack_require__(2);
 
-	var _ExprParser2 = _interopRequireDefault(_ExprParser);
+	var _ExprParser3 = _interopRequireDefault(_ExprParser2);
 
 	var _Tree = __webpack_require__(18);
 
@@ -2599,116 +2605,136 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	/**
-	 * @file 给ExprParser加上处理组件props.children的能力；
-	 *       给ExprParser加上记录子孙的功能。
-	 * @author yibuyisheng(yibuyisheng@163.com)
-	 */
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var setAttrOld = _ExprParser2.default.prototype.setAttr;
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-	/**
-	 * 此处增加处理children的情况
-	 *
-	 * @protected
-	 * @param {string} attrName  属性名
-	 * @param {string|Object} value 值
-	 */
-	_ExprParser2.default.prototype.setAttr = function setTextNodeValue(attrName, value) {
-	    if (value && value instanceof _Children2.default) {
-	        // 如果之前创建了这种子树，直接销毁掉。
-	        if (this.$$childrenTree) {
-	            this.$$childrenTree.destroy();
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /**
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * @file 给ExprParser加上处理组件props.children的能力；
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *       给ExprParser加上记录子孙的功能。
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * @author yibuyisheng(yibuyisheng@163.com)
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
+
+	var ExprParserEnhance = function (_ExprParser) {
+	    _inherits(ExprParserEnhance, _ExprParser);
+
+	    function ExprParserEnhance() {
+	        _classCallCheck(this, ExprParserEnhance);
+
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(ExprParserEnhance).apply(this, arguments));
+	    }
+
+	    _createClass(ExprParserEnhance, [{
+	        key: 'setAttr',
+
+	        /**
+	         * 此处增加处理children的情况
+	         *
+	         * @protected
+	         * @param {string} attrName  属性名
+	         * @param {string|Object} value 值
+	         */
+	        value: function setAttr(attrName, value) {
+	            if (value && value instanceof _Children2.default) {
+	                // 如果之前创建了这种子树，直接销毁掉。
+	                if (this.$$childrenTree) {
+	                    this.$$childrenTree.destroy();
+	                }
+
+	                var nodesManager = this.tree.getTreeVar('nodesManager');
+	                this.startNode = nodesManager.createComment('children');
+	                this.endNode = nodesManager.createComment('/children');
+
+	                // 将children节点插入到dom树里面去
+	                var parentNode = this.node.getParentNode();
+	                parentNode.insertBefore(this.startNode, this.node);
+	                var delayFns = [];
+	                for (var curNode = value.getStartNode(); curNode && !curNode.isAfter(value.getEndNode()); curNode = curNode.getNextSibling()) {
+	                    delayFns.push((0, _utils.bind)(parentNode.insertBefore, parentNode, curNode, this.node));
+	                }
+	                for (var i = 0, il = delayFns.length; i < il; ++i) {
+	                    delayFns[i]();
+	                }
+	                parentNode.insertBefore(this.endNode, this.node);
+	                // 移除之前的文本节点，这个节点现在已经没有用了。
+	                this.node.remove();
+	                this.node = null;
+
+	                // 创建子树
+	                this.$$childrenTree = new _Tree2.default({
+	                    startNode: this.startNode,
+	                    endNode: this.endNode
+	                });
+	                this.$$childrenTree.setParent(value.getParentTree());
+	                this.$$childrenTree.rootScope.setParent(value.getParentTree().rootScope);
+	                value.getParentTree().rootScope.addChild(this.$$childrenTree.rootScope);
+
+	                this.$$childrenTree.compile();
+	                this.$$childrenTree.link();
+	                this.$$childrenTree.initRender();
+	            } else if (attrName === 'ref') {
+	                this.$$ref = value;
+	                var children = this.tree.getTreeVar('children');
+	                children[value] = this.node;
+	            } else {
+	                _get(Object.getPrototypeOf(ExprParserEnhance.prototype), 'setAttr', this).call(this, attrName, value);
+	            }
 	        }
+	    }, {
+	        key: 'getStartNode',
+	        value: function getStartNode() {
+	            if (this.node) {
+	                return this.node;
+	            }
 
-	        var nodesManager = this.tree.getTreeVar('nodesManager');
-	        this.startNode = nodesManager.createComment('children');
-	        this.endNode = nodesManager.createComment('/children');
-
-	        // 将children节点插入到dom树里面去
-	        var parentNode = this.node.getParentNode();
-	        parentNode.insertBefore(this.startNode, this.node);
-	        var delayFns = [];
-	        for (var curNode = value.getStartNode(); curNode && !curNode.isAfter(value.getEndNode()); curNode = curNode.getNextSibling()) {
-	            delayFns.push((0, _utils.bind)(parentNode.insertBefore, parentNode, curNode, this.node));
+	            return this.startNode;
 	        }
-	        for (var i = 0, il = delayFns.length; i < il; ++i) {
-	            delayFns[i]();
+	    }, {
+	        key: 'getEndNode',
+	        value: function getEndNode() {
+	            if (this.node) {
+	                return this.node;
+	            }
+
+	            return this.endNode;
 	        }
-	        parentNode.insertBefore(this.endNode, this.node);
-	        // 移除之前的文本节点，这个节点现在已经没有用了。
-	        this.node.remove();
-	        this.node = null;
+	    }, {
+	        key: 'destroy',
+	        value: function destroy() {
+	            // TODO: destroy the `childrenTree`
 
-	        // 创建子树
-	        this.$$childrenTree = new _Tree2.default({
-	            startNode: this.startNode,
-	            endNode: this.endNode
-	        });
-	        this.$$childrenTree.setParent(value.getParentTree());
-	        this.$$childrenTree.rootScope.setParent(value.getParentTree().rootScope);
-	        value.getParentTree().rootScope.addChild(this.$$childrenTree.rootScope);
+	            if (this.$$ref) {
+	                var children = this.tree.getTreeVar('children');
+	                children[this.$$ref] = null;
+	                delete children[this.$$ref];
+	            }
 
-	        this.$$childrenTree.compile();
-	        this.$$childrenTree.link();
-	        this.$$childrenTree.initRender();
-	    } else if (attrName === 'ref') {
-	        this.$$ref = value;
-	        var children = this.tree.getTreeVar('children');
-	        children[value] = this.node;
-	    } else {
-	        setAttrOld.call(this, attrName, value);
-	    }
-	};
+	            _get(Object.getPrototypeOf(ExprParserEnhance.prototype), 'destroy', this).call(this);
+	        }
+	    }, {
+	        key: 'goDark',
+	        value: function goDark() {
+	            if (this.$$childrenTree) {
+	                this.$$childrenTree.goDark();
+	            } else {
+	                _get(Object.getPrototypeOf(ExprParserEnhance.prototype), 'goDark', this).call(this);
+	            }
+	        }
+	    }, {
+	        key: 'restoreFromDark',
+	        value: function restoreFromDark() {
+	            if (this.$$childrenTree) {
+	                this.$$childrenTree.restoreFromDark();
+	            } else {
+	                _get(Object.getPrototypeOf(ExprParserEnhance.prototype), 'restoreFromDark', this).call(this);
+	            }
+	        }
+	    }]);
 
-	_ExprParser2.default.prototype.getStartNode = function getStartNode() {
-	    if (this.node) {
-	        return this.node;
-	    }
+	    return ExprParserEnhance;
+	}(_ExprParser3.default);
 
-	    return this.startNode;
-	};
-
-	_ExprParser2.default.prototype.getEndNode = function getEndNode() {
-	    if (this.node) {
-	        return this.node;
-	    }
-
-	    return this.endNode;
-	};
-
-	var destroyOld = _ExprParser2.default.prototype.destroy;
-	_ExprParser2.default.prototype.destroy = function destroy() {
-	    // TODO: destroy the `childrenTree`
-
-	    if (this.$$ref) {
-	        var children = this.tree.getTreeVar('children');
-	        children[this.$$ref] = null;
-	        delete children[this.$$ref];
-	    }
-
-	    destroyOld.call(this);
-	};
-
-	var goDarkOld = _ExprParser2.default.prototype.goDark;
-	_ExprParser2.default.prototype.goDark = function goDark() {
-	    if (this.$$childrenTree) {
-	        this.$$childrenTree.goDark();
-	    } else {
-	        goDarkOld.call(this);
-	    }
-	};
-
-	var restoreFromDarkOld = _ExprParser2.default.prototype.restoreFromDark;
-	_ExprParser2.default.prototype.restoreFromDark = function restoreFromDark() {
-	    if (this.$$childrenTree) {
-	        this.$$childrenTree.restoreFromDark();
-	    } else {
-	        restoreFromDarkOld.call(this);
-	    }
-	};
-
-	exports.default = _ExprParser2.default;
+	exports.default = ExprParserEnhance;
 
 /***/ },
 /* 18 */
