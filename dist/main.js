@@ -375,19 +375,16 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'initRender',
 	        value: function initRender() {
-	            var _this4 = this;
-
-	            var exprWacther = this.tree.getExprWatcher();
-	            // 初始化一下界面
-	            (0, _utils.forEach)(this.$component.props, function (value, key) {
-	                _this4.setProp(key, value);
-	            });
-
-	            (0, _utils.forEach)(this.$$updatePropFns, function (updateFns, expr) {
-	                (0, _utils.forEach)(updateFns, function (fn) {
-	                    return fn(exprWacther.calculate(expr));
-	                });
-	            });
+	            //debugger
+	            //let exprWacther = this.tree.getExprWatcher();
+	            //// 初始化一下界面
+	            //forEach(this.$component.props, (value, key) => {
+	            //    this.setProp(key, value);
+	            //});
+	            //
+	            //forEach(this.$$updatePropFns, (updateFns, expr) => {
+	            //    forEach(updateFns, fn => fn(exprWacther.calculate(expr)));
+	            //});
 
 	            this.$$componentTree.initRender();
 
@@ -595,6 +592,8 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
@@ -653,12 +652,6 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ExprParser).call(this, options));
 
 	        _this.node = options.node;
-
-	        /**
-	         * DOM节点属性与更新属性的任务id的映射
-	         * @type {Object}
-	         */
-	        _this.attrToDomTaskIdMap = {};
 
 	        _this.isGoDark = false;
 
@@ -787,14 +780,11 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }, {
 	        key: 'initRender',
-	        value: function initRender() {
-	            var exprWatcher = this.tree.getExprWatcher();
-	            (0, _utils.forEach)(this.$exprUpdateFns, function (fns, expr) {
-	                (0, _utils.forEach)(fns, function (fn) {
-	                    return fn(exprWatcher.calculate(expr));
-	                });
-	            });
-	        }
+	        value: function initRender() {}
+	        //let exprWatcher = this.tree.getExprWatcher();
+	        //forEach(this.$exprUpdateFns, (fns, expr) => {
+	        //    forEach(fns, fn => fn(exprWatcher.calculate(expr)));
+	        //});
 
 	        /**
 	         * 获取开始节点
@@ -834,11 +824,9 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        key: 'destroy',
 	        value: function destroy() {
 	            this.node = null;
-	            this.exprFns = null;
-	            this.exprOldValues = null;
-	            this.attrToDomTaskIdMap = null;
+	            this.$exprUpdateFns = null;
 
-	            _Parser3.default.prototype.destroy.call(this);
+	            _get(Object.getPrototypeOf(ExprParser.prototype), 'destroy', this).call(this);
 	        }
 
 	        /**
@@ -968,7 +956,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        var _this = _possibleConstructorReturn(this, (_Object$getPrototypeO = Object.getPrototypeOf(ScopeModel)).call.apply(_Object$getPrototypeO, [this].concat(args)));
 
 	        _this.store = {};
-	        _this.parent;
+	        _this.parent = null;
 	        _this.children = [];
 	        return _this;
 	    }
@@ -2074,6 +2062,8 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	                    this.$node.removeEventListener(eventName, eventFn);
 	                }
 	            }
+
+	            this.$node = null;
 	        }
 	    }], [{
 	        key: 'getClassList',
@@ -2970,8 +2960,6 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	                parser.linkScope();
 	                parser.$state = _parserState2.default.END_LINK;
 	            }
-
-	            this.$exprWatcher.start();
 	        }
 
 	        /**
@@ -2990,6 +2978,8 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	                parser.initRender();
 	                parser.$state = _parserState2.default.READY;
 	            }
+
+	            this.$exprWatcher.start();
 	        }
 	    }, {
 	        key: 'goDark',
@@ -3025,7 +3015,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            function walk(parsers) {
 	                (0, _utils.each)(parsers, function (parser) {
 	                    parser.destroy();
-	                    parser.$state = _parserState2.default.DETROIED;
+	                    parser.$state = _parserState2.default.DESTROIED;
 	                });
 	            }
 	        }
@@ -3255,7 +3245,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	            return {
 	                paramNameDependency: paramNameDependency,
-	                fn: function fn(scopeModel) {
+	                fn: function fn() {
 	                    if (rawExprs.length === 1) {
 	                        return _this3.$$exprCalculater.calculate(rawExprs[0], false, _this3.$$scopeModel);
 	                    }
@@ -3277,6 +3267,11 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        value: function start() {
 	            this.$$scopeModel.on('change', this.check, this);
 	            this.$$scopeModel.on('parentchange', this.check, this);
+
+	            // 强制刷新一下数据
+	            for (var expr in this.$$exprs) {
+	                this.compute(expr);
+	            }
 	        }
 
 	        /**
@@ -3342,25 +3337,28 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	                        return;
 	                    }
 
-	                    var fn = _this4.$$exprs[expr];
-	                    delayFns.push((0, _utils.bind)(calculate, _this4, expr, fn));
+	                    delayFns.push((0, _utils.bind)(_this4.compute, _this4, expr));
 	                });
 	            });
 	            (0, _utils.forEach)(delayFns, function (fn) {
 	                return fn();
 	            });
+	        }
 
-	            function calculate(expr, fn) {
-	                var exprValue = fn();
-	                var oldValue = this.$$exprOldValues[expr];
+	        // private
 
-	                var equals = (0, _utils.bind)(this.$$exprEqualFn[expr], null) || (0, _utils.bind)(this.equals, this);
-	                var clone = (0, _utils.bind)(this.$$exprCloneFn[expr], null) || (0, _utils.bind)(this.dump, this);
+	    }, {
+	        key: 'compute',
+	        value: function compute(expr) {
+	            var exprValue = this.$$exprs[expr]();
+	            var oldValue = this.$$exprOldValues[expr];
 
-	                if (!equals(expr, exprValue, oldValue)) {
-	                    this.trigger('change', { expr: expr, newValue: exprValue, oldValue: oldValue });
-	                    this.$$exprOldValues[expr] = clone(expr, exprValue);
-	                }
+	            var equals = (0, _utils.bind)(this.$$exprEqualFn[expr], null) || (0, _utils.bind)(this.equals, this);
+	            var clone = (0, _utils.bind)(this.$$exprCloneFn[expr], null) || (0, _utils.bind)(this.dump, this);
+
+	            if (!equals(expr, exprValue, oldValue)) {
+	                this.trigger('change', { expr: expr, newValue: exprValue, oldValue: oldValue });
+	                this.$$exprOldValues[expr] = clone(expr, exprValue);
 	            }
 	        }
 
@@ -3423,6 +3421,16 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        key: 'destroy',
 	        value: function destroy() {
 	            this.stop();
+
+	            this.$$scopeModel = null;
+	            this.$$exprCalculater = null;
+
+	            this.$$exprs = null;
+	            this.$$paramNameToExprMap = null;
+	            this.$$exprOldValues = null;
+
+	            this.$$exprEqualFn = null;
+	            this.$$exprCloneFn = null;
 	        }
 	    }]);
 
@@ -3882,10 +3890,9 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }, {
 	        key: 'initRender',
-	        value: function initRender() {
-	            var exprWatcher = this.tree.getExprWatcher();
-	            this.updateFn(exprWatcher.calculate(this.listExpr));
-	        }
+	        value: function initRender() {}
+	        //let exprWatcher = this.tree.getExprWatcher();
+	        //this.updateFn(exprWatcher.calculate(this.listExpr));
 
 	        /**
 	         * 创建更新函数。
@@ -4055,6 +4062,8 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
@@ -4121,6 +4130,13 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        key: 'getEndNode',
 	        value: function getEndNode() {
 	            return this.node;
+	        }
+	    }, {
+	        key: 'destroy',
+	        value: function destroy() {
+	            this.node = null;
+
+	            _get(Object.getPrototypeOf(DirectiveParser.prototype), 'destroy', this).call(this);
 	        }
 	    }], [{
 	        key: 'isProperNode',
@@ -4344,11 +4360,11 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'initRender',
 	        value: function initRender() {
-	            this.renderDOM(this);
+	            //this.renderDOM(this);
 
-	            for (var i = 0, il = this.$branchTrees.length; i < il; ++i) {
-	                this.$branchTrees[i].initRender();
-	            }
+	            //for (let i = 0, il = this.$branchTrees.length; i < il; ++i) {
+	            //    this.$branchTrees[i].initRender();
+	            //}
 	        }
 	    }, {
 	        key: 'renderDOM',
@@ -4651,9 +4667,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        _classCallCheck(this, ExprCalculater);
 
 	        this.fns = {};
-
 	        this.exprNameMap = {};
-	        this.exprNameRegExp = /\.?\$?([a-z|A-Z]+|([a-z|A-Z]+[0-9]+[a-z|A-Z]*))/g;
 	    }
 
 	    /**
@@ -4727,7 +4741,6 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        value: function destroy() {
 	            this.fns = null;
 	            this.exprNameMap = null;
-	            this.exprNameRegExp = null;
 	        }
 	    }]);
 
@@ -4847,12 +4860,8 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        _classCallCheck(this, DomUpdater);
 
 	        this.tasks = {};
-	        this.isExecuting = false;
-	        this.doneFns = [];
 	        this.counter = 0;
-
 	        this.$$nodeAttrNameTaskIdMap = {};
-
 	        this.$$isExecuting = false;
 	    }
 
@@ -4925,6 +4934,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        value: function destroy() {
 	            this.stop();
 	            this.tasks = null;
+	            this.$$nodeAttrNameTaskIdMap = null;
 	        }
 
 	        /**
