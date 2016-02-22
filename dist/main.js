@@ -341,6 +341,14 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	            this.node = null;
 
+	            // 给component扩展两个控制表达式监测的方法
+	            this.$component.suspendExpr = function (expr) {
+	                exprWacther.suspendExpr(expr);
+	            };
+	            this.$component.resumeExpr = function (expr) {
+	                exprWacther.resumeExpr(expr);
+	            };
+
 	            // 把组件节点放到 DOM 树中去
 	            function insertComponentNodes(componentNode, startNode, endNode) {
 	                var parentNode = componentNode.getParentNode();
@@ -532,7 +540,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	         *
 	         * @private
 	         * @param {Class} ComponentClass 组件类
-	         * @return {string} 组件css类名
+	         * @return {Array<string>} 组件css类名
 	         */
 
 	    }, {
@@ -2981,6 +2989,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            (0, _utils.forEach)(this.$parsers, function (parser) {
 	                return parser.goDark();
 	            });
+	            this.$exprWatcher.stop();
 	        }
 	    }, {
 	        key: 'restoreFromDark',
@@ -2988,6 +2997,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            (0, _utils.forEach)(this.$parsers, function (parser) {
 	                return parser.restoreFromDark();
 	            });
+	            this.$exprWatcher.start();
 	        }
 	    }, {
 	        key: 'destroy',
@@ -3128,6 +3138,9 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	        _this.$$exprEqualFn = {};
 	        _this.$$exprCloneFn = {};
+
+	        // 暂时不需要计算的表达式
+	        _this.$$exprSuspend = {};
 	        return _this;
 	    }
 
@@ -3270,6 +3283,34 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        /**
+	         * 将指定表达式暂时挂起，在check的时候不做处理。
+	         *
+	         * @param expr
+	         */
+
+	    }, {
+	        key: 'suspendExpr',
+	        value: function suspendExpr(expr) {
+	            if (this.$$exprs[expr]) {
+	                this.$$exprSuspend[expr] = true;
+	            }
+	        }
+
+	        /**
+	         * 将指定表达式恢复检测。
+	         *
+	         * @param expr
+	         */
+
+	    }, {
+	        key: 'resumeExpr',
+	        value: function resumeExpr(expr) {
+	            if (this.$$exprs[expr]) {
+	                this.$$exprSuspend[expr] = false;
+	            }
+	        }
+
+	        /**
 	         * 检查this.$$exprs里面的脏值情况，如果脏了，就会触发change事件
 	         *
 	         * @private
@@ -3287,6 +3328,11 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	                var influencedExprs = _this4.getExprsByParamName(change.name);
 
 	                (0, _utils.forEach)(influencedExprs, function (expr) {
+	                    // 表达式被挂起了
+	                    if (_this4.$$exprSuspend[expr]) {
+	                        return;
+	                    }
+
 	                    var fn = _this4.$$exprs[expr];
 	                    delayFns.push((0, _utils.bind)(calculate, _this4, expr, fn));
 	                });
@@ -4853,7 +4899,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	         * @public
 	         * @param {number} taskId 任务ID
 	         * @param {function()} taskFn 任务函数
-	         * @param {function(Error, *)} callback 执行结果的回调函数
+	         * @param {function(Error, *)=} callback 执行结果的回调函数
 	         */
 
 	    }, {
