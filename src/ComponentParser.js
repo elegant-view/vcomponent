@@ -121,6 +121,14 @@ class ComponentParser extends ExprParser {
 
         this.node = null;
 
+        // 给component扩展两个控制表达式监测的方法
+        this.$component.suspendExpr = function (expr) {
+            exprWacther.suspendExpr(expr);
+        };
+        this.$component.resumeExpr = function (expr) {
+            exprWacther.resumeExpr(expr);
+        };
+
         // 把组件节点放到 DOM 树中去
         function insertComponentNodes(componentNode, startNode, endNode) {
             let parentNode = componentNode.getParentNode();
@@ -292,7 +300,7 @@ class ComponentParser extends ExprParser {
      *
      * @private
      * @param {Class} ComponentClass 组件类
-     * @return {string} 组件css类名
+     * @return {Array<string>} 组件css类名
      */
     getCssClassName(ComponentClass) {
         let name = [];
