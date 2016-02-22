@@ -375,16 +375,19 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'initRender',
 	        value: function initRender() {
-	            //debugger
-	            //let exprWacther = this.tree.getExprWatcher();
-	            //// 初始化一下界面
-	            //forEach(this.$component.props, (value, key) => {
-	            //    this.setProp(key, value);
-	            //});
-	            //
-	            //forEach(this.$$updatePropFns, (updateFns, expr) => {
-	            //    forEach(updateFns, fn => fn(exprWacther.calculate(expr)));
-	            //});
+	            var _this4 = this;
+
+	            var exprWacther = this.tree.getExprWatcher();
+	            // 初始化一下界面
+	            (0, _utils.forEach)(this.$component.props, function (value, key) {
+	                _this4.setProp(key, value);
+	            });
+
+	            (0, _utils.forEach)(this.$$updatePropFns, function (updateFns, expr) {
+	                (0, _utils.forEach)(updateFns, function (fn) {
+	                    return fn(exprWacther.calculate(expr));
+	                });
+	            });
 
 	            this.$$componentTree.initRender();
 
@@ -780,11 +783,14 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }, {
 	        key: 'initRender',
-	        value: function initRender() {}
-	        //let exprWatcher = this.tree.getExprWatcher();
-	        //forEach(this.$exprUpdateFns, (fns, expr) => {
-	        //    forEach(fns, fn => fn(exprWatcher.calculate(expr)));
-	        //});
+	        value: function initRender() {
+	            var exprWatcher = this.tree.getExprWatcher();
+	            (0, _utils.forEach)(this.$exprUpdateFns, function (fns, expr) {
+	                (0, _utils.forEach)(fns, function (fn) {
+	                    return fn(exprWatcher.calculate(expr));
+	                });
+	            });
+	        }
 
 	        /**
 	         * 获取开始节点
@@ -2601,7 +2607,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            if (value && value instanceof _Children2.default) {
 	                // 如果之前创建了这种子树，直接销毁掉。
 	                if (this.$$childrenTree) {
-	                    this.$$childrenTree.destroy();
+	                    throw new Error('already have a child tree.');
 	                }
 
 	                var nodesManager = this.tree.getTreeVar('nodesManager');
@@ -2996,7 +3002,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            (0, _utils.forEach)(this.$parsers, function (parser) {
 	                return parser.restoreFromDark();
 	            });
-	            this.$exprWatcher.start();
+	            this.$exprWatcher.resume();
 	        }
 	    }, {
 	        key: 'destroy',
@@ -3267,11 +3273,6 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        value: function start() {
 	            this.$$scopeModel.on('change', this.check, this);
 	            this.$$scopeModel.on('parentchange', this.check, this);
-
-	            // 强制刷新一下数据
-	            for (var expr in this.$$exprs) {
-	                this.compute(expr);
-	            }
 	        }
 
 	        /**
@@ -3284,6 +3285,24 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        key: 'stop',
 	        value: function stop() {
 	            this.$$scopeModel.off('change', this.check, this);
+	            this.$$scopeModel.off('parentchange', this.check, this);
+	        }
+
+	        /**
+	         * 唤醒
+	         *
+	         * @public
+	         */
+
+	    }, {
+	        key: 'resume',
+	        value: function resume() {
+	            this.start();
+
+	            // 强制刷新一下数据
+	            for (var expr in this.$$exprs) {
+	                this.compute(expr);
+	            }
 	        }
 
 	        /**
@@ -3358,7 +3377,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	            if (!equals(expr, exprValue, oldValue)) {
 	                this.trigger('change', { expr: expr, newValue: exprValue, oldValue: oldValue });
-	                this.$$exprOldValues[expr] = clone(expr, exprValue);
+	                this.$$exprOldValues[expr] = clone(exprValue);
 	            }
 	        }
 
@@ -3373,7 +3392,14 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'calculate',
 	        value: function calculate(expr) {
-	            return this.$$exprs[expr]();
+	            if (!(expr in this.$$exprs)) {
+	                throw new Error('no such expression under the scope.');
+	            }
+
+	            var clone = (0, _utils.bind)(this.$$exprCloneFn[expr], null) || (0, _utils.bind)(this.dump, this);
+	            var value = this.$$exprs[expr]();
+	            this.$$exprOldValues[expr] = clone(value);
+	            return value;
 	        }
 
 	        /**
@@ -3387,7 +3413,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	    }, {
 	        key: 'dump',
-	        value: function dump(expr, obj) {
+	        value: function dump(obj) {
 	            if (obj instanceof _Data2.default) {
 	                return obj.clone();
 	            }
@@ -3890,9 +3916,10 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }, {
 	        key: 'initRender',
-	        value: function initRender() {}
-	        //let exprWatcher = this.tree.getExprWatcher();
-	        //this.updateFn(exprWatcher.calculate(this.listExpr));
+	        value: function initRender() {
+	            var exprWatcher = this.tree.getExprWatcher();
+	            this.updateFn(exprWatcher.calculate(this.listExpr));
+	        }
 
 	        /**
 	         * 创建更新函数。
@@ -4360,11 +4387,11 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'initRender',
 	        value: function initRender() {
-	            //this.renderDOM(this);
+	            this.renderDOM(this);
 
-	            //for (let i = 0, il = this.$branchTrees.length; i < il; ++i) {
-	            //    this.$branchTrees[i].initRender();
-	            //}
+	            for (var i = 0, il = this.$branchTrees.length; i < il; ++i) {
+	                this.$branchTrees[i].initRender();
+	            }
 	        }
 	    }, {
 	        key: 'renderDOM',

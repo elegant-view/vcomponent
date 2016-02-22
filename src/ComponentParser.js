@@ -173,16 +173,15 @@ class ComponentParser extends ExprParser {
     }
 
     initRender() {
-        //debugger
-        //let exprWacther = this.tree.getExprWatcher();
-        //// 初始化一下界面
-        //forEach(this.$component.props, (value, key) => {
-        //    this.setProp(key, value);
-        //});
-        //
-        //forEach(this.$$updatePropFns, (updateFns, expr) => {
-        //    forEach(updateFns, fn => fn(exprWacther.calculate(expr)));
-        //});
+        let exprWacther = this.tree.getExprWatcher();
+        // 初始化一下界面
+        forEach(this.$component.props, (value, key) => {
+            this.setProp(key, value);
+        });
+
+        forEach(this.$$updatePropFns, (updateFns, expr) => {
+            forEach(updateFns, fn => fn(exprWacther.calculate(expr)));
+        });
 
         this.$$componentTree.initRender();
 

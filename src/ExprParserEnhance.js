@@ -22,7 +22,7 @@ export default class ExprParserEnhance extends ExprParser {
         if (value && value instanceof Children) {
             // 如果之前创建了这种子树，直接销毁掉。
             if (this.$$childrenTree) {
-                this.$$childrenTree.destroy();
+                throw new Error('already have a child tree.');
             }
 
             let nodesManager = this.tree.getTreeVar('nodesManager');
