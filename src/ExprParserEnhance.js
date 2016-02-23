@@ -96,7 +96,9 @@ export default class ExprParserEnhance extends ExprParser {
     }
 
     destroy() {
-        // TODO: destroy the `childrenTree`
+        if (this.$$childrenTree) {
+            this.$$childrenTree.destroy();
+        }
 
         if (this.$$ref) {
             let children = this.tree.getTreeVar('children');

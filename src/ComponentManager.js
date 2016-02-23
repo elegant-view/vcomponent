@@ -68,7 +68,7 @@ export default class ComponentManager {
      * 将组件的样式挂载上去
      *
      * @private
-     * @param {组件类} ComponentClass 组件类
+     * @param {Class} ComponentClass 组件类
      */
     mountStyle(ComponentClass) {
         let componentName = ComponentClass.name;
@@ -91,9 +91,32 @@ export default class ComponentManager {
         }
     }
 
-    // TODO
-    destroy() {
+    /**
+     * 卸载掉组件样式
+     *
+     * @private
+     * @param {Class} ComponentClass 组件类
+     */
+    unmountStyle(ComponentClass) {
+        let componentName = ComponentClass.name;
+        let styleNodeId = 'component-' + componentName;
 
+        let el = document.getElementById(styleNodeId);
+        if (el) {
+            el.parentNode.removeChild(el);
+        }
+
+        if (componentName !== 'Component') {
+            this.unmountStyle(getSuper(ComponentClass));
+        }
+    }
+
+    destroy() {
+        for (let name in this.components) {
+            this.unmountStyle(this.components[name]);
+        }
+
+        this.components = null;
     }
 }
 
