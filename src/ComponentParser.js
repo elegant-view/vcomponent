@@ -95,7 +95,7 @@ class ComponentParser extends ExprParser {
             let attrValue = attr.nodeValue;
             let attrName = attr.nodeName;
 
-            attrs[attrName] = true;
+            attrs[line2camel(attrName)] = true;
 
             // 对于含有表达式的prop，把表达式记录下来，并且生成相应的表达式值计算函数和prop更新函数。
             if (config.getExprRegExp().test(attrValue)) {

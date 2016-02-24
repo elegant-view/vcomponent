@@ -294,7 +294,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	                var attrValue = attr.nodeValue;
 	                var attrName = attr.nodeName;
 
-	                attrs[attrName] = true;
+	                attrs[(0, _utils.line2camel)(attrName)] = true;
 
 	                // 对于含有表达式的prop，把表达式记录下来，并且生成相应的表达式值计算函数和prop更新函数。
 	                if (config.getExprRegExp().test(attrValue)) {
@@ -593,6 +593,8 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
@@ -698,20 +700,31 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	            // 元素节点
 	            if (nodeType === _Node2.default.ELEMENT_NODE) {
-	                var attributes = this.node.getAttributes();
-	                for (var i = 0, il = attributes.length; i < il; ++i) {
-	                    var attribute = attributes[i];
-	                    if (!isExpr.call(this, attribute.value)) {
-	                        this.setAttr(attribute.name, attribute.value);
-	                        continue;
+	                (function () {
+	                    var attributes = _this2.node.getAttributes();
+	                    var attrs = {};
+	                    for (var i = 0, il = attributes.length; i < il; ++i) {
+	                        var attribute = attributes[i];
+	                        attrs[(0, _utils.line2camel)(attribute.name)] = true;
+
+	                        if (!isExpr.call(_this2, attribute.value)) {
+	                            _this2.setAttr(attribute.name, attribute.value);
+	                            continue;
+	                        }
+
+	                        if (_Node2.default.isEventName(attribute.name) || attribute.name === 'on-outclick') {
+	                            _this2.setEvent(attribute.name, attribute.value);
+	                        } else {
+	                            exprWatcher.addExpr(attribute.value);
+
+	                            var updateFns = _this2.$exprUpdateFns[attribute.value] || [];
+	                            attribute.name === 'd-rest' ? updateFns.push(function (value) {
+	                                return _this2.setRestAttrs(value, attrs);
+	                            }) : updateFns.push((0, _utils.bind)(updateAttr, _this2, _this2.getTaskId(attribute.name), domUpdater, attribute.name));
+	                            _this2.$exprUpdateFns[attribute.value] = updateFns;
+	                        }
 	                    }
-
-	                    exprWatcher.addExpr(attribute.value);
-
-	                    var updateFns = this.$exprUpdateFns[attribute.value] || [];
-	                    updateFns.push((0, _utils.bind)(updateAttr, this, this.getTaskId(attribute.name), domUpdater, attribute.name));
-	                    this.$exprUpdateFns[attribute.value] = updateFns;
-	                }
+	                })();
 	            }
 
 	            function updateAttr(taskId, domUpdater, attrName, exprValue, callback) {
@@ -724,9 +737,45 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            }
 
 	            function isExpr(expr) {
-	                return (/\$\{(.+?)\}/.test(expr)
+	                return (/\$\{(.+?)}/.test(expr)
 	                );
 	            }
+	        }
+	    }, {
+	        key: 'setRestAttrs',
+	        value: function setRestAttrs(value, attrs) {
+	            if (!value || (typeof value === 'undefined' ? 'undefined' : _typeof(value)) !== 'object') {
+	                return;
+	            }
+
+	            for (var key in value) {
+	                if (!(key in attrs)) {
+	                    this.setAttr(key, value[key]);
+	                }
+	            }
+	        }
+	    }, {
+	        key: 'setEvent',
+	        value: function setEvent(attrName, attrValue) {
+	            var _this4 = this;
+
+	            if (!attrValue) {
+	                return;
+	            }
+
+	            var eventName = attrName.replace('on-', '');
+	            this.node.off(eventName);
+	            this.node.on(eventName, function (event) {
+	                attrValue = attrValue.replace(/^\${|}$/g, '');
+
+	                var exprCalculater = _this4.tree.getTreeVar('exprCalculater');
+	                exprCalculater.createExprFn(attrValue, true);
+
+	                var localScope = new _ScopeModel2.default();
+	                localScope.setParent(_this4.tree.rootScope);
+	                localScope.set('event', event);
+	                exprCalculater.calculate(attrValue, true, localScope);
+	            });
 	        }
 
 	        /**
@@ -740,23 +789,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'setAttr',
 	        value: function setAttr(attrName, attrValue) {
-	            var _this4 = this;
-
-	            if (_Node2.default.isEventName(attrName) || attrName === 'on-outclick') {
-	                var eventName = attrName.replace('on-', '');
-	                this.node.off(eventName);
-	                this.node.on(eventName, function (event) {
-	                    var exprCalculater = _this4.tree.getTreeVar('exprCalculater');
-	                    exprCalculater.createExprFn(attrValue, true);
-
-	                    var localScope = new _ScopeModel2.default();
-	                    localScope.setParent(_this4.tree.rootScope);
-	                    localScope.set('event', event);
-	                    exprCalculater.calculate(attrValue, true, localScope);
-	                });
-	            } else {
-	                this.node.attr(attrName, attrValue);
-	            }
+	            this.node.attr(attrName, attrValue);
 	        }
 
 	        /**
@@ -2363,7 +2396,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	         * 将组件的样式挂载上去
 	         *
 	         * @private
-	         * @param {组件类} ComponentClass 组件类
+	         * @param {Class} ComponentClass 组件类
 	         */
 
 	    }, {
@@ -2389,11 +2422,37 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            }
 	        }
 
-	        // TODO
+	        /**
+	         * 卸载掉组件样式
+	         *
+	         * @private
+	         * @param {Class} ComponentClass 组件类
+	         */
 
 	    }, {
+	        key: 'unmountStyle',
+	        value: function unmountStyle(ComponentClass) {
+	            var componentName = ComponentClass.name;
+	            var styleNodeId = 'component-' + componentName;
+
+	            var el = document.getElementById(styleNodeId);
+	            if (el) {
+	                el.parentNode.removeChild(el);
+	            }
+
+	            if (componentName !== 'Component') {
+	                this.unmountStyle((0, _utils.getSuper)(ComponentClass));
+	            }
+	        }
+	    }, {
 	        key: 'destroy',
-	        value: function destroy() {}
+	        value: function destroy() {
+	            for (var name in this.components) {
+	                this.unmountStyle(this.components[name]);
+	            }
+
+	            this.components = null;
+	        }
 	    }]);
 
 	    return ComponentManager;
@@ -2680,7 +2739,9 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'destroy',
 	        value: function destroy() {
-	            // TODO: destroy the `childrenTree`
+	            if (this.$$childrenTree) {
+	                this.$$childrenTree.destroy();
+	            }
 
 	            if (this.$$ref) {
 	                var children = this.tree.getTreeVar('children');
