@@ -4784,7 +4784,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	                return this.fns[expr][avoidReturn];
 	            }
 
-	            var params = getVariableNamesFromExpr(this, expr);
+	            var params = this.getVariableNamesFromExpr(expr);
 	            var fn = new Function(params, (avoidReturn ? '' : 'return ') + expr);
 
 	            var exprObj = {
@@ -4830,59 +4830,69 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            this.fns = null;
 	            this.exprNameMap = null;
 	        }
+
+	        /**
+	         * 从表达式中抽离出变量名
+	         *
+	         * @inner
+	         * @param {ExprCalculater} me 对应实例
+	         * @param  {string} expr 表达式字符串，类似于 `${name}` 中的 name
+	         * @return {Array.<string>}      变量名数组
+	         */
+
+	    }, {
+	        key: 'getVariableNamesFromExpr',
+	        value: function getVariableNamesFromExpr(expr) {
+	            if (this.exprNameMap[expr]) {
+	                return this.exprNameMap[expr];
+	            }
+
+	            var possibleVariables = expr.match(/[\w$]+/g);
+	            if (!possibleVariables || !possibleVariables.length) {
+	                return [];
+	            }
+
+	            var variables = [];
+	            var _iteratorNormalCompletion = true;
+	            var _didIteratorError = false;
+	            var _iteratorError = undefined;
+
+	            try {
+	                for (var _iterator = possibleVariables[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	                    var variable = _step.value;
+
+	                    // 如果以数字开头,那就不是变量
+	                    if (!isNaN(parseInt(variable))) {
+	                        continue;
+	                    }
+
+	                    variables.push(variable);
+	                }
+	            } catch (err) {
+	                _didIteratorError = true;
+	                _iteratorError = err;
+	            } finally {
+	                try {
+	                    if (!_iteratorNormalCompletion && _iterator.return) {
+	                        _iterator.return();
+	                    }
+	                } finally {
+	                    if (_didIteratorError) {
+	                        throw _iteratorError;
+	                    }
+	                }
+	            }
+
+	            this.exprNameMap[expr] = variables;
+
+	            return variables;
+	        }
 	    }]);
 
 	    return ExprCalculater;
 	}();
 
-	/**
-	 * 从表达式中抽离出变量名
-	 *
-	 * @inner
-	 * @param {ExprCalculater} me 对应实例
-	 * @param  {string} expr 表达式字符串，类似于 `${name}` 中的 name
-	 * @return {Array.<string>}      变量名数组
-	 */
-
 	exports.default = ExprCalculater;
-	function getVariableNamesFromExpr(me, expr) {
-	    if (me.exprNameMap[expr]) {
-	        return me.exprNameMap[expr];
-	    }
-
-	    var reg = /[\$|_|a-z|A-Z]{1}(?:[a-z|A-Z|0-9|\$|_]*)/g;
-
-	    var names = {};
-	    for (var name = reg.exec(expr); name; name = reg.exec(expr)) {
-	        var restStr = expr.slice(name.index + name[0].length);
-
-	        // 是左值
-	        if (/^\s*=(?!=)/.test(restStr)) {
-	            continue;
-	        }
-
-	        // 变量名前面是否存在 `.` ，或者变量名是否位于引号内部
-	        if (name.index && (expr[name.index - 1] === '.' || isInQuote(expr.slice(0, name.index), restStr))) {
-	            continue;
-	        }
-
-	        names[name[0]] = true;
-	    }
-
-	    var ret = [];
-	    (0, _utils.each)(names, function (isOk, name) {
-	        if (isOk) {
-	            ret.push(name);
-	        }
-	    });
-	    me.exprNameMap[expr] = ret;
-
-	    return ret;
-
-	    function isInQuote(preStr, restStr) {
-	        return preStr.lastIndexOf('\'') + 1 && restStr.indexOf('\'') + 1 || preStr.lastIndexOf('"') + 1 && restStr.indexOf('"') + 1;
-	    }
-	}
 
 /***/ },
 /* 26 */
