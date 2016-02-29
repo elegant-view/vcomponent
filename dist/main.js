@@ -4756,6 +4756,8 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	        this.fns = {};
 	        this.exprNameMap = {};
+
+	        this.reservedWords = ['abstract', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'double', 'else', 'enum', 'export', 'extends', 'false', 'final', 'finally', 'float', 'for', 'function', 'goto', 'if', 'implements', 'import', 'in', 'instanceof', 'int', 'interface', 'long', 'native', 'new', 'null', 'package', 'private', 'protected', 'public', 'return', 'short', 'static', 'super', 'switch', 'synchronized', 'this', 'throw', 'throws', 'transient', 'true', 'try', 'typeof', 'var', 'void', 'volatile', 'while', 'with'];
 	    }
 
 	    /**
@@ -4863,6 +4865,18 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	                    // 如果以数字开头,那就不是变量
 	                    if (!isNaN(parseInt(variable))) {
+	                        continue;
+	                    }
+
+	                    // 如果是javascript保留字,就不是变量
+	                    var isReservedWord = false;
+	                    for (var i = 0, il = this.reservedWords.length; i < il; ++i) {
+	                        if (this.reservedWords[i] === variable) {
+	                            isReservedWord = true;
+	                            break;
+	                        }
+	                    }
+	                    if (isReservedWord) {
 	                        continue;
 	                    }
 
