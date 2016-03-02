@@ -3313,7 +3313,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            return {
 	                paramNameDependency: paramNameDependency,
 	                fn: function fn() {
-	                    if (rawExprs.length === 1) {
+	                    if (rawExprs.length === 1 && expr.replace(/^\$\{|\}$/g, '') === rawExprs[0]) {
 	                        return _this3.$$exprCalculater.calculate(rawExprs[0], false, _this3.$$scopeModel);
 	                    }
 	                    return expr.replace(/\$\{(.+?)\}/g, function () {
