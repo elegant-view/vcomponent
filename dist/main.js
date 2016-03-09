@@ -774,7 +774,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	                var localScope = new _ScopeModel2.default();
 	                localScope.setParent(_this4.tree.rootScope);
 	                localScope.set('event', event);
-	                exprCalculater.calculate(attrValue, true, localScope);
+	                exprCalculater.calculate(attrValue, true, localScope, true);
 	            });
 	        }
 
@@ -3313,11 +3313,15 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            return {
 	                paramNameDependency: paramNameDependency,
 	                fn: function fn() {
-	                    if (rawExprs.length === 1) {
-	                        return _this3.$$exprCalculater.calculate(rawExprs[0], false, _this3.$$scopeModel);
+	                    if (rawExprs.length === 1 && expr.replace(/^\$\{|\}$/g, '') === rawExprs[0]) {
+	                        var result = _this3.$$exprCalculater.calculate(rawExprs[0], false, _this3.$$scopeModel);
+	                        _this3.convertExpressionResult(result);
+	                        return result;
 	                    }
 	                    return expr.replace(/\$\{(.+?)\}/g, function () {
-	                        return _this3.$$exprCalculater.calculate(arguments.length <= 1 ? undefined : arguments[1], false, _this3.$$scopeModel);
+	                        var result = _this3.$$exprCalculater.calculate(arguments.length <= 1 ? undefined : arguments[1], false, _this3.$$scopeModel);
+	                        _this3.convertExpressionResult(result);
+	                        return result;
 	                    });
 	                }
 	            };
@@ -3460,7 +3464,26 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            var clone = (0, _utils.bind)(this.$$exprCloneFn[expr], null) || (0, _utils.bind)(this.dump, this);
 	            var value = this.$$exprs[expr]();
 	            this.$$exprOldValues[expr] = clone(value);
-	            return value;
+	            return this.convertExpressionResult(value);
+	        }
+
+	        /**
+	         * 对某些值做预处理,方便显示
+	         *
+	         * @private
+	         * @param {*} result 表达式计算结果
+	         * @returns {*} 预处理结果
+	         */
+
+	    }, {
+	        key: 'convertExpressionResult',
+	        value: function convertExpressionResult(result) {
+	            if (result === undefined || result === null || result !== result // 是NaN
+	            ) {
+	                    return '';
+	                }
+
+	            return result;
 	        }
 
 	        /**
@@ -4756,6 +4779,8 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	        this.fns = {};
 	        this.exprNameMap = {};
+
+	        this.reservedWords = ['abstract', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'double', 'else', 'enum', 'export', 'extends', 'false', 'final', 'finally', 'float', 'for', 'function', 'goto', 'if', 'implements', 'import', 'in', 'instanceof', 'int', 'interface', 'long', 'native', 'new', 'null', 'package', 'private', 'protected', 'public', 'return', 'short', 'static', 'super', 'switch', 'synchronized', 'this', 'throw', 'throws', 'transient', 'true', 'try', 'typeof', 'var', 'void', 'volatile', 'while', 'with'];
 	    }
 
 	    /**
@@ -4784,7 +4809,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	                return this.fns[expr][avoidReturn];
 	            }
 
-	            var params = getVariableNamesFromExpr(this, expr);
+	            var params = this.getVariableNamesFromExpr(expr);
 	            var fn = new Function(params, (avoidReturn ? '' : 'return ') + expr);
 
 	            var exprObj = {
@@ -4794,9 +4819,21 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            this.fns[expr][avoidReturn] = exprObj;
 	            return exprObj;
 	        }
+
+	        /**
+	         * 计算表达式的值
+	         *
+	         * public
+	         * @param {string} expr 要计算的表达式
+	         * @param {boolean} avoidReturn 是否需要返回值
+	         * @param {ScopeModel} scopeModel 当前表达式所在的scope数据
+	         * @param {boolean=} shouldThrowException 是否应该抛出异常.默认情况下,会自动处理掉异常,但是在事件回调函数的场景中,还是需要抛出这个异常
+	         * @returns {*}
+	         */
+
 	    }, {
 	        key: 'calculate',
-	        value: function calculate(expr, avoidReturn, scopeModel) {
+	        value: function calculate(expr, avoidReturn, scopeModel, shouldThrowException) {
 	            // 对expr='class'进行下转换
 	            if (expr === 'class') {
 	                expr = 'klass';
@@ -4815,13 +4852,18 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            }
 
 	            var result = undefined;
-	            try {
+	            if (shouldThrowException) {
 	                result = fnObj.fn.apply(null, fnArgs);
-	            } catch (e) {
-	                // 将表达式的错误打印出来，方便调试
-	                _log2.default.info(e.stack, '\n', expr, scopeModel);
-	                result = '';
+	            } else {
+	                try {
+	                    result = fnObj.fn.apply(null, fnArgs);
+	                } catch (e) {
+	                    // 将表达式的错误打印出来，方便调试
+	                    _log2.default.info(e.stack, '\n', expr, scopeModel);
+	                    result = '';
+	                }
 	            }
+
 	            return result;
 	        }
 	    }, {
@@ -4830,59 +4872,81 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            this.fns = null;
 	            this.exprNameMap = null;
 	        }
+
+	        /**
+	         * 从表达式中抽离出变量名
+	         *
+	         * @inner
+	         * @param {ExprCalculater} me 对应实例
+	         * @param  {string} expr 表达式字符串，类似于 `${name}` 中的 name
+	         * @return {Array.<string>}      变量名数组
+	         */
+
+	    }, {
+	        key: 'getVariableNamesFromExpr',
+	        value: function getVariableNamesFromExpr(expr) {
+	            if (this.exprNameMap[expr]) {
+	                return this.exprNameMap[expr];
+	            }
+
+	            var possibleVariables = expr.match(/[\w$]+/g);
+	            if (!possibleVariables || !possibleVariables.length) {
+	                return [];
+	            }
+
+	            var variables = [];
+	            var _iteratorNormalCompletion = true;
+	            var _didIteratorError = false;
+	            var _iteratorError = undefined;
+
+	            try {
+	                for (var _iterator = possibleVariables[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	                    var variable = _step.value;
+
+	                    // 如果以数字开头,那就不是变量
+	                    if (!isNaN(parseInt(variable))) {
+	                        continue;
+	                    }
+
+	                    // 如果是javascript保留字,就不是变量
+	                    var isReservedWord = false;
+	                    for (var i = 0, il = this.reservedWords.length; i < il; ++i) {
+	                        if (this.reservedWords[i] === variable) {
+	                            isReservedWord = true;
+	                            break;
+	                        }
+	                    }
+	                    if (isReservedWord) {
+	                        continue;
+	                    }
+
+	                    variables.push(variable);
+	                }
+	            } catch (err) {
+	                _didIteratorError = true;
+	                _iteratorError = err;
+	            } finally {
+	                try {
+	                    if (!_iteratorNormalCompletion && _iterator.return) {
+	                        _iterator.return();
+	                    }
+	                } finally {
+	                    if (_didIteratorError) {
+	                        throw _iteratorError;
+	                    }
+	                }
+	            }
+
+	            this.exprNameMap[expr] = variables;
+
+	            return variables;
+	        }
 	    }]);
 
 	    return ExprCalculater;
 	}();
 
-	/**
-	 * 从表达式中抽离出变量名
-	 *
-	 * @inner
-	 * @param {ExprCalculater} me 对应实例
-	 * @param  {string} expr 表达式字符串，类似于 `${name}` 中的 name
-	 * @return {Array.<string>}      变量名数组
-	 */
-
 	exports.default = ExprCalculater;
-	function getVariableNamesFromExpr(me, expr) {
-	    if (me.exprNameMap[expr]) {
-	        return me.exprNameMap[expr];
-	    }
-
-	    var reg = /[\$|_|a-z|A-Z]{1}(?:[a-z|A-Z|0-9|\$|_]*)/g;
-
-	    var names = {};
-	    for (var name = reg.exec(expr); name; name = reg.exec(expr)) {
-	        var restStr = expr.slice(name.index + name[0].length);
-
-	        // 是左值
-	        if (/^\s*=(?!=)/.test(restStr)) {
-	            continue;
-	        }
-
-	        // 变量名前面是否存在 `.` ，或者变量名是否位于引号内部
-	        if (name.index && (expr[name.index - 1] === '.' || isInQuote(expr.slice(0, name.index), restStr))) {
-	            continue;
-	        }
-
-	        names[name[0]] = true;
-	    }
-
-	    var ret = [];
-	    (0, _utils.each)(names, function (isOk, name) {
-	        if (isOk) {
-	            ret.push(name);
-	        }
-	    });
-	    me.exprNameMap[expr] = ret;
-
-	    return ret;
-
-	    function isInQuote(preStr, restStr) {
-	        return preStr.lastIndexOf('\'') + 1 && restStr.indexOf('\'') + 1 || preStr.lastIndexOf('"') + 1 && restStr.indexOf('"') + 1;
-	    }
-	}
 
 /***/ },
 /* 26 */
