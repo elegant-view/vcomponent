@@ -4068,9 +4068,10 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            if (!this.isGoDark) {
 	                return;
 	            }
-	            (0, _utils.forEach)(this.trees, function (tree) {
-	                return tree.restoreFromDark();
-	            });
+
+	            var exprWatcher = this.tree.getExprWatcher();
+	            this.updateFn(exprWatcher.calculate(this.listExpr));
+
 	            this.isGoDark = false;
 	        }
 	    }, {
