@@ -8,7 +8,6 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-// import ExprParser from 'vtpl/src/parsers/ExprParser';
 import ExprParserEnhance from './ExprParserEnhance';
 import {line2camel, bind, getSuper, camel2line, distinctArr, forEach} from './utils';
 import ComponentManager from './ComponentManager';
@@ -16,7 +15,7 @@ import Node from 'vtpl/src/nodes/Node';
 import componentState from './componentState';
 import Children from './data/Children';
 
-class ComponentParser extends ExprParserEnhance {
+export default class ComponentParser extends ExprParserEnhance {
     constructor(options) {
         super(options);
 
@@ -293,7 +292,7 @@ class ComponentParser extends ExprParserEnhance {
     destroy() {
         this.$component.destroy();
         this.$component.$$state = componentState.DESTROIED;
-        ExprParser.prototype.destroy.apply(this, arguments);
+        super.destroy();
     }
 
     /**
@@ -354,5 +353,3 @@ class ComponentParser extends ExprParserEnhance {
         return tagName.indexOf('ui-') === 0;
     }
 }
-
-export default ComponentParser;

@@ -161,6 +161,8 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
@@ -202,8 +204,6 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *           - 2、$$props[expr].updateFns ：根据表达式值去更新dom的函数数组，类型是`[function(*)]`。
 	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * @author yibuyisheng(yibuyisheng@163.com)
 	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
-
-	// import ExprParser from 'vtpl/src/parsers/ExprParser';
 
 	var ComponentParser = function (_ExprParserEnhance) {
 	    _inherits(ComponentParser, _ExprParserEnhance);
@@ -513,7 +513,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        value: function destroy() {
 	            this.$component.destroy();
 	            this.$component.$$state = _componentState2.default.DESTROIED;
-	            ExprParser.prototype.destroy.apply(this, arguments);
+	            _get(Object.getPrototypeOf(ComponentParser.prototype), 'destroy', this).call(this);
 	        }
 
 	        /**
