@@ -861,11 +861,26 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	                        var parser = _this2;
 	                        domUpdater.addTaskFn(_this2.getTaskId('nodeValue'), function () {
 	                            if ((0, _utils.isPureObject)(exprValue) && exprValue.type === 'html') {
+	                                if (parser.startNode && parser.endNode) {
+	                                    parser.startNode.getParentNode().insertBefore(parser.node, parser.startNode);
+	                                    for (var curNode = parser.startNode; curNode && !curNode.isAfter(parser.endNode); curNode = curNode.getNextSibling()) {
+	                                        curNode.remove();
+	                                    }
+	                                    parser.startNode = parser.endNode = null;
+	                                }
+
 	                                var result = parser.node.replaceByHtml(exprValue.html);
 	                                parser.startNode = result.startNode;
 	                                parser.endNode = result.endNode;
-	                                parser.node = null;
 	                            } else {
+	                                if (parser.startNode && parser.endNode) {
+	                                    parser.startNode.getParentNode().insertBefore(parser.node, parser.startNode);
+	                                    for (var curNode = parser.startNode; curNode && !curNode.isAfter(parser.endNode); curNode = curNode.getNextSibling()) {
+	                                        curNode.remove();
+	                                    }
+	                                    parser.startNode = parser.endNode = null;
+	                                }
+
 	                                parser.setAttr('nodeValue', exprValue);
 	                            }
 	                            callback && callback();
@@ -1014,12 +1029,11 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'getStartNode',
 	        value: function getStartNode() {
-	            if (this.node) {
-	                return this.node;
+	            if (this.startNode) {
+	                return this.startNode;
 	            }
 
-	            // 对文本节点设置html的时候，可能会产生多个节点
-	            return this.startNode;
+	            return this.node;
 	        }
 
 	        /**
@@ -1033,12 +1047,11 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'getEndNode',
 	        value: function getEndNode() {
-	            if (this.node) {
-	                return this.node;
+	            if (this.endNode) {
+	                return this.endNode;
 	            }
 
-	            // 对文本节点设置html的时候，可能会产生多个节点
-	            return this.endNode;
+	            return this.node;
 	        }
 
 	        /**
