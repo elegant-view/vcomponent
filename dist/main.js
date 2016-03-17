@@ -860,29 +860,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	                    updateFns.push(function (exprValue, callback) {
 	                        var parser = _this2;
 	                        domUpdater.addTaskFn(_this2.getTaskId('nodeValue'), function () {
-	                            if ((0, _utils.isPureObject)(exprValue) && exprValue.type === 'html') {
-	                                if (parser.startNode && parser.endNode) {
-	                                    parser.startNode.getParentNode().insertBefore(parser.node, parser.startNode);
-	                                    for (var curNode = parser.startNode; curNode && !curNode.isAfter(parser.endNode); curNode = curNode.getNextSibling()) {
-	                                        curNode.remove();
-	                                    }
-	                                    parser.startNode = parser.endNode = null;
-	                                }
-
-	                                var result = parser.node.replaceByHtml(exprValue.html);
-	                                parser.startNode = result.startNode;
-	                                parser.endNode = result.endNode;
-	                            } else {
-	                                if (parser.startNode && parser.endNode) {
-	                                    parser.startNode.getParentNode().insertBefore(parser.node, parser.startNode);
-	                                    for (var curNode = parser.startNode; curNode && !curNode.isAfter(parser.endNode); curNode = curNode.getNextSibling()) {
-	                                        curNode.remove();
-	                                    }
-	                                    parser.startNode = parser.endNode = null;
-	                                }
-
-	                                parser.setAttr('nodeValue', exprValue);
-	                            }
+	                            parser.setAttr('nodeValue', exprValue);
 	                            callback && callback();
 	                        });
 	                    });
@@ -982,7 +960,107 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'setAttr',
 	        value: function setAttr(attrName, attrValue) {
-	            this.node.attr(attrName, attrValue);
+	            if (attrName === 'nodeValue') {
+	                this.setNodeValue(attrValue);
+	            } else {
+	                this.node.attr(attrName, attrValue);
+	            }
+	        }
+
+	        /**
+	         * 设置文本节点的“nodeValue”，此处对html的情况也做了支持
+	         *
+	         * @private
+	         * @param {*} value 要设置的值
+	         */
+
+	    }, {
+	        key: 'setNodeValue',
+	        value: function setNodeValue(value) {
+	            if ((0, _utils.isPureObject)(value) && value.type === 'html') {
+	                var nodesManager = this.tree.getTreeVar('nodesManager');
+	                var fragment = nodesManager.createDocumentFragment();
+	                fragment.setInnerHTML(value.html);
+	                var childNodes = fragment.getChildNodes();
+
+	                var baseNode = undefined;
+	                if (this.startNode && this.endNode) {
+	                    baseNode = this.startNode;
+	                } else {
+	                    baseNode = this.node;
+	                }
+
+	                var _iteratorNormalCompletion = true;
+	                var _didIteratorError = false;
+	                var _iteratorError = undefined;
+
+	                try {
+	                    for (var _iterator = childNodes[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	                        var childNode = _step.value;
+
+	                        baseNode.getParentNode().insertBefore(childNode, baseNode);
+	                    }
+	                } catch (err) {
+	                    _didIteratorError = true;
+	                    _iteratorError = err;
+	                } finally {
+	                    try {
+	                        if (!_iteratorNormalCompletion && _iterator.return) {
+	                            _iterator.return();
+	                        }
+	                    } finally {
+	                        if (_didIteratorError) {
+	                            throw _iteratorError;
+	                        }
+	                    }
+	                }
+
+	                this.node.setNodeValue('');
+	                removeNodes(this.startNode, this.endNode);
+
+	                this.startNode = childNodes[0];
+	                this.endNode = childNodes[childNodes.length - 1];
+	            } else {
+	                if (this.startNode && this.endNode) {
+	                    removeNodes(this.startNode, this.endNode);
+	                    this.startNode = this.endNode = null;
+	                }
+
+	                this.node.setNodeValue(value);
+	            }
+
+	            function removeNodes(startNode, endNode) {
+	                var delayFns = [];
+	                for (var curNode = startNode; curNode && !curNode.isAfter(endNode); curNode = curNode.getNextSibling()) {
+	                    delayFns.push((0, _utils.bind)(function (curNode) {
+	                        return curNode.remove();
+	                    }, null, curNode));
+	                }
+	                var _iteratorNormalCompletion2 = true;
+	                var _didIteratorError2 = false;
+	                var _iteratorError2 = undefined;
+
+	                try {
+	                    for (var _iterator2 = delayFns[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+	                        var fn = _step2.value;
+
+	                        fn();
+	                    }
+	                } catch (err) {
+	                    _didIteratorError2 = true;
+	                    _iteratorError2 = err;
+	                } finally {
+	                    try {
+	                        if (!_iteratorNormalCompletion2 && _iterator2.return) {
+	                            _iterator2.return();
+	                        }
+	                    } finally {
+	                        if (_didIteratorError2) {
+	                            throw _iteratorError2;
+	                        }
+	                    }
+	                }
+	            }
 	        }
 
 	        /**
@@ -2277,29 +2355,6 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        key: 'getDOMNode',
 	        value: function getDOMNode() {
 	            return this.$node;
-	        }
-
-	        /**
-	         * html替换
-	         *
-	         * @public
-	         * @param {string} html html字符串
-	         * @return {Object}
-	         */
-
-	    }, {
-	        key: 'replaceByHtml',
-	        value: function replaceByHtml(html) {
-	            var fragment = this.$manager.createDocumentFragment();
-	            fragment.setInnerHTML(html);
-	            var startNode = fragment.getFirstChild();
-	            var endNode = fragment.getLastChild();
-	            var childNodes = fragment.getChildNodes();
-	            for (var i = 0, il = childNodes.length; i < il; ++i) {
-	                this.getParentNode().insertBefore(childNodes[i], this);
-	            }
-	            this.remove();
-	            return { startNode: startNode, endNode: endNode };
 	        }
 
 	        /**
