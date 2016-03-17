@@ -60,11 +60,11 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _ComponentParser2 = _interopRequireDefault(_ComponentParser);
 
-	var _ExprParserEnhance = __webpack_require__(15);
+	var _ExprParserEnhance = __webpack_require__(2);
 
 	var _ExprParserEnhance2 = _interopRequireDefault(_ExprParserEnhance);
 
-	var _ComponentManager = __webpack_require__(11);
+	var _ComponentManager = __webpack_require__(18);
 
 	var _ComponentManager2 = _interopRequireDefault(_ComponentManager);
 
@@ -165,25 +165,25 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _ExprParser2 = __webpack_require__(2);
+	var _ExprParserEnhance2 = __webpack_require__(2);
 
-	var _ExprParser3 = _interopRequireDefault(_ExprParser2);
+	var _ExprParserEnhance3 = _interopRequireDefault(_ExprParserEnhance2);
 
-	var _utils = __webpack_require__(10);
+	var _utils = __webpack_require__(17);
 
-	var _ComponentManager = __webpack_require__(11);
+	var _ComponentManager = __webpack_require__(18);
 
 	var _ComponentManager2 = _interopRequireDefault(_ComponentManager);
 
-	var _Node = __webpack_require__(9);
+	var _Node = __webpack_require__(10);
 
 	var _Node2 = _interopRequireDefault(_Node);
 
-	var _componentState = __webpack_require__(12);
+	var _componentState = __webpack_require__(19);
 
 	var _componentState2 = _interopRequireDefault(_componentState);
 
-	var _Children = __webpack_require__(13);
+	var _Children = __webpack_require__(16);
 
 	var _Children2 = _interopRequireDefault(_Children);
 
@@ -203,8 +203,10 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * @author yibuyisheng(yibuyisheng@163.com)
 	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
 
-	var ComponentParser = function (_ExprParser) {
-	    _inherits(ComponentParser, _ExprParser);
+	// import ExprParser from 'vtpl/src/parsers/ExprParser';
+
+	var ComponentParser = function (_ExprParserEnhance) {
+	    _inherits(ComponentParser, _ExprParserEnhance);
 
 	    function ComponentParser(options) {
 	        _classCallCheck(this, ComponentParser);
@@ -511,7 +513,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        value: function destroy() {
 	            this.$component.destroy();
 	            this.$component.$$state = _componentState2.default.DESTROIED;
-	            _ExprParser3.default.prototype.destroy.apply(this, arguments);
+	            ExprParser.prototype.destroy.apply(this, arguments);
 	        }
 
 	        /**
@@ -583,12 +585,185 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    }]);
 
 	    return ComponentParser;
-	}(_ExprParser3.default);
+	}(_ExprParserEnhance3.default);
 
 	exports.default = ComponentParser;
 
 /***/ },
 /* 2 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _ExprParser2 = __webpack_require__(3);
+
+	var _ExprParser3 = _interopRequireDefault(_ExprParser2);
+
+	var _Tree = __webpack_require__(11);
+
+	var _Tree2 = _interopRequireDefault(_Tree);
+
+	var _utils = __webpack_require__(5);
+
+	var _Children = __webpack_require__(16);
+
+	var _Children2 = _interopRequireDefault(_Children);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /**
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * @file 给ExprParser加上处理组件props.children的能力；
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *       给ExprParser加上记录子孙的功能。
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * @author yibuyisheng(yibuyisheng@163.com)
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
+
+	var ExprParserEnhance = function (_ExprParser) {
+	    _inherits(ExprParserEnhance, _ExprParser);
+
+	    function ExprParserEnhance() {
+	        _classCallCheck(this, ExprParserEnhance);
+
+	        return _possibleConstructorReturn(this, Object.getPrototypeOf(ExprParserEnhance).apply(this, arguments));
+	    }
+
+	    _createClass(ExprParserEnhance, [{
+	        key: 'setAttr',
+
+	        /**
+	         * 此处增加处理children的情况
+	         *
+	         * @protected
+	         * @param {string} attrName  属性名
+	         * @param {string|Object} value 值
+	         */
+	        value: function setAttr(attrName, value) {
+	            if (value && value instanceof _Children2.default) {
+	                // 如果之前创建了这种子树，直接销毁掉。
+	                if (this.$$childrenTree) {
+	                    throw new Error('already have a child tree.');
+	                }
+
+	                var nodesManager = this.tree.getTreeVar('nodesManager');
+	                this.startNode = nodesManager.createComment('children');
+	                this.endNode = nodesManager.createComment('/children');
+
+	                // 将children节点插入到dom树里面去
+	                var parentNode = this.node.getParentNode();
+	                parentNode.insertBefore(this.startNode, this.node);
+	                var delayFns = [];
+	                for (var curNode = value.getStartNode(); curNode && !curNode.isAfter(value.getEndNode()); curNode = curNode.getNextSibling()) {
+	                    delayFns.push((0, _utils.bind)(parentNode.insertBefore, parentNode, curNode, this.node));
+	                }
+	                for (var i = 0, il = delayFns.length; i < il; ++i) {
+	                    delayFns[i]();
+	                }
+	                parentNode.insertBefore(this.endNode, this.node);
+	                // 移除之前的文本节点，这个节点现在已经没有用了。
+	                this.node.remove();
+	                this.node = null;
+
+	                // 创建子树
+	                this.$$childrenTree = new _Tree2.default({
+	                    startNode: this.startNode,
+	                    endNode: this.endNode
+	                });
+	                this.$$childrenTree.setParent(value.getParentTree());
+	                this.$$childrenTree.rootScope.setParent(value.getParentTree().rootScope);
+	                value.getParentTree().rootScope.addChild(this.$$childrenTree.rootScope);
+
+	                this.$$childrenTree.compile();
+	                this.$$childrenTree.link();
+	                this.$$childrenTree.initRender();
+	            } else if (attrName === 'ref') {
+	                this.$$ref = value;
+	                var children = this.tree.getTreeVar('children');
+	                children[value] = this.node;
+	            } else {
+	                _get(Object.getPrototypeOf(ExprParserEnhance.prototype), 'setAttr', this).call(this, attrName, value);
+	            }
+	        }
+	    }, {
+	        key: 'getStartNode',
+	        value: function getStartNode() {
+	            if (this.node) {
+	                return this.node;
+	            }
+
+	            return this.startNode;
+	        }
+	    }, {
+	        key: 'getEndNode',
+	        value: function getEndNode() {
+	            if (this.node) {
+	                return this.node;
+	            }
+
+	            return this.endNode;
+	        }
+	    }, {
+	        key: 'getTaskId',
+	        value: function getTaskId(attrName) {
+	            var node = this.node;
+	            if (this.$$childrenTree) {
+	                node = this.startNode;
+	            }
+
+	            return this.tree.getTreeVar('domUpdater').generateNodeAttrUpdateId(node, attrName);
+	        }
+	    }, {
+	        key: 'destroy',
+	        value: function destroy() {
+	            if (this.$$childrenTree) {
+	                this.$$childrenTree.destroy();
+	            }
+
+	            if (this.$$ref) {
+	                var children = this.tree.getTreeVar('children');
+	                children[this.$$ref] = null;
+	                delete children[this.$$ref];
+	            }
+
+	            _get(Object.getPrototypeOf(ExprParserEnhance.prototype), 'destroy', this).call(this);
+	        }
+	    }, {
+	        key: 'goDark',
+	        value: function goDark() {
+	            if (this.$$childrenTree) {
+	                this.$$childrenTree.goDark();
+	            } else {
+	                _get(Object.getPrototypeOf(ExprParserEnhance.prototype), 'goDark', this).call(this);
+	            }
+	        }
+	    }, {
+	        key: 'restoreFromDark',
+	        value: function restoreFromDark() {
+	            if (this.$$childrenTree) {
+	                this.$$childrenTree.restoreFromDark();
+	            } else {
+	                _get(Object.getPrototypeOf(ExprParserEnhance.prototype), 'restoreFromDark', this).call(this);
+	            }
+	        }
+	    }]);
+
+	    return ExprParserEnhance;
+	}(_ExprParser3.default);
+
+	exports.default = ExprParserEnhance;
+
+/***/ },
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -603,21 +778,21 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _ScopeModel = __webpack_require__(3);
+	var _ScopeModel = __webpack_require__(4);
 
 	var _ScopeModel2 = _interopRequireDefault(_ScopeModel);
 
-	var _Parser2 = __webpack_require__(6);
+	var _Parser2 = __webpack_require__(7);
 
 	var _Parser3 = _interopRequireDefault(_Parser2);
 
-	var _utils = __webpack_require__(4);
+	var _utils = __webpack_require__(5);
 
-	var _Node = __webpack_require__(9);
+	var _Node = __webpack_require__(10);
 
 	var _Node2 = _interopRequireDefault(_Node);
 
-	var _parserState = __webpack_require__(8);
+	var _parserState = __webpack_require__(9);
 
 	var _parserState2 = _interopRequireDefault(_parserState);
 
@@ -952,7 +1127,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = ExprParser;
 
 /***/ },
-/* 3 */
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -963,9 +1138,9 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _utils = __webpack_require__(4);
+	var _utils = __webpack_require__(5);
 
-	var _Event2 = __webpack_require__(5);
+	var _Event2 = __webpack_require__(6);
 
 	var _Event3 = _interopRequireDefault(_Event2);
 
@@ -1148,7 +1323,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 4 */
+/* 5 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -1365,7 +1540,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	function empty() {}
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1379,7 +1554,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _utils = __webpack_require__(4);
+	var _utils = __webpack_require__(5);
 
 	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
@@ -1504,7 +1679,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Event;
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1515,11 +1690,11 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	  value: true
 	});
 
-	var _Base2 = __webpack_require__(7);
+	var _Base2 = __webpack_require__(8);
 
 	var _Base3 = _interopRequireDefault(_Base2);
 
-	var _parserState = __webpack_require__(8);
+	var _parserState = __webpack_require__(9);
 
 	var _parserState2 = _interopRequireDefault(_parserState);
 
@@ -1648,7 +1823,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Parser;
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1682,7 +1857,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Base;
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1708,7 +1883,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1723,9 +1898,9 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _utils = __webpack_require__(4);
+	var _utils = __webpack_require__(5);
 
-	var _Event = __webpack_require__(5);
+	var _Event = __webpack_require__(6);
 
 	var _Event2 = _interopRequireDefault(_Event);
 
@@ -2267,546 +2442,36 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Node;
 
 /***/ },
-/* 10 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.type = exports.isClass = exports.forEach = exports.bind = exports.distinctArr = exports.camel2line = exports.line2camel = exports.isArray = exports.getSuper = undefined;
-
-	var _utils = __webpack_require__(4);
-
-	var getSuper = undefined; /**
-	                           * @file 扩展一下`vtpl/src/utils`
-	                           * @author yibuyisheng(yibuyisheng@163.com)
-	                           */
-
-	if (Object.getPrototypeOf) {
-	    exports.getSuper = getSuper = function getSuper(cls) {
-	        return Object.getPrototypeOf(cls.prototype).constructor;
-	    };
-	} else {
-	    exports.getSuper = getSuper = function getSuper(cls) {
-	        return cls.prototype.__proto__.constructor;
-	    };
-	}
-
-	exports.getSuper = getSuper;
-	exports.isArray = _utils.isArray;
-	exports.line2camel = _utils.line2camel;
-	exports.camel2line = _utils.camel2line;
-	exports.distinctArr = _utils.distinctArr;
-	exports.bind = _utils.bind;
-	exports.forEach = _utils.forEach;
-	exports.isClass = _utils.isClass;
-	exports.type = _utils.type;
-
-/***/ },
 /* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * @file 组件管理。ComponentManager也是有层级关系的，
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      *       Tree下面的ComponentManager注册这个Tree实例用到的Component，
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      *       而在Component中也可以注册此Component的tpl中将会使用到的Component。
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * @author yibuyisheng(yibuyisheng@163.com)
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _utils = __webpack_require__(10);
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	var ComponentManager = function () {
-	    function ComponentManager() {
-	        _classCallCheck(this, ComponentManager);
-
-	        this.components = {};
-	    }
-
-	    /**
-	     * 批量注册组件
-	     *
-	     * @public
-	     * @param  {Array.<Class>} componentClasses 组件类数组
-	     */
-
-	    _createClass(ComponentManager, [{
-	        key: 'register',
-	        value: function register(componentClasses) {
-	            if (!(0, _utils.isArray)(componentClasses)) {
-	                return;
-	            }
-	            for (var i = 0, il = componentClasses.length; i < il; ++i) {
-	                var ComponentClass = componentClasses[i];
-	                if (!ComponentClass) {
-	                    throw new Error('the `ComponentClass` passed in is undefined, please check your code.');
-	                }
-	                var name = ComponentClass.name;
-	                this.components[name] = ComponentClass;
-	                this.mountStyle(ComponentClass);
-	            }
-	        }
-
-	        /**
-	         * 根据名字获取组件类。在模板解析的过程中会调用这个方法。
-	         *
-	         * @public
-	         * @param  {string} name 组件名
-	         * @return {ComponentClass}  组件类
-	         */
-
-	    }, {
-	        key: 'getClass',
-	        value: function getClass(name) {
-	            var component = this.components[name];
-	            if (component) {
-	                return component;
-	            }
-
-	            if (this.parent) {
-	                component = this.parent.getClass(name);
-	            }
-
-	            return component;
-	        }
-
-	        /**
-	         * 设置父级组件管理器
-	         *
-	         * @public
-	         * @param {ComponentManger} componentManager 组件管理器
-	         */
-
-	    }, {
-	        key: 'setParent',
-	        value: function setParent(componentManager) {
-	            this.parent = componentManager;
-	        }
-
-	        /**
-	         * 将组件的样式挂载上去
-	         *
-	         * @private
-	         * @param {Class} ComponentClass 组件类
-	         */
-
-	    }, {
-	        key: 'mountStyle',
-	        value: function mountStyle(ComponentClass) {
-	            var componentName = ComponentClass.name;
-	            var styleNodeId = 'component-' + componentName;
-
-	            // 判断一下，避免重复添加css
-	            if (!document.getElementById(styleNodeId)) {
-	                var style = ComponentClass.getStyle instanceof Function && ComponentClass.getStyle() || '';
-	                if (style) {
-	                    var styleNode = document.createElement('style');
-	                    styleNode.setAttribute('id', styleNodeId);
-	                    styleNode.innerText = style;
-	                    document.head.appendChild(styleNode);
-	                }
-	            }
-
-	            // 将父类的css样式也加上去。父类很可能没注册，如果此处不加上去，样式可能就会缺一块。
-	            if (componentName !== 'Component') {
-	                this.mountStyle((0, _utils.getSuper)(ComponentClass));
-	            }
-	        }
-
-	        /**
-	         * 卸载掉组件样式
-	         *
-	         * @private
-	         * @param {Class} ComponentClass 组件类
-	         */
-
-	    }, {
-	        key: 'unmountStyle',
-	        value: function unmountStyle(ComponentClass) {
-	            var componentName = ComponentClass.name;
-	            var styleNodeId = 'component-' + componentName;
-
-	            var el = document.getElementById(styleNodeId);
-	            if (el) {
-	                el.parentNode.removeChild(el);
-	            }
-
-	            if (componentName !== 'Component') {
-	                this.unmountStyle((0, _utils.getSuper)(ComponentClass));
-	            }
-	        }
-	    }, {
-	        key: 'destroy',
-	        value: function destroy() {
-	            for (var name in this.components) {
-	                this.unmountStyle(this.components[name]);
-	            }
-
-	            this.components = null;
-	        }
-	    }]);
-
-	    return ComponentManager;
-	}();
-
-	exports.default = ComponentManager;
-
-/***/ },
-/* 12 */
-/***/ function(module, exports) {
-
-	"use strict";
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	/**
-	 * @file 组件状态枚举
-	 * @author yibuyisheng(yibuyisheng@163.com)
-	 */
-
-	exports.default = {
-	    INITIALIZING: 1,
-	    READY: 2,
-	    DESTROIED: 3,
-	    BEFORE_RENDER: 4
-	};
-
-/***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
 
-	var _Data2 = __webpack_require__(14);
+	var _utils = __webpack_require__(5);
 
-	var _Data3 = _interopRequireDefault(_Data2);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /**
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * @file 组件子节点
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * @author yibuyisheng(yibuyisheng@163.com)
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
-
-	var Children = function (_Data) {
-	    _inherits(Children, _Data);
-
-	    function Children(startNode, endNode, parentTree) {
-	        _classCallCheck(this, Children);
-
-	        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Children).call(this));
-
-	        _this.$$startNode = startNode;
-	        _this.$$endNode = endNode;
-	        _this.$$parentTree = parentTree;
-	        return _this;
-	    }
-
-	    _createClass(Children, [{
-	        key: 'getStartNode',
-	        value: function getStartNode() {
-	            return this.$$startNode;
-	        }
-	    }, {
-	        key: 'getEndNode',
-	        value: function getEndNode() {
-	            return this.$$endNode;
-	        }
-	    }, {
-	        key: 'getParentTree',
-	        value: function getParentTree() {
-	            return this.$$parentTree;
-	        }
-	    }, {
-	        key: 'equals',
-	        value: function equals(children) {
-	            if (!(children instanceof Children)) {
-	                return false;
-	            }
-	            return this.$$startNode === children.$$startNode && this.$$endNode === children.$$endNode && this.$$parentTree === children.$$parentTree;
-	        }
-	    }, {
-	        key: 'clone',
-	        value: function clone() {
-	            return new Children(this.$$startNode, this.$$endNode, this.$$parentTree);
-	        }
-	    }]);
-
-	    return Children;
-	}(_Data3.default);
-
-	exports.default = Children;
-
-/***/ },
-/* 14 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	/**
-	 * @file 数据基类，这个用于scope里面的数据，主要实现了clone和equals方法
-	 * @author yibuyisheng(yibuyisheng@163.com)
-	 */
-
-	var Data = function () {
-	    function Data() {
-	        _classCallCheck(this, Data);
-	    }
-
-	    _createClass(Data, [{
-	        key: 'clone',
-	        value: function clone() {
-	            throw new Error('please implement the `clone` method first!');
-	        }
-	    }, {
-	        key: 'equals',
-	        value: function equals() {
-	            throw new Error('please implement the `equal` method first!');
-	        }
-	    }, {
-	        key: 'toString',
-	        value: function toString() {
-	            return '';
-	        }
-	    }]);
-
-	    return Data;
-	}();
-
-	exports.default = Data;
-
-/***/ },
-/* 15 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _ExprParser2 = __webpack_require__(2);
-
-	var _ExprParser3 = _interopRequireDefault(_ExprParser2);
-
-	var _Tree = __webpack_require__(16);
-
-	var _Tree2 = _interopRequireDefault(_Tree);
-
-	var _utils = __webpack_require__(4);
-
-	var _Children = __webpack_require__(13);
-
-	var _Children2 = _interopRequireDefault(_Children);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /**
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * @file 给ExprParser加上处理组件props.children的能力；
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                *       给ExprParser加上记录子孙的功能。
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * @author yibuyisheng(yibuyisheng@163.com)
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
-
-	var ExprParserEnhance = function (_ExprParser) {
-	    _inherits(ExprParserEnhance, _ExprParser);
-
-	    function ExprParserEnhance() {
-	        _classCallCheck(this, ExprParserEnhance);
-
-	        return _possibleConstructorReturn(this, Object.getPrototypeOf(ExprParserEnhance).apply(this, arguments));
-	    }
-
-	    _createClass(ExprParserEnhance, [{
-	        key: 'setAttr',
-
-	        /**
-	         * 此处增加处理children的情况
-	         *
-	         * @protected
-	         * @param {string} attrName  属性名
-	         * @param {string|Object} value 值
-	         */
-	        value: function setAttr(attrName, value) {
-	            if (value && value instanceof _Children2.default) {
-	                // 如果之前创建了这种子树，直接销毁掉。
-	                if (this.$$childrenTree) {
-	                    throw new Error('already have a child tree.');
-	                }
-
-	                var nodesManager = this.tree.getTreeVar('nodesManager');
-	                this.startNode = nodesManager.createComment('children');
-	                this.endNode = nodesManager.createComment('/children');
-
-	                // 将children节点插入到dom树里面去
-	                var parentNode = this.node.getParentNode();
-	                parentNode.insertBefore(this.startNode, this.node);
-	                var delayFns = [];
-	                for (var curNode = value.getStartNode(); curNode && !curNode.isAfter(value.getEndNode()); curNode = curNode.getNextSibling()) {
-	                    delayFns.push((0, _utils.bind)(parentNode.insertBefore, parentNode, curNode, this.node));
-	                }
-	                for (var i = 0, il = delayFns.length; i < il; ++i) {
-	                    delayFns[i]();
-	                }
-	                parentNode.insertBefore(this.endNode, this.node);
-	                // 移除之前的文本节点，这个节点现在已经没有用了。
-	                this.node.remove();
-	                this.node = null;
-
-	                // 创建子树
-	                this.$$childrenTree = new _Tree2.default({
-	                    startNode: this.startNode,
-	                    endNode: this.endNode
-	                });
-	                this.$$childrenTree.setParent(value.getParentTree());
-	                this.$$childrenTree.rootScope.setParent(value.getParentTree().rootScope);
-	                value.getParentTree().rootScope.addChild(this.$$childrenTree.rootScope);
-
-	                this.$$childrenTree.compile();
-	                this.$$childrenTree.link();
-	                this.$$childrenTree.initRender();
-	            } else if (attrName === 'ref') {
-	                this.$$ref = value;
-	                var children = this.tree.getTreeVar('children');
-	                children[value] = this.node;
-	            } else {
-	                _get(Object.getPrototypeOf(ExprParserEnhance.prototype), 'setAttr', this).call(this, attrName, value);
-	            }
-	        }
-	    }, {
-	        key: 'getStartNode',
-	        value: function getStartNode() {
-	            if (this.node) {
-	                return this.node;
-	            }
-
-	            return this.startNode;
-	        }
-	    }, {
-	        key: 'getEndNode',
-	        value: function getEndNode() {
-	            if (this.node) {
-	                return this.node;
-	            }
-
-	            return this.endNode;
-	        }
-	    }, {
-	        key: 'getTaskId',
-	        value: function getTaskId(attrName) {
-	            var node = this.node;
-	            if (this.$$childrenTree) {
-	                node = this.startNode;
-	            }
-
-	            return this.tree.getTreeVar('domUpdater').generateNodeAttrUpdateId(node, attrName);
-	        }
-	    }, {
-	        key: 'destroy',
-	        value: function destroy() {
-	            if (this.$$childrenTree) {
-	                this.$$childrenTree.destroy();
-	            }
-
-	            if (this.$$ref) {
-	                var children = this.tree.getTreeVar('children');
-	                children[this.$$ref] = null;
-	                delete children[this.$$ref];
-	            }
-
-	            _get(Object.getPrototypeOf(ExprParserEnhance.prototype), 'destroy', this).call(this);
-	        }
-	    }, {
-	        key: 'goDark',
-	        value: function goDark() {
-	            if (this.$$childrenTree) {
-	                this.$$childrenTree.goDark();
-	            } else {
-	                _get(Object.getPrototypeOf(ExprParserEnhance.prototype), 'goDark', this).call(this);
-	            }
-	        }
-	    }, {
-	        key: 'restoreFromDark',
-	        value: function restoreFromDark() {
-	            if (this.$$childrenTree) {
-	                this.$$childrenTree.restoreFromDark();
-	            } else {
-	                _get(Object.getPrototypeOf(ExprParserEnhance.prototype), 'restoreFromDark', this).call(this);
-	            }
-	        }
-	    }]);
-
-	    return ExprParserEnhance;
-	}(_ExprParser3.default);
-
-	exports.default = ExprParserEnhance;
-
-/***/ },
-/* 16 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-
-	var _utils = __webpack_require__(4);
-
-	var _ScopeModel = __webpack_require__(3);
+	var _ScopeModel = __webpack_require__(4);
 
 	var _ScopeModel2 = _interopRequireDefault(_ScopeModel);
 
-	var _Base2 = __webpack_require__(7);
+	var _Base2 = __webpack_require__(8);
 
 	var _Base3 = _interopRequireDefault(_Base2);
 
-	var _Node = __webpack_require__(9);
+	var _Node = __webpack_require__(10);
 
 	var _Node2 = _interopRequireDefault(_Node);
 
-	var _ExprWatcher = __webpack_require__(17);
+	var _ExprWatcher = __webpack_require__(12);
 
 	var _ExprWatcher2 = _interopRequireDefault(_ExprWatcher);
 
-	var _parserState = __webpack_require__(8);
+	var _parserState = __webpack_require__(9);
 
 	var _parserState2 = _interopRequireDefault(_parserState);
 
@@ -3147,7 +2812,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = Tree;
 
 /***/ },
-/* 17 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3158,17 +2823,17 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _utils = __webpack_require__(4);
+	var _utils = __webpack_require__(5);
 
-	var _Event2 = __webpack_require__(5);
+	var _Event2 = __webpack_require__(6);
 
 	var _Event3 = _interopRequireDefault(_Event2);
 
-	var _clone = __webpack_require__(18);
+	var _clone = __webpack_require__(13);
 
 	var _clone2 = _interopRequireDefault(_clone);
 
-	var _deepEqual = __webpack_require__(19);
+	var _deepEqual = __webpack_require__(15);
 
 	var _deepEqual2 = _interopRequireDefault(_deepEqual);
 
@@ -3550,7 +3215,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	exports.default = ExprWatcher;
 
 /***/ },
-/* 18 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3565,7 +3230,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	});
 	exports.default = clone;
 
-	var _utils = __webpack_require__(4);
+	var _utils = __webpack_require__(5);
 
 	var _Data = __webpack_require__(14);
 
@@ -3634,7 +3299,53 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 19 */
+/* 14 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	/**
+	 * @file 数据基类，这个用于scope里面的数据，主要实现了clone和equals方法
+	 * @author yibuyisheng(yibuyisheng@163.com)
+	 */
+
+	var Data = function () {
+	    function Data() {
+	        _classCallCheck(this, Data);
+	    }
+
+	    _createClass(Data, [{
+	        key: 'clone',
+	        value: function clone() {
+	            throw new Error('please implement the `clone` method first!');
+	        }
+	    }, {
+	        key: 'equals',
+	        value: function equals() {
+	            throw new Error('please implement the `equal` method first!');
+	        }
+	    }, {
+	        key: 'toString',
+	        value: function toString() {
+	            return '';
+	        }
+	    }]);
+
+	    return Data;
+	}();
+
+	exports.default = Data;
+
+/***/ },
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -3649,7 +3360,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	});
 	exports.default = deepEqual;
 
-	var _utils = __webpack_require__(4);
+	var _utils = __webpack_require__(5);
 
 	var _Data = __webpack_require__(14);
 
@@ -3721,6 +3432,297 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
+/* 16 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _Data2 = __webpack_require__(14);
+
+	var _Data3 = _interopRequireDefault(_Data2);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /**
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * @file 组件子节点
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * @author yibuyisheng(yibuyisheng@163.com)
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
+
+	var Children = function (_Data) {
+	    _inherits(Children, _Data);
+
+	    function Children(startNode, endNode, parentTree) {
+	        _classCallCheck(this, Children);
+
+	        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Children).call(this));
+
+	        _this.$$startNode = startNode;
+	        _this.$$endNode = endNode;
+	        _this.$$parentTree = parentTree;
+	        return _this;
+	    }
+
+	    _createClass(Children, [{
+	        key: 'getStartNode',
+	        value: function getStartNode() {
+	            return this.$$startNode;
+	        }
+	    }, {
+	        key: 'getEndNode',
+	        value: function getEndNode() {
+	            return this.$$endNode;
+	        }
+	    }, {
+	        key: 'getParentTree',
+	        value: function getParentTree() {
+	            return this.$$parentTree;
+	        }
+	    }, {
+	        key: 'equals',
+	        value: function equals(children) {
+	            if (!(children instanceof Children)) {
+	                return false;
+	            }
+	            return this.$$startNode === children.$$startNode && this.$$endNode === children.$$endNode && this.$$parentTree === children.$$parentTree;
+	        }
+	    }, {
+	        key: 'clone',
+	        value: function clone() {
+	            return new Children(this.$$startNode, this.$$endNode, this.$$parentTree);
+	        }
+	    }]);
+
+	    return Children;
+	}(_Data3.default);
+
+	exports.default = Children;
+
+/***/ },
+/* 17 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.type = exports.isClass = exports.forEach = exports.bind = exports.distinctArr = exports.camel2line = exports.line2camel = exports.isArray = exports.getSuper = undefined;
+
+	var _utils = __webpack_require__(5);
+
+	var getSuper = undefined; /**
+	                           * @file 扩展一下`vtpl/src/utils`
+	                           * @author yibuyisheng(yibuyisheng@163.com)
+	                           */
+
+	if (Object.getPrototypeOf) {
+	    exports.getSuper = getSuper = function getSuper(cls) {
+	        return Object.getPrototypeOf(cls.prototype).constructor;
+	    };
+	} else {
+	    exports.getSuper = getSuper = function getSuper(cls) {
+	        return cls.prototype.__proto__.constructor;
+	    };
+	}
+
+	exports.getSuper = getSuper;
+	exports.isArray = _utils.isArray;
+	exports.line2camel = _utils.line2camel;
+	exports.camel2line = _utils.camel2line;
+	exports.distinctArr = _utils.distinctArr;
+	exports.bind = _utils.bind;
+	exports.forEach = _utils.forEach;
+	exports.isClass = _utils.isClass;
+	exports.type = _utils.type;
+
+/***/ },
+/* 18 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * @file 组件管理。ComponentManager也是有层级关系的，
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      *       Tree下面的ComponentManager注册这个Tree实例用到的Component，
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      *       而在Component中也可以注册此Component的tpl中将会使用到的Component。
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * @author yibuyisheng(yibuyisheng@163.com)
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _utils = __webpack_require__(17);
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var ComponentManager = function () {
+	    function ComponentManager() {
+	        _classCallCheck(this, ComponentManager);
+
+	        this.components = {};
+	    }
+
+	    /**
+	     * 批量注册组件
+	     *
+	     * @public
+	     * @param  {Array.<Class>} componentClasses 组件类数组
+	     */
+
+	    _createClass(ComponentManager, [{
+	        key: 'register',
+	        value: function register(componentClasses) {
+	            if (!(0, _utils.isArray)(componentClasses)) {
+	                return;
+	            }
+	            for (var i = 0, il = componentClasses.length; i < il; ++i) {
+	                var ComponentClass = componentClasses[i];
+	                if (!ComponentClass) {
+	                    throw new Error('the `ComponentClass` passed in is undefined, please check your code.');
+	                }
+	                var name = ComponentClass.name;
+	                this.components[name] = ComponentClass;
+	                this.mountStyle(ComponentClass);
+	            }
+	        }
+
+	        /**
+	         * 根据名字获取组件类。在模板解析的过程中会调用这个方法。
+	         *
+	         * @public
+	         * @param  {string} name 组件名
+	         * @return {ComponentClass}  组件类
+	         */
+
+	    }, {
+	        key: 'getClass',
+	        value: function getClass(name) {
+	            var component = this.components[name];
+	            if (component) {
+	                return component;
+	            }
+
+	            if (this.parent) {
+	                component = this.parent.getClass(name);
+	            }
+
+	            return component;
+	        }
+
+	        /**
+	         * 设置父级组件管理器
+	         *
+	         * @public
+	         * @param {ComponentManger} componentManager 组件管理器
+	         */
+
+	    }, {
+	        key: 'setParent',
+	        value: function setParent(componentManager) {
+	            this.parent = componentManager;
+	        }
+
+	        /**
+	         * 将组件的样式挂载上去
+	         *
+	         * @private
+	         * @param {Class} ComponentClass 组件类
+	         */
+
+	    }, {
+	        key: 'mountStyle',
+	        value: function mountStyle(ComponentClass) {
+	            var componentName = ComponentClass.name;
+	            var styleNodeId = 'component-' + componentName;
+
+	            // 判断一下，避免重复添加css
+	            if (!document.getElementById(styleNodeId)) {
+	                var style = ComponentClass.getStyle instanceof Function && ComponentClass.getStyle() || '';
+	                if (style) {
+	                    var styleNode = document.createElement('style');
+	                    styleNode.setAttribute('id', styleNodeId);
+	                    styleNode.innerText = style;
+	                    document.head.appendChild(styleNode);
+	                }
+	            }
+
+	            // 将父类的css样式也加上去。父类很可能没注册，如果此处不加上去，样式可能就会缺一块。
+	            if (componentName !== 'Component') {
+	                this.mountStyle((0, _utils.getSuper)(ComponentClass));
+	            }
+	        }
+
+	        /**
+	         * 卸载掉组件样式
+	         *
+	         * @private
+	         * @param {Class} ComponentClass 组件类
+	         */
+
+	    }, {
+	        key: 'unmountStyle',
+	        value: function unmountStyle(ComponentClass) {
+	            var componentName = ComponentClass.name;
+	            var styleNodeId = 'component-' + componentName;
+
+	            var el = document.getElementById(styleNodeId);
+	            if (el) {
+	                el.parentNode.removeChild(el);
+	            }
+
+	            if (componentName !== 'Component') {
+	                this.unmountStyle((0, _utils.getSuper)(ComponentClass));
+	            }
+	        }
+	    }, {
+	        key: 'destroy',
+	        value: function destroy() {
+	            for (var name in this.components) {
+	                this.unmountStyle(this.components[name]);
+	            }
+
+	            this.components = null;
+	        }
+	    }]);
+
+	    return ComponentManager;
+	}();
+
+	exports.default = ComponentManager;
+
+/***/ },
+/* 19 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	/**
+	 * @file 组件状态枚举
+	 * @author yibuyisheng(yibuyisheng@163.com)
+	 */
+
+	exports.default = {
+	    INITIALIZING: 1,
+	    READY: 2,
+	    DESTROIED: 3,
+	    BEFORE_RENDER: 4
+	};
+
+/***/ },
 /* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -3747,7 +3749,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _DirectiveParser2 = _interopRequireDefault(_DirectiveParser);
 
-	var _ExprParser = __webpack_require__(2);
+	var _ExprParser = __webpack_require__(3);
 
 	var _ExprParser2 = _interopRequireDefault(_ExprParser);
 
@@ -3755,7 +3757,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _VarDirectiveParser2 = _interopRequireDefault(_VarDirectiveParser);
 
-	var _Tree = __webpack_require__(16);
+	var _Tree = __webpack_require__(11);
 
 	var _Tree2 = _interopRequireDefault(_Tree);
 
@@ -3767,7 +3769,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _DomUpdater2 = _interopRequireDefault(_DomUpdater);
 
-	var _utils = __webpack_require__(4);
+	var _utils = __webpack_require__(5);
 
 	var _Config = __webpack_require__(28);
 
@@ -3777,7 +3779,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _NodesManager2 = _interopRequireDefault(_NodesManager);
 
-	var _Parser = __webpack_require__(6);
+	var _Parser = __webpack_require__(7);
 
 	var _Parser2 = _interopRequireDefault(_Parser);
 
@@ -3915,9 +3917,9 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _DirectiveParser3 = _interopRequireDefault(_DirectiveParser2);
 
-	var _utils = __webpack_require__(4);
+	var _utils = __webpack_require__(5);
 
-	var _Node = __webpack_require__(9);
+	var _Node = __webpack_require__(10);
 
 	var _Node2 = _interopRequireDefault(_Node);
 
@@ -4180,11 +4182,11 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _Parser2 = __webpack_require__(6);
+	var _Parser2 = __webpack_require__(7);
 
 	var _Parser3 = _interopRequireDefault(_Parser2);
 
-	var _Node = __webpack_require__(9);
+	var _Node = __webpack_require__(10);
 
 	var _Node2 = _interopRequireDefault(_Node);
 
@@ -4314,9 +4316,9 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _DirectiveParser3 = _interopRequireDefault(_DirectiveParser2);
 
-	var _utils = __webpack_require__(4);
+	var _utils = __webpack_require__(5);
 
-	var _Node = __webpack_require__(9);
+	var _Node = __webpack_require__(10);
 
 	var _Node2 = _interopRequireDefault(_Node);
 
@@ -4764,7 +4766,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _utils = __webpack_require__(4);
+	var _utils = __webpack_require__(5);
 
 	var _log = __webpack_require__(26);
 
@@ -5004,7 +5006,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _utils = __webpack_require__(4);
+	var _utils = __webpack_require__(5);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -5016,6 +5018,12 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        this.counter = 0;
 	        this.$$nodeAttrNameTaskIdMap = {};
 	        this.$$isExecuting = false;
+
+	        this.$$requestAnimationFrame = function (fn) {
+	            window.requestAnimationFrame(fn);
+	        } || function (fn) {
+	            setTimeout(fn, 17);
+	        };
 	    }
 
 	    /**
@@ -5121,7 +5129,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	            function execute() {
 	                var _this = this;
 
-	                requestAnimationFrame(function () {
+	                this.$$requestAnimationFrame(function () {
 	                    if (!_this.$$isExecuting) {
 	                        return;
 	                    }
@@ -5169,7 +5177,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _utils = __webpack_require__(4);
+	var _utils = __webpack_require__(5);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -5315,11 +5323,11 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _Base2 = __webpack_require__(7);
+	var _Base2 = __webpack_require__(8);
 
 	var _Base3 = _interopRequireDefault(_Base2);
 
-	var _Node = __webpack_require__(9);
+	var _Node = __webpack_require__(10);
 
 	var _Node2 = _interopRequireDefault(_Node);
 
@@ -5434,7 +5442,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _Node = __webpack_require__(9);
+	var _Node = __webpack_require__(10);
 
 	var _Node2 = _interopRequireDefault(_Node);
 
@@ -5562,7 +5570,7 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 
-	var _componentState = __webpack_require__(12);
+	var _componentState = __webpack_require__(19);
 
 	var _componentState2 = _interopRequireDefault(_componentState);
 
@@ -5570,13 +5578,13 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _log2 = _interopRequireDefault(_log);
 
-	var _utils = __webpack_require__(10);
+	var _utils = __webpack_require__(17);
 
-	var _deepEqual = __webpack_require__(19);
+	var _deepEqual = __webpack_require__(15);
 
 	var _deepEqual2 = _interopRequireDefault(_deepEqual);
 
-	var _clone = __webpack_require__(18);
+	var _clone = __webpack_require__(13);
 
 	var _clone2 = _interopRequireDefault(_clone);
 
