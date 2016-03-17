@@ -792,10 +792,6 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	var _Node2 = _interopRequireDefault(_Node);
 
-	var _parserState = __webpack_require__(9);
-
-	var _parserState2 = _interopRequireDefault(_parserState);
-
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -864,7 +860,14 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	                    updateFns.push(function (exprValue, callback) {
 	                        var parser = _this2;
 	                        domUpdater.addTaskFn(_this2.getTaskId('nodeValue'), function () {
-	                            parser.setAttr('nodeValue', exprValue);
+	                            if ((0, _utils.isPureObject)(exprValue) && exprValue.type === 'html') {
+	                                var result = parser.node.replaceByHtml(exprValue.html);
+	                                parser.startNode = result.startNode;
+	                                parser.endNode = result.endNode;
+	                                parser.node = null;
+	                            } else {
+	                                parser.setAttr('nodeValue', exprValue);
+	                            }
 	                            callback && callback();
 	                        });
 	                    });
@@ -1011,7 +1014,12 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'getStartNode',
 	        value: function getStartNode() {
-	            return this.node;
+	            if (this.node) {
+	                return this.node;
+	            }
+
+	            // 对文本节点设置html的时候，可能会产生多个节点
+	            return this.startNode;
 	        }
 
 	        /**
@@ -1025,7 +1033,12 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    }, {
 	        key: 'getEndNode',
 	        value: function getEndNode() {
-	            return this.node;
+	            if (this.node) {
+	                return this.node;
+	            }
+
+	            // 对文本节点设置html的时候，可能会产生多个节点
+	            return this.endNode;
 	        }
 
 	        /**
@@ -2254,6 +2267,29 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	        }
 
 	        /**
+	         * html替换
+	         *
+	         * @public
+	         * @param {string} html html字符串
+	         * @return {Object}
+	         */
+
+	    }, {
+	        key: 'replaceByHtml',
+	        value: function replaceByHtml(html) {
+	            var fragment = this.$manager.createDocumentFragment();
+	            fragment.setInnerHTML(html);
+	            var startNode = fragment.getFirstChild();
+	            var endNode = fragment.getLastChild();
+	            var childNodes = fragment.getChildNodes();
+	            for (var i = 0, il = childNodes.length; i < il; ++i) {
+	                this.getParentNode().insertBefore(childNodes[i], this);
+	            }
+	            this.remove();
+	            return { startNode: startNode, endNode: endNode };
+	        }
+
+	        /**
 	         * 销毁，做一些清理工作：
 	         * 1、清理outclick；
 	         * 2、清理事件；
@@ -2422,6 +2458,8 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 	    return Node;
 	}();
 
+	exports.default = Node;
+
 	(0, _utils.extend)(Node, {
 	    ELEMENT_NODE: 1,
 	    ATTRIBUTE_NODE: 2,
@@ -2438,8 +2476,6 @@ define(function() { return /******/ (function(modules) { // webpackBootstrap
 
 	    eventList: ('blur focus focusin focusout load resize scroll unload click dblclick ' + 'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' + 'change select submit keydown keypress keyup error contextmenu').split(' ')
 	});
-
-	exports.default = Node;
 
 /***/ },
 /* 11 */
