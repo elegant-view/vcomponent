@@ -1,10 +1,10 @@
 {
   "name": "vcomponent",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "",
   "main": "src/main.js",
   "scripts": {
-    "dev": "./node_modules/edp/bin/edp-cli webserver",
+    "dev": "edp webserver",
     "build": "webpack ."
   },
   "author": "",

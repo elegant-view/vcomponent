@@ -23,7 +23,7 @@ export default function () {
             vc.render();
 
             setTimeout(() => {
-                expect(node.innerText).toBe('base');
+                expect(node.textContent).toBe('base');
                 done();
             }, 70);
         });
@@ -41,7 +41,7 @@ export default function () {
             vc.render();
 
             setTimeout(() => {
-                expect(node.innerText).toBe('yibuyisheng');
+                expect(node.textContent).toBe('yibuyisheng');
                 done();
             }, 70);
         });
@@ -59,7 +59,7 @@ export default function () {
             vc.render();
 
             setTimeout(() => {
-                expect(node.innerText).toBe('yibuyisheng');
+                expect(node.textContent).toBe('yibuyisheng');
                 done();
             }, 70);
         });
@@ -98,7 +98,7 @@ export default function () {
                 outerName: 'yibuyisheng'
             });
             setTimeout(() => {
-                expect(node.innerText).toBe('yibuyisheng');
+                expect(node.textContent).toBe('yibuyisheng');
                 done();
             }, 70);
         });

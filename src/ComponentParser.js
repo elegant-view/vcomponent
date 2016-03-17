@@ -8,14 +8,15 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-import ExprParser from 'vtpl/src/parsers/ExprParser';
+// import ExprParser from 'vtpl/src/parsers/ExprParser';
+import ExprParserEnhance from './ExprParserEnhance';
 import {line2camel, bind, getSuper, camel2line, distinctArr, forEach} from './utils';
 import ComponentManager from './ComponentManager';
 import Node from 'vtpl/src/nodes/Node';
 import componentState from './componentState';
 import Children from './data/Children';
 
-class ComponentParser extends ExprParser {
+class ComponentParser extends ExprParserEnhance {
     constructor(options) {
         super(options);
 
