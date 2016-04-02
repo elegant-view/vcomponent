@@ -3,18 +3,10 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-import {isArray, line2camel, camel2line, distinctArr, bind, forEach, isClass, type} from 'vtpl/src/utils';
+import * as utils from 'vtpl/utils';
 
-let getSuper;
-if (Object.getPrototypeOf) {
-    getSuper = function (cls) {
+export default utils.extend(utils, {
+    getSuper(cls) {
         return Object.getPrototypeOf(cls.prototype).constructor;
-    };
-}
-else {
-    getSuper = function (cls) {
-        return cls.prototype.__proto__.constructor;
-    };
-}
-
-export {getSuper, isArray, line2camel, camel2line, distinctArr, bind, forEach, isClass, type};
+    }
+});

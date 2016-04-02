@@ -11,9 +11,13 @@
 import ExprParserEnhance from './ExprParserEnhance';
 import {line2camel, bind, getSuper, camel2line, distinctArr, forEach} from './utils';
 import ComponentManager from './ComponentManager';
-import Node from 'vtpl/src/nodes/Node';
+import Node from 'vtpl/nodes/Node';
 import componentState from './componentState';
 import Children from './data/Children';
+
+const CREATE_COMPONENT_TREE = Symbol('createComponentTree');
+const CREATE_COMPONENT = Symbol('createComponent');
+const REGISTER_COMPONENTS = Symbol('registerComponents');
 
 export default class ComponentParser extends ExprParserEnhance {
     constructor(options) {
@@ -25,7 +29,7 @@ export default class ComponentParser extends ExprParserEnhance {
         this.$$ref = null;
     }
 
-    createComponent() {
+    [CREATE_COMPONENT]() {
         let componentName = line2camel(this.node.getTagName().replace('ui', ''));
         let ComponentClass = this.tree.getTreeVar('componentManager').getClass(componentName);
         if (!ComponentClass) {
@@ -41,7 +45,7 @@ export default class ComponentParser extends ExprParserEnhance {
     }
 
     // 必须在组件创建之后
-    createComponentTree() {
+    [CREATE_COMPONENT_TREE]() {
         let nodesManager = this.tree.getTreeVar('nodesManager');
         let fragment = nodesManager.createDocumentFragment();
         let tagName = this.node.getTagName();
@@ -75,9 +79,9 @@ export default class ComponentParser extends ExprParserEnhance {
      * d-rest是一个特殊属性
      */
     collectExprs() {
-        this.createComponent();
-        this.createComponentTree();
-        this.registerComponents();
+        this[CREATE_COMPONENT]();
+        this[CREATE_COMPONENT_TREE]();
+        this[REGISTER_COMPONENTS]();
 
         // 组件本身就有的css类名
         this.setProp('class', this.$$componentCssClassName);
@@ -277,7 +281,7 @@ export default class ComponentParser extends ExprParserEnhance {
         return this.tree.rootScope;
     }
 
-    registerComponents() {
+    [REGISTER_COMPONENTS]() {
         let componentManager = this.tree.getTreeVar('componentManager');
         let curComponentManager = new ComponentManager();
         curComponentManager.setParent(componentManager);

@@ -112,11 +112,12 @@ export default class ComponentManager {
     }
 
     destroy() {
+        /* eslint-disable guard-for-in */
         for (let name in this.components) {
+        /* eslint-enable guard-for-in */
             this.unmountStyle(this.components[name]);
         }
 
         this.components = null;
     }
 }
-

@@ -3,7 +3,7 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-import Data from 'vtpl/src/Data';
+import Data from 'vtpl/Data';
 
 export default class BaseDataType extends Data {
     constructor(rawValue) {

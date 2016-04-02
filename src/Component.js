@@ -6,10 +6,10 @@
  */
 
 import componentState from './componentState';
-import log from 'vtpl/src/log';
+import log from 'vtpl/log';
 import {isClass, type} from './utils';
-import deepEqual from 'vtpl/src/deepEqual';
-import clone from 'vtpl/src/clone';
+import deepEqual from 'vtpl/deepEqual';
+import clone from 'vtpl/clone';
 
 export default class Component {
     constructor() {

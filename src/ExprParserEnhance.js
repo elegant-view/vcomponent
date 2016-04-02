@@ -4,9 +4,9 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-import ExprParser from 'vtpl/src/parsers/ExprParser';
-import Tree from 'vtpl/src/trees/Tree';
-import {bind} from 'vtpl/src/utils';
+import ExprParser from 'vtpl/parsers/ExprParser';
+import Tree from 'vtpl/trees/Tree';
+import {bind} from 'vtpl/utils';
 import Children from './data/Children';
 
 export default class ExprParserEnhance extends ExprParser {

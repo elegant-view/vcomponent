@@ -8,7 +8,9 @@ import ExprParserEnhance from './ExprParserEnhance';
 
 import ComponentManager from './ComponentManager';
 import VTpl from 'vtpl';
-import Component from './Component';
+/* eslint-disable fecs-export-on-declare */
+export {default as Component} from './Component';
+/* eslint-enable fecs-export-on-declare */
 
 export class VComponent {
     constructor(options) {
@@ -61,5 +63,3 @@ export class VComponent {
         return children[name];
     }
 }
-
-export {VComponent, Component};
