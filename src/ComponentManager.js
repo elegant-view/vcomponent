@@ -5,7 +5,7 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-import {isArray, getSuper} from './utils';
+import utils from './utils';
 
 export default class ComponentManager {
     constructor() {
@@ -19,7 +19,7 @@ export default class ComponentManager {
      * @param  {Array.<Class>} componentClasses 组件类数组
      */
     register(componentClasses) {
-        if (!isArray(componentClasses)) {
+        if (!utils.isArray(componentClasses)) {
             return;
         }
         for (let i = 0, il = componentClasses.length; i < il; ++i) {
@@ -87,7 +87,7 @@ export default class ComponentManager {
 
         // 将父类的css样式也加上去。父类很可能没注册，如果此处不加上去，样式可能就会缺一块。
         if (componentName !== 'Component') {
-            this.mountStyle(getSuper(ComponentClass));
+            this.mountStyle(utils.getSuper(ComponentClass));
         }
     }
 
@@ -107,7 +107,7 @@ export default class ComponentManager {
         }
 
         if (componentName !== 'Component') {
-            this.unmountStyle(getSuper(ComponentClass));
+            this.unmountStyle(utils.getSuper(ComponentClass));
         }
     }
 

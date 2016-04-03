@@ -8,11 +8,8 @@ import ExprParserEnhance from './ExprParserEnhance';
 
 import ComponentManager from './ComponentManager';
 import VTpl from 'vtpl';
-/* eslint-disable fecs-export-on-declare */
-export {default as Component} from './Component';
-/* eslint-enable fecs-export-on-declare */
 
-export class VComponent {
+export default class VComponent {
     constructor(options) {
         this.$vtpl = new VTpl(options);
         this.$vtpl.registerParser(ExprParserEnhance);

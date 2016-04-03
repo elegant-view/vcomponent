@@ -106,6 +106,9 @@ export default class ExprParserEnhance extends ExprParser {
             delete children[this.$$ref];
         }
 
+        this.removeFromDOM(this.node, this.node);
+        this.removeFromDOM(this.startNode, this.endNode);
+
         super.destroy();
     }
 
