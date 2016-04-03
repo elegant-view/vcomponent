@@ -20,12 +20,13 @@ const {line2camel, bind, getSuper, camel2line, distinctArr, forEach} = utils;
 const CREATE_COMPONENT_TREE = Symbol('createComponentTree');
 const CREATE_COMPONENT = Symbol('createComponent');
 const REGISTER_COMPONENTS = Symbol('registerComponents');
+const COMPONENT_TREE = Symbol('componentTree');
 
 export default class ComponentParser extends ExprParserEnhance {
     constructor(options) {
         super(options);
 
-        this.$$componentTree = null;
+        this[COMPONENT_TREE] = null;
         this.$$componentCssClassName = null;
         this.$component = null;
         this.$$ref = null;
@@ -59,22 +60,22 @@ export default class ComponentParser extends ExprParserEnhance {
         this.startNode = fragment.getFirstChild();
         this.endNode = fragment.getLastChild();
 
-        this.$$componentTree = this.tree.createTree({
+        this[COMPONENT_TREE] = this.tree.createTree({
             startNode: this.startNode,
             endNode: this.endNode
         });
 
-        this.$$componentTree.rootScope.set({props: this.$component.props, state: this.$component.state});
+        this[COMPONENT_TREE].rootScope.set({props: this.$component.props, state: this.$component.state});
 
         // 记录下children
         this.setProp('children', new Children(
             this.node.getFirstChild(), this.node.getLastChild(), this.tree
         ));
 
-        this.$$componentTree.setParent(this.tree);
+        this[COMPONENT_TREE].setParent(this.tree);
 
         // 用于存放当前组件下的子组件
-        this.$$componentTree.setTreeVar('children', this.$component.refs);
+        this[COMPONENT_TREE].setTreeVar('children', this.$component.refs);
     }
 
     /**
@@ -89,7 +90,7 @@ export default class ComponentParser extends ExprParserEnhance {
         this.setProp('class', this.$$componentCssClassName);
 
         // 将scope注入到component里面去
-        this.$component.$$scopeModel = this.$$componentTree.rootScope;
+        this.$component.$$scopeModel = this[COMPONENT_TREE].rootScope;
 
         let config = this.tree.getTreeVar('config');
         let exprWacther = this.tree.getExprWatcher();
@@ -122,7 +123,7 @@ export default class ComponentParser extends ExprParserEnhance {
         }
 
         // 子树先compile完，再把整棵树插入到DOM中
-        this.$$componentTree.compile();
+        this[COMPONENT_TREE].compile();
         insertComponentNodes(this.node, this.startNode, this.endNode);
 
         this.node = null;
@@ -161,10 +162,10 @@ export default class ComponentParser extends ExprParserEnhance {
     linkScope() {
         let exprWacther = this.tree.getExprWatcher();
 
-        this.$$componentTree.link();
+        this[COMPONENT_TREE].link();
 
-        this.$$componentTree.rootScope.setParent(this.tree.rootScope);
-        this.tree.rootScope.addChild(this.$$componentTree.rootScope);
+        this[COMPONENT_TREE].rootScope.setParent(this.tree.rootScope);
+        this.tree.rootScope.addChild(this[COMPONENT_TREE].rootScope);
 
         exprWacther.on('change', event => {
             if (this.isGoDark) {
@@ -189,7 +190,7 @@ export default class ComponentParser extends ExprParserEnhance {
             forEach(updateFns, fn => fn(exprWacther.calculate(expr)));
         });
 
-        this.$$componentTree.initRender();
+        this[COMPONENT_TREE].initRender();
 
         // 到此处，组件应该就初始化完毕了。
         this.$component.$$state = componentState.READY;
@@ -231,11 +232,11 @@ export default class ComponentParser extends ExprParserEnhance {
             classList = this.$$componentCssClassName.concat(classList || []);
             classList = distinctArr(classList, cls => cls);
 
-            set.call(this, this.$$componentTree.rootScope, name, classList);
+            set.call(this, this[COMPONENT_TREE].rootScope, name, classList);
             return;
         }
 
-        set.call(this, this.$$componentTree.rootScope, name, value);
+        set.call(this, this[COMPONENT_TREE].rootScope, name, value);
 
         function set(scopeModel, name, value) {
             let props = scopeModel.get('props');
@@ -292,12 +293,17 @@ export default class ComponentParser extends ExprParserEnhance {
             curComponentManager.register(this.$component.getComponentClasses());
         }
 
-        this.$$componentTree.setTreeVar('componentManager', curComponentManager);
+        this[COMPONENT_TREE].setTreeVar('componentManager', curComponentManager);
     }
 
     destroy() {
+        this[COMPONENT_TREE].destroy();
         this.$component.destroy();
         this.$component.$$state = componentState.DESTROIED;
+
+        this.removeFromDOM(this.node, this.node);
+        this.removeFromDOM(this.startNode, this.endNode);
+
         super.destroy();
     }
 
@@ -330,7 +336,7 @@ export default class ComponentParser extends ExprParserEnhance {
         if (this.isGoDark) {
             return;
         }
-        this.$$componentTree.goDark();
+        this[COMPONENT_TREE].goDark();
         this.isGoDark = true;
     }
 
@@ -338,7 +344,7 @@ export default class ComponentParser extends ExprParserEnhance {
         if (!this.isGoDark) {
             return;
         }
-        this.$$componentTree.restoreFromDark();
+        this[COMPONENT_TREE].restoreFromDark();
         this.isGoDark = false;
     }
 
