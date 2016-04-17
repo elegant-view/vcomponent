@@ -14,68 +14,79 @@ import ComponentManager from './ComponentManager';
 import Node from 'vtpl/nodes/Node';
 import componentState from './componentState';
 import Children from './data/Children';
+import Tree from 'vtpl/trees/Tree';
 
-const {line2camel, bind, getSuper, camel2line, distinctArr, forEach} = utils;
+const {line2camel, getSuper, camel2line, distinctArr} = utils;
 
 const CREATE_COMPONENT_TREE = Symbol('createComponentTree');
 const CREATE_COMPONENT = Symbol('createComponent');
 const REGISTER_COMPONENTS = Symbol('registerComponents');
 const COMPONENT_TREE = Symbol('componentTree');
+const COMPONENT_CSS_CLASS_NAME = Symbol('componentCssClassName');
+const COMPONENT = Symbol('component');
+const REFERENCE = Symbol('reference');
+const UPDATE_PROPERTY_FUNCTIONS = Symbol('updatePropertyFunctions');
+const COMPONENT_NODE = Symbol('componentNode');
 
 export default class ComponentParser extends ExprParserEnhance {
     constructor(options) {
         super(options);
 
         this[COMPONENT_TREE] = null;
-        this.$$componentCssClassName = null;
-        this.$component = null;
-        this.$$ref = null;
+        this[COMPONENT_CSS_CLASS_NAME] = null;
+        this[COMPONENT] = null;
+        this[REFERENCE] = null;
+
+        this[COMPONENT_NODE] = this.startNode;
     }
 
     [CREATE_COMPONENT]() {
-        let componentName = line2camel(this.node.getTagName().replace('ui', ''));
+        const node = this[COMPONENT_NODE];
+        let componentName = line2camel(node.getTagName().replace('ui', ''));
         let ComponentClass = this.tree.getTreeVar('componentManager').getClass(componentName);
         if (!ComponentClass) {
             throw new Error(`the component \`${componentName}\` is not registed!`);
         }
 
-        this.$component = new ComponentClass();
-        this.$component.$$state = componentState.INITIALIZING;
-
-        this.$$componentCssClassName = this.getCssClassName(ComponentClass);
-
-        this.$$updatePropFns = {};
+        this[COMPONENT] = new ComponentClass();
+        this[COMPONENT].$$state = componentState.INITIALIZING;
+        this[COMPONENT_CSS_CLASS_NAME] = this.getCssClassName(ComponentClass);
+        this[UPDATE_PROPERTY_FUNCTIONS] = {};
     }
 
     // 必须在组件创建之后
     [CREATE_COMPONENT_TREE]() {
-        let nodesManager = this.tree.getTreeVar('nodesManager');
+        const node = this[COMPONENT_NODE];
+        let nodesManager = this.getNodesManager();
         let fragment = nodesManager.createDocumentFragment();
-        let tagName = this.node.getTagName();
+        let tagName = node.getTagName();
 
         fragment.setInnerHTML(
-            `<!-- ${tagName} -->${this.$component.getTemplate()}<!-- /${tagName} -->`
+            `<!-- ${tagName} -->${this[COMPONENT].getTemplate()}<!-- /${tagName} -->`
         );
 
         this.startNode = fragment.getFirstChild();
         this.endNode = fragment.getLastChild();
 
-        this[COMPONENT_TREE] = this.tree.createTree({
+        this[COMPONENT_TREE] = Tree.createTree({
             startNode: this.startNode,
             endNode: this.endNode
         });
 
-        this[COMPONENT_TREE].rootScope.set({props: this.$component.props, state: this.$component.state});
+        this[COMPONENT_TREE].rootScope.set({
+            props: this[COMPONENT].props,
+            state: this[COMPONENT].state
+        });
 
         // 记录下children
         this.setProp('children', new Children(
-            this.node.getFirstChild(), this.node.getLastChild(), this.tree
+            node.getFirstChild(), node.getLastChild(), this.tree
         ));
 
         this[COMPONENT_TREE].setParent(this.tree);
 
         // 用于存放当前组件下的子组件
-        this[COMPONENT_TREE].setTreeVar('children', this.$component.refs);
+        this[COMPONENT_TREE].setTreeVar('children', this[COMPONENT].refs);
     }
 
     /**
@@ -87,14 +98,14 @@ export default class ComponentParser extends ExprParserEnhance {
         this[REGISTER_COMPONENTS]();
 
         // 组件本身就有的css类名
-        this.setProp('class', this.$$componentCssClassName);
+        this.setProp('class', this[COMPONENT_CSS_CLASS_NAME]);
 
         // 将scope注入到component里面去
-        this.$component.$$scopeModel = this[COMPONENT_TREE].rootScope;
+        this[COMPONENT].$$scopeModel = this[COMPONENT_TREE].rootScope;
 
-        let config = this.tree.getTreeVar('config');
-        let exprWacther = this.tree.getExprWatcher();
-        let curNode = this.node;
+        let config = this.getConfig();
+        let exprWacther = this.getExpressionWatcher();
+        let curNode = this[COMPONENT_NODE];
         let attributes = curNode.getAttributes();
         let attrs = {};
         for (let i = 0, il = attributes.length; i < il; i++) {
@@ -107,14 +118,14 @@ export default class ComponentParser extends ExprParserEnhance {
             // 对于含有表达式的prop，把表达式记录下来，并且生成相应的表达式值计算函数和prop更新函数。
             if (config.getExprRegExp().test(attrValue)) {
                 exprWacther.addExpr(attrValue);
-                exprWacther.setExprEqualsFn(attrValue, bind(this.shouldUpdate, this));
-                exprWacther.setExprCloneFn(attrValue, bind(this.cloneExpressionObject, this));
+                // exprWacther.setExprEqualsFn(attrValue, ::this.shouldUpdate);
+                // exprWacther.setExprCloneFn(attrValue, ::this.cloneExpressionObject);
 
-                let updateFns = this.$$updatePropFns[attrValue] || [];
+                let updateFns = this[UPDATE_PROPERTY_FUNCTIONS][attrValue] || [];
                 attrName === 'd-rest'
                     ? updateFns.push(value => this.setRestProps(value, attrs))
-                    : updateFns.push(bind(this.setProp, this, attrName));
-                this.$$updatePropFns[attrValue] = updateFns;
+                    : updateFns.push(this.setProp.bind(this, attrName));
+                this[UPDATE_PROPERTY_FUNCTIONS][attrValue] = updateFns;
             }
             // 对于字面量prop，直接设置到$component.props里面去
             else {
@@ -124,15 +135,15 @@ export default class ComponentParser extends ExprParserEnhance {
 
         // 子树先compile完，再把整棵树插入到DOM中
         this[COMPONENT_TREE].compile();
-        insertComponentNodes(this.node, this.startNode, this.endNode);
+        insertComponentNodes(curNode, this.startNode, this.endNode);
 
-        this.node = null;
+        this[COMPONENT_NODE] = null;
 
         // 给component扩展两个控制表达式监测的方法
-        this.$component.suspendExpr = function (expr) {
+        this[COMPONENT].suspendExpr = function (expr) {
             exprWacther.suspendExpr(expr);
         };
-        this.$component.resumeExpr = function (expr) {
+        this[COMPONENT].resumeExpr = function (expr) {
             exprWacther.resumeExpr(expr);
         };
 
@@ -145,7 +156,7 @@ export default class ComponentParser extends ExprParserEnhance {
                 curNode && !curNode.isAfter(endNode);
                 curNode = curNode.getNextSibling()
             ) {
-                delayFns.push(bind(insert, null, curNode));
+                delayFns.push(insert.bind(null, curNode));
             }
             for (let i = 0, il = delayFns.length; i < il; ++i) {
                 delayFns[i]();
@@ -160,41 +171,46 @@ export default class ComponentParser extends ExprParserEnhance {
     }
 
     linkScope() {
-        let exprWacther = this.tree.getExprWatcher();
+        let exprWacther = this.getExpressionWatcher();
 
         this[COMPONENT_TREE].link();
 
-        this[COMPONENT_TREE].rootScope.setParent(this.tree.rootScope);
-        this.tree.rootScope.addChild(this[COMPONENT_TREE].rootScope);
+        this[COMPONENT_TREE].rootScope.setParent(this.getScope());
+        this.getScope().addChild(this[COMPONENT_TREE].rootScope);
 
         exprWacther.on('change', event => {
             if (this.isGoDark) {
                 return;
             }
 
-            let updateFns = this.$$updatePropFns[event.expr];
+            let updateFns = this[UPDATE_PROPERTY_FUNCTIONS][event.expr];
             if (updateFns && updateFns.length) {
-                forEach(updateFns, fn => fn(event.newValue));
+                updateFns.forEach(fn => fn(event.newValue));
             }
         });
     }
 
     initRender() {
-        let exprWacther = this.tree.getExprWatcher();
+        let exprWacther = this.getExpressionWatcher();
         // 初始化一下界面
-        forEach(this.$component.props, (value, key) => {
-            this.setProp(key, value);
-        });
+        /* eslint-disable guard-for-in */
+        for (let key in this[COMPONENT].props) {
+            this.setProp(key, this[COMPONENT].props[key]);
+        }
 
-        forEach(this.$$updatePropFns, (updateFns, expr) => {
-            forEach(updateFns, fn => fn(exprWacther.calculate(expr)));
-        });
+        for (let expr in this[UPDATE_PROPERTY_FUNCTIONS]) {
+            const updateFns = this[UPDATE_PROPERTY_FUNCTIONS][expr];
+            for (let i = 0, il = updateFns.length; i < il; ++i) {
+                updateFns[i](exprWacther.calculate(expr));
+            }
+        }
+        /* eslint-enable guard-for-in */
 
         this[COMPONENT_TREE].initRender();
 
         // 到此处，组件应该就初始化完毕了。
-        this.$component.$$state = componentState.READY;
-        this.$component.ready();
+        this[COMPONENT].$$state = componentState.READY;
+        this[COMPONENT].ready();
     }
 
     setRestProps(value, attrs) {
@@ -220,16 +236,16 @@ export default class ComponentParser extends ExprParserEnhance {
         name = line2camel(name);
 
         if (name === 'ref') {
-            this.$$ref = value;
+            this[REFERENCE] = value;
             // 把当前组件存放到父组件的treeVar里面去
             let childComponents = this.tree.getTreeVar('children');
-            childComponents[this.$$ref] = this.$component;
+            childComponents[this[REFERENCE]] = this[COMPONENT];
             return;
         }
 
         if (name === 'class') {
             let classList = Node.getClassList(value);
-            classList = this.$$componentCssClassName.concat(classList || []);
+            classList = this[COMPONENT_CSS_CLASS_NAME].concat(classList || []);
             classList = distinctArr(classList, cls => cls);
 
             set.call(this, this[COMPONENT_TREE].rootScope, name, classList);
@@ -243,45 +259,12 @@ export default class ComponentParser extends ExprParserEnhance {
             props[name] = value;
             scopeModel.set('props', props);
 
-            if (this.$component
-                && (this.$component.$$state === componentState.READY)
+            if (this[COMPONENT]
+                && (this[COMPONENT].$$state === componentState.READY)
             ) {
-                this.$component.propsChange();
+                this[COMPONENT].propsChange();
             }
         }
-    }
-
-    /**
-     * 获取开始节点
-     *
-     * @protected
-     * @inheritDoc
-     * @return {Node}
-     */
-    getStartNode() {
-        if (this.node) {
-            return this.node;
-        }
-        return this.startNode;
-    }
-
-    /**
-     * 获取结束节点
-     *
-     * @protected
-     * @inheritDoc
-     * @return {Node}
-     */
-    getEndNode() {
-        // 如果node还存在，说明组件标签还没有被模板所替换，此时的结束节点还应该是node
-        if (this.node) {
-            return this.node;
-        }
-        return this.endNode;
-    }
-
-    getScope() {
-        return this.tree.rootScope;
     }
 
     [REGISTER_COMPONENTS]() {
@@ -289,8 +272,8 @@ export default class ComponentParser extends ExprParserEnhance {
         let curComponentManager = new ComponentManager();
         curComponentManager.setParent(componentManager);
 
-        if (this.$component.getComponentClasses instanceof Function) {
-            curComponentManager.register(this.$component.getComponentClasses());
+        if (this[COMPONENT].getComponentClasses instanceof Function) {
+            curComponentManager.register(this[COMPONENT].getComponentClasses());
         }
 
         this[COMPONENT_TREE].setTreeVar('componentManager', curComponentManager);
@@ -298,10 +281,9 @@ export default class ComponentParser extends ExprParserEnhance {
 
     destroy() {
         this[COMPONENT_TREE].destroy();
-        this.$component.destroy();
-        this.$component.$$state = componentState.DESTROIED;
+        this[COMPONENT].destroy();
+        this[COMPONENT].$$state = componentState.DESTROIED;
 
-        this.removeFromDOM(this.node, this.node);
         this.removeFromDOM(this.startNode, this.endNode);
 
         super.destroy();

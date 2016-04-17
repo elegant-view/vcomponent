@@ -1,15 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="../node_modules/jasmine-core/lib/jasmine-core/jasmine.css">
+    <link rel="stylesheet" href="/jasmine.css">
+    <script src="/jasmine.js"></script>
 
-    <script src="../node_modules/jasmine-core/lib/jasmine-core/jasmine.js"></script>
-    <script src="../node_modules/jasmine-core/lib/jasmine-core/jasmine-html.js"></script>
-    <script src="../node_modules/jasmine-core/lib/jasmine-core/boot.js"></script>
-
-    <script src="../external/babel-support.js"></script>
-
-    <script type="text/javascript" src="../node_modules/esl/src/esl.js"></script>
+    <script type="text/javascript" src="../node_modules/requirejs/require.js"></script>
 </head>
 <body>
     <script type="text/javascript">
@@ -23,12 +18,12 @@
             },
             {
                 "name": "vtpl",
-                "location": "../node_modules/vtpl",
-                "main": "src/main"
+                "location": "../node_modules/vtpl/src",
+                "main": "main"
             },
             {
                 "name": "vcomponent",
-                "location": ".."
+                "location": "../src"
             },
             {
                 "name": "vcontrol",
@@ -42,7 +37,9 @@
     });
     </script>
     <script type="text/javascript">
-    require(['test']);
+    require(['test'], function () {
+        jasmine.getEnv().execute();
+    });
     </script>
 </body>
 </html>

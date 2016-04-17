@@ -1,4 +1,5 @@
-import {VComponent, Component} from 'vcomponent/src/main';
+import Component from 'vcomponent/Component';
+import VComponent from 'vcomponent/main';
 
 export default function () {
     describe('ComponentParserSpec', () => {

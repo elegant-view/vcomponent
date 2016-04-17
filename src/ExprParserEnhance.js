@@ -1,15 +1,20 @@
 /**
- * @file 给ExprParser加上处理组件props.children的能力；
- *       给ExprParser加上记录子孙的功能。
+ * @file 给HTMLExprParser加上处理组件props.children的能力；
+ *       给HTMLExprParser加上记录子孙的功能。
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-import ExprParser from 'vtpl/parsers/ExprParser';
+import HTMLExprParser from 'vtpl/parsers/HTMLExprParser';
 import Tree from 'vtpl/trees/Tree';
-import {bind} from 'vtpl/utils';
 import Children from './data/Children';
 
-export default class ExprParserEnhance extends ExprParser {
+export default class ExprParserEnhance extends HTMLExprParser {
+
+    constructor(...args) {
+        super(...args);
+
+        this.node = this.startNode;
+    }
 
     /**
      * 此处增加处理children的情况
@@ -37,7 +42,7 @@ export default class ExprParserEnhance extends ExprParser {
                  curNode && !curNode.isAfter(value.getEndNode());
                  curNode = curNode.getNextSibling()
             ) {
-                delayFns.push(bind(parentNode.insertBefore, parentNode, curNode, this.node));
+                delayFns.push(parentNode.insertBefore.bind(parentNode, curNode, this.node));
             }
             for (let i = 0, il = delayFns.length; i < il; ++i) {
                 delayFns[i]();
@@ -68,22 +73,6 @@ export default class ExprParserEnhance extends ExprParser {
         else {
             super.setAttr(attrName, value);
         }
-    }
-
-    getStartNode() {
-        if (this.node) {
-            return this.node;
-        }
-
-        return this.startNode;
-    }
-
-    getEndNode() {
-        if (this.node) {
-            return this.node;
-        }
-
-        return this.endNode;
     }
 
     getTaskId(attrName) {

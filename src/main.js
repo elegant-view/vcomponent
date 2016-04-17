@@ -9,26 +9,28 @@ import ExprParserEnhance from './ExprParserEnhance';
 import ComponentManager from './ComponentManager';
 import VTpl from 'vtpl';
 
+const VTPL = Symbol('vtpl');
+
 export default class VComponent {
     constructor(options) {
-        this.$vtpl = new VTpl(options);
-        this.$vtpl.registerParser(ExprParserEnhance);
-        this.$vtpl.registerParser(ComponentParser);
+        this[VTPL] = new VTpl(options);
+        this[VTPL].registerParser(ExprParserEnhance);
+        this[VTPL].registerParser(ComponentParser);
 
-        this.$vtpl.$tree.setTreeVar('componentManager', new ComponentManager());
-        this.$vtpl.$tree.setTreeVar('children', {});
+        this[VTPL].tree.setTreeVar('componentManager', new ComponentManager());
+        this[VTPL].tree.setTreeVar('children', {});
     }
 
     render() {
-        this.$vtpl.render();
+        this[VTPL].render();
     }
 
     setData(...args) {
-        this.$vtpl.setData(...args);
+        this[VTPL].setData(...args);
     }
 
     getData(...args) {
-        let scope = this.$vtpl.$tree.rootScope;
+        let scope = this[VTPL].tree.rootScope;
         return scope.get(...args);
     }
 
@@ -44,19 +46,19 @@ export default class VComponent {
      * @param {*} value 变量值
      */
     registerComponents(componentClasses) {
-        let componentManager = this.$vtpl.$tree.getTreeVar('componentManager');
+        let componentManager = this[VTPL].tree.getTreeVar('componentManager');
         componentManager.register(componentClasses);
     }
 
     destroy() {
-        let componentManager = this.$vtpl.$tree.getTreeVar('componentManager');
+        let componentManager = this[VTPL].tree.getTreeVar('componentManager');
         componentManager.destroy();
 
-        this.$vtpl.destroy();
+        this[VTPL].destroy();
     }
 
     ref(name) {
-        let children = this.$vtpl.$tree.getTreeVar('children') || {};
+        let children = this[VTPL].tree.getTreeVar('children') || {};
         return children[name];
     }
 }
