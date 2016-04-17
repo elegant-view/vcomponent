@@ -151,22 +151,17 @@ export default class ComponentParser extends ExprParserEnhance {
         function insertComponentNodes(componentNode, startNode, endNode) {
             let parentNode = componentNode.getParentNode();
 
-            let delayFns = [];
-            for (let curNode = startNode;
-                curNode && !curNode.isAfter(endNode);
-                curNode = curNode.getNextSibling()
-            ) {
-                delayFns.push(insert.bind(null, curNode));
-            }
-            for (let i = 0, il = delayFns.length; i < il; ++i) {
-                delayFns[i]();
-            }
+            Node.iterate(startNode, endNode, curNode => {
+                const nextNode = curNode.getNextSibling();
+                parentNode.insertBefore(curNode, componentNode);
+
+                return {
+                    type: 'options',
+                    getNextNode: () => nextNode
+                };
+            });
 
             componentNode.remove();
-
-            function insert(curNode) {
-                parentNode.insertBefore(curNode, componentNode);
-            }
         }
     }
 

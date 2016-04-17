@@ -4,8 +4,8 @@
  */
 
 export default {
-    INITIALIZING: 1,
-    READY: 2,
-    DESTROIED: 3,
-    BEFORE_RENDER: 4
+    INITIALIZING: Symbol('initializing'),
+    READY: Symbol('ready'),
+    DESTROIED: Symbol('destroied'),
+    BEFORE_RENDER: Symbol('beforeRender')
 };
