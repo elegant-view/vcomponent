@@ -24,7 +24,6 @@ const REGISTER_COMPONENTS = Symbol('registerComponents');
 const COMPONENT_TREE = Symbol('componentTree');
 const COMPONENT_CSS_CLASS_NAME = Symbol('componentCssClassName');
 const COMPONENT = Symbol('component');
-const REFERENCE = Symbol('reference');
 const UPDATE_PROPERTY_FUNCTIONS = Symbol('updatePropertyFunctions');
 const COMPONENT_NODE = Symbol('componentNode');
 
@@ -35,7 +34,6 @@ export default class ComponentParser extends ExprParserEnhance {
         this[COMPONENT_TREE] = null;
         this[COMPONENT_CSS_CLASS_NAME] = null;
         this[COMPONENT] = null;
-        this[REFERENCE] = null;
 
         this[COMPONENT_NODE] = this.startNode;
     }
@@ -233,10 +231,10 @@ export default class ComponentParser extends ExprParserEnhance {
         name = line2camel(name);
 
         if (name === 'ref') {
-            this[REFERENCE] = value;
+            this.ref = value;
             // 把当前组件存放到父组件的treeVar里面去
             const childComponents = this.tree.getTreeVar('children');
-            childComponents[this[REFERENCE]] = this[COMPONENT];
+            childComponents[this.ref] = this[COMPONENT];
         }
         else if (name === 'class') {
             let classList = Node.getClassList(value);

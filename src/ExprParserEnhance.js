@@ -8,12 +8,25 @@ import HTMLExprParser from 'vtpl/parsers/HTMLExprParser';
 import Tree from 'vtpl/trees/Tree';
 import Children from './data/Children';
 
+const REFERENCE = Symbol('reference');
+const CHILDREN_TREE = Symbol('childrenTree');
+
 export default class ExprParserEnhance extends HTMLExprParser {
 
     constructor(...args) {
         super(...args);
 
         this.node = this.startNode;
+
+        this[REFERENCE] = null;
+    }
+
+    get ref() {
+        return this[REFERENCE];
+    }
+
+    set ref(value) {
+        this[REFERENCE] = value;
     }
 
     /**
@@ -26,7 +39,7 @@ export default class ExprParserEnhance extends HTMLExprParser {
     setAttr(attrName, value) {
         if (value && value instanceof Children) {
             // 如果之前创建了这种子树，直接销毁掉。
-            if (this.$$childrenTree) {
+            if (this[CHILDREN_TREE]) {
                 throw new Error('already have a child tree.');
             }
 
@@ -53,20 +66,20 @@ export default class ExprParserEnhance extends HTMLExprParser {
             this.node = null;
 
             // 创建子树
-            this.$$childrenTree = new Tree({
+            this[CHILDREN_TREE] = new Tree({
                 startNode: this.startNode,
                 endNode: this.endNode
             });
-            this.$$childrenTree.setParent(value.getParentTree());
-            this.$$childrenTree.rootScope.setParent(value.getParentTree().rootScope);
-            value.getParentTree().rootScope.addChild(this.$$childrenTree.rootScope);
+            this[CHILDREN_TREE].setParent(value.getParentTree());
+            this[CHILDREN_TREE].rootScope.setParent(value.getParentTree().rootScope);
+            value.getParentTree().rootScope.addChild(this[CHILDREN_TREE].rootScope);
 
-            this.$$childrenTree.compile();
-            this.$$childrenTree.link();
-            this.$$childrenTree.initRender();
+            this[CHILDREN_TREE].compile();
+            this[CHILDREN_TREE].link();
+            this[CHILDREN_TREE].initRender();
         }
         else if (attrName === 'ref') {
-            this.$$ref = value;
+            this.ref = value;
             let children = this.tree.getTreeVar('children');
             children[value] = this.node;
         }
@@ -77,7 +90,7 @@ export default class ExprParserEnhance extends HTMLExprParser {
 
     getTaskId(attrName) {
         let node = this.node;
-        if (this.$$childrenTree) {
+        if (this[CHILDREN_TREE]) {
             node = this.startNode;
         }
 
@@ -85,22 +98,24 @@ export default class ExprParserEnhance extends HTMLExprParser {
     }
 
     destroy() {
-        if (this.$$childrenTree) {
-            this.$$childrenTree.destroy();
+        if (this[CHILDREN_TREE]) {
+            this[CHILDREN_TREE].destroy();
+            this[CHILDREN_TREE] = null;
         }
 
-        if (this.$$ref) {
-            let children = this.tree.getTreeVar('children');
-            children[this.$$ref] = null;
-            delete children[this.$$ref];
+        if (this.ref) {
+            const children = this.tree.getTreeVar('children');
+            children[this.ref] = null;
+            delete children[this.ref];
         }
+        this[REFERENCE] = null;
 
         super.destroy();
     }
 
     goDark() {
-        if (this.$$childrenTree) {
-            this.$$childrenTree.goDark();
+        if (this[CHILDREN_TREE]) {
+            this[CHILDREN_TREE].goDark();
         }
         else {
             super.goDark();
@@ -108,8 +123,8 @@ export default class ExprParserEnhance extends HTMLExprParser {
     }
 
     restoreFromDark() {
-        if (this.$$childrenTree) {
-            this.$$childrenTree.restoreFromDark();
+        if (this[CHILDREN_TREE]) {
+            this[CHILDREN_TREE].restoreFromDark();
         }
         else {
             super.restoreFromDark();
