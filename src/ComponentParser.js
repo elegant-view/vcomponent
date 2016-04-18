@@ -57,9 +57,9 @@ export default class ComponentParser extends ExprParserEnhance {
     // 必须在组件创建之后
     [CREATE_COMPONENT_TREE]() {
         const node = this[COMPONENT_NODE];
-        let nodesManager = this.getNodesManager();
-        let fragment = nodesManager.createDocumentFragment();
-        let tagName = node.getTagName();
+        const nodesManager = this.getNodesManager();
+        const fragment = nodesManager.createDocumentFragment();
+        const tagName = node.getTagName();
 
         fragment.setInnerHTML(
             `<!-- ${tagName} -->${this[COMPONENT].getTemplate()}<!-- /${tagName} -->`
@@ -68,10 +68,7 @@ export default class ComponentParser extends ExprParserEnhance {
         this.startNode = fragment.getFirstChild();
         this.endNode = fragment.getLastChild();
 
-        this[COMPONENT_TREE] = Tree.createTree({
-            startNode: this.startNode,
-            endNode: this.endNode
-        });
+        this[COMPONENT_TREE] = Tree.createTree({startNode: this.startNode, endNode: this.endNode});
 
         this[COMPONENT_TREE].rootScope.set({
             props: this[COMPONENT].props,
@@ -79,9 +76,12 @@ export default class ComponentParser extends ExprParserEnhance {
         });
 
         // 记录下children
-        this.setProp('children', new Children(
-            node.getFirstChild(), node.getLastChild(), this.tree
-        ));
+        const children = new Children(
+            node.getFirstChild(),
+            node.getLastChild(),
+            this.tree
+        );
+        this.setProp('children', children);
 
         this[COMPONENT_TREE].setParent(this.tree);
 
@@ -118,12 +118,10 @@ export default class ComponentParser extends ExprParserEnhance {
             // 对于含有表达式的prop，把表达式记录下来，并且生成相应的表达式值计算函数和prop更新函数。
             if (config.getExprRegExp().test(attrValue)) {
                 exprWacther.addExpr(attrValue);
-                // exprWacther.setExprEqualsFn(attrValue, ::this.shouldUpdate);
-                // exprWacther.setExprCloneFn(attrValue, ::this.cloneExpressionObject);
 
                 let updateFns = this[UPDATE_PROPERTY_FUNCTIONS][attrValue] || [];
                 attrName === 'd-rest'
-                    ? updateFns.push(value => this.setRestProps(value, attrs))
+                    ? updateFns.push(setRestProps.bind(this, attrs))
                     : updateFns.push(this.setProp.bind(this, attrName));
                 this[UPDATE_PROPERTY_FUNCTIONS][attrValue] = updateFns;
             }
@@ -146,6 +144,10 @@ export default class ComponentParser extends ExprParserEnhance {
         this[COMPONENT].resumeExpr = function (expr) {
             exprWacther.resumeExpr(expr);
         };
+
+        function setRestProps(attrs, value) {
+            this.setRestProps(value, attrs);
+        }
 
         // 把组件节点放到 DOM 树中去
         function insertComponentNodes(componentNode, startNode, endNode) {
@@ -174,7 +176,7 @@ export default class ComponentParser extends ExprParserEnhance {
         this.getScope().addChild(this[COMPONENT_TREE].rootScope);
 
         exprWacther.on('change', event => {
-            if (this.isGoDark) {
+            if (this.isDark) {
                 return;
             }
 
@@ -233,24 +235,22 @@ export default class ComponentParser extends ExprParserEnhance {
         if (name === 'ref') {
             this[REFERENCE] = value;
             // 把当前组件存放到父组件的treeVar里面去
-            let childComponents = this.tree.getTreeVar('children');
+            const childComponents = this.tree.getTreeVar('children');
             childComponents[this[REFERENCE]] = this[COMPONENT];
-            return;
         }
-
-        if (name === 'class') {
+        else if (name === 'class') {
             let classList = Node.getClassList(value);
             classList = this[COMPONENT_CSS_CLASS_NAME].concat(classList || []);
             classList = distinctArr(classList, cls => cls);
 
             set.call(this, this[COMPONENT_TREE].rootScope, name, classList);
-            return;
+        }
+        else {
+            set.call(this, this[COMPONENT_TREE].rootScope, name, value);
         }
 
-        set.call(this, this[COMPONENT_TREE].rootScope, name, value);
-
         function set(scopeModel, name, value) {
-            let props = scopeModel.get('props');
+            const props = scopeModel.get('props');
             props[name] = value;
             scopeModel.set('props', props);
 
@@ -310,19 +310,19 @@ export default class ComponentParser extends ExprParserEnhance {
     }
 
     goDark() {
-        if (this.isGoDark) {
+        if (this.isDark) {
             return;
         }
+        super.goDark();
         this[COMPONENT_TREE].goDark();
-        this.isGoDark = true;
     }
 
     restoreFromDark() {
-        if (!this.isGoDark) {
+        if (!this.isDark) {
             return;
         }
+        super.restoreFromDark();
         this[COMPONENT_TREE].restoreFromDark();
-        this.isGoDark = false;
     }
 
      /**
@@ -333,12 +333,12 @@ export default class ComponentParser extends ExprParserEnhance {
      * @return {boolean}
      */
     static isProperNode(node) {
-        let nodeType = node.getNodeType();
+        const nodeType = node.getNodeType();
         if (nodeType !== Node.ELEMENT_NODE) {
             return false;
         }
 
-        let tagName = node.getTagName();
+        const tagName = node.getTagName();
         return tagName.indexOf('ui-') === 0;
     }
 }
