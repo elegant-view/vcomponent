@@ -157,7 +157,8 @@ export default class ComponentParser extends ExprParserEnhance {
 
                 return {
                     type: 'options',
-                    getNextNode: () => nextNode
+                    getNextNode: () => nextNode,
+                    getChildNodes: () => []
                 };
             });
 
