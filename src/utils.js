@@ -3,10 +3,8 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-import * as utils from 'vtpl/utils';
+export * from 'vtpl/utils';
 
-export default utils.extend(utils, {
-    getSuper(cls) {
-        return Object.getPrototypeOf(cls.prototype).constructor;
-    }
-});
+export function getSuper(cls) {
+    return Object.getPrototypeOf(cls.prototype).constructor;
+}

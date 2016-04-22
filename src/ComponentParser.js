@@ -9,14 +9,12 @@
  */
 
 import ExprParserEnhance from './ExprParserEnhance';
-import utils from './utils';
+import {line2camel, getSuper, camel2line, distinctArr} from './utils';
 import ComponentManager from './ComponentManager';
 import Node from 'vtpl/nodes/Node';
 import componentState from './componentState';
 import Children from './data/Children';
 import Tree from 'vtpl/trees/Tree';
-
-const {line2camel, getSuper, camel2line, distinctArr} = utils;
 
 const CREATE_COMPONENT_TREE = Symbol('createComponentTree');
 const CREATE_COMPONENT = Symbol('createComponent');
