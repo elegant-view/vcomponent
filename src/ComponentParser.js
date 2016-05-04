@@ -15,6 +15,7 @@ import Node from 'vtpl/nodes/Node';
 import componentState from './componentState';
 import Children from './data/Children';
 import Tree from 'vtpl/trees/Tree';
+import DoneChecker from 'vtpl/DoneChecker';
 
 const CREATE_COMPONENT_TREE = Symbol('createComponentTree');
 const CREATE_COMPONENT = Symbol('createComponent');
@@ -141,8 +142,8 @@ export default class ComponentParser extends ExprParserEnhance {
             exprWacther.resumeExpr(expr);
         };
 
-        function setRestProps(attrs, value) {
-            this.setRestProps(value, attrs);
+        function setRestProps(attrs, value, done) {
+            this.setRestProps(value, attrs, done);
         }
 
         // 把组件节点放到 DOM 树中去
@@ -165,58 +166,85 @@ export default class ComponentParser extends ExprParserEnhance {
     }
 
     linkScope() {
-        let exprWacther = this.getExpressionWatcher();
+        const exprWacther = this.getExpressionWatcher();
 
         this[COMPONENT_TREE].link();
 
         this[COMPONENT_TREE].rootScope.setParent(this.getScope());
         this.getScope().addChild(this[COMPONENT_TREE].rootScope);
 
-        exprWacther.on('change', event => {
+        exprWacther.on('change', (event, done) => {
+            const doneChecker = new DoneChecker(done);
             if (this.isDark) {
+                doneChecker.complete();
                 return;
             }
 
-            let updateFns = this[UPDATE_PROPERTY_FUNCTIONS][event.expr];
+            const updateFns = this[UPDATE_PROPERTY_FUNCTIONS][event.expr];
             if (updateFns && updateFns.length) {
-                updateFns.forEach(fn => fn(event.newValue));
+                updateFns.forEach(fn => {
+                    doneChecker.add(done => {
+                        fn(event.newValue, done);
+                    });
+                });
             }
+            doneChecker.complete();
         });
     }
 
-    initRender() {
-        let exprWacther = this.getExpressionWatcher();
+    initRender(done) {
+        const doneChecker = new DoneChecker(done);
+        const exprWacther = this.getExpressionWatcher();
         // 初始化一下界面
         /* eslint-disable guard-for-in */
         for (let key in this[COMPONENT].props) {
-            this.setProp(key, this[COMPONENT].props[key]);
+            /* eslint-disable no-loop-func */
+            doneChecker.add(done => {
+                this.setProp(key, this[COMPONENT].props[key], done);
+            });
+            /* eslint-enable no-loop-func */
         }
 
         for (let expr in this[UPDATE_PROPERTY_FUNCTIONS]) {
             const updateFns = this[UPDATE_PROPERTY_FUNCTIONS][expr];
             for (let i = 0, il = updateFns.length; i < il; ++i) {
-                updateFns[i](exprWacther.calculate(expr));
+                /* eslint-disable no-loop-func */
+                doneChecker.add(done => {
+                    updateFns[i](exprWacther.calculate(expr), done);
+                });
+                /* eslint-enable no-loop-func */
             }
         }
         /* eslint-enable guard-for-in */
 
-        this[COMPONENT_TREE].initRender();
+        doneChecker.add(done => {
+            this[COMPONENT_TREE].initRender(done);
+        });
 
         // 到此处，组件应该就初始化完毕了。
         this[COMPONENT].$$state = componentState.READY;
         this[COMPONENT].ready();
+
+        doneChecker.complete();
     }
 
-    setRestProps(value, attrs) {
+    setRestProps(value, attrs, done) {
+        const doneChecker = new DoneChecker(done);
         if (!value || typeof value !== 'object') {
+            doneChecker.complete();
             return;
         }
 
         for (let key in value) {
             if (!(key in attrs)) {
-                this.setProp(key, value[key]);
+                /* eslint-disable no-loop-func */
+                doneChecker.add(done => {
+                    this.setProp(key, value[key], done);
+                });
+                /* eslint-enable no-loop-func */
             }
         }
+        doneChecker.complete();
     }
 
     /**
@@ -225,8 +253,10 @@ export default class ComponentParser extends ExprParserEnhance {
      * @public
      * @param {string} name  prop名字
      * @param {*} value prop值
+     * @param {function()} done 异步操作完成的回调函数
      */
-    setProp(name, value) {
+    setProp(name, value, done) {
+        const doneChecker = new DoneChecker(done);
         name = line2camel(name);
 
         if (name === 'ref') {
@@ -240,16 +270,22 @@ export default class ComponentParser extends ExprParserEnhance {
             classList = this[COMPONENT_CSS_CLASS_NAME].concat(classList || []);
             classList = distinctArr(classList, cls => cls);
 
-            set.call(this, this[COMPONENT_TREE].rootScope, name, classList);
+            doneChecker.add(done => {
+                set.call(this, this[COMPONENT_TREE].rootScope, name, classList, done);
+            });
         }
         else {
-            set.call(this, this[COMPONENT_TREE].rootScope, name, value);
+            doneChecker.add(done => {
+                set.call(this, this[COMPONENT_TREE].rootScope, name, value, done);
+            });
         }
 
-        function set(scopeModel, name, value) {
+        doneChecker.complete();
+
+        function set(scopeModel, name, value, done) {
             const props = scopeModel.get('props');
             props[name] = value;
-            scopeModel.set('props', props);
+            scopeModel.set('props', props, false, done);
 
             if (this[COMPONENT]
                 && (this[COMPONENT].$$state === componentState.READY)
@@ -306,20 +342,34 @@ export default class ComponentParser extends ExprParserEnhance {
         return [];
     }
 
-    goDark() {
+    goDark(done) {
+        const doneChecker = new DoneChecker(done);
         if (this.isDark) {
+            doneChecker.complete();
             return;
         }
-        super.goDark();
-        this[COMPONENT_TREE].goDark();
+        doneChecker.add(done => {
+            super.goDark(done);
+        });
+        doneChecker.add(done => {
+            this[COMPONENT_TREE].goDark(done);
+        });
+        doneChecker.complete();
     }
 
-    restoreFromDark() {
+    restoreFromDark(done) {
+        const doneChecker = new DoneChecker(done);
         if (!this.isDark) {
+            doneChecker.complete();
             return;
         }
-        super.restoreFromDark();
-        this[COMPONENT_TREE].restoreFromDark();
+        doneChecker.add(done => {
+            super.restoreFromDark(done);
+        });
+        doneChecker.add(done => {
+            this[COMPONENT_TREE].restoreFromDark(done);
+        });
+        doneChecker.complete();
     }
 
      /**

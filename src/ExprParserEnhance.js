@@ -7,6 +7,7 @@
 import HTMLExprParser from 'vtpl/parsers/HTMLExprParser';
 import Tree from 'vtpl/trees/Tree';
 import Children from './data/Children';
+import DoneChecker from 'vtpl/DoneChecker';
 
 const REFERENCE = Symbol('reference');
 const CHILDREN_TREE = Symbol('childrenTree');
@@ -113,21 +114,33 @@ export default class ExprParserEnhance extends HTMLExprParser {
         super.destroy();
     }
 
-    goDark() {
+    goDark(done) {
+        const doneChecker = new DoneChecker(done);
         if (this[CHILDREN_TREE]) {
-            this[CHILDREN_TREE].goDark();
+            doneChecker.add(done => {
+                this[CHILDREN_TREE].goDark(done);
+            });
         }
         else {
-            super.goDark();
+            doneChecker.add(done => {
+                super.goDark(done);
+            });
         }
+        doneChecker.complete();
     }
 
-    restoreFromDark() {
+    restoreFromDark(done) {
+        const doneChecker = new DoneChecker(done);
         if (this[CHILDREN_TREE]) {
-            this[CHILDREN_TREE].restoreFromDark();
+            doneChecker.add(done => {
+                this[CHILDREN_TREE].restoreFromDark(done);
+            });
         }
         else {
-            super.restoreFromDark();
+            doneChecker.add(done => {
+                super.restoreFromDark(done);
+            });
         }
+        doneChecker.complete();
     }
 }

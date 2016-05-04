@@ -45,14 +45,14 @@ export default class Component {
 
     getComponentClasses() {}
 
-    setState(...args) {
+    setState(name, value, options) {
         if (this.$$state !== componentState.READY) {
             return log.warn(`don't set state data when the component 's state is not \`READY\``);
         }
 
-        let state = this.$$scopeModel.get('state');
-        set(...args);
-        this.$$scopeModel.set({state});
+        const state = this.$$scopeModel.get('state');
+        set(name, value);
+        this.$$scopeModel.set({state}, options.isSilent, options.done);
 
         function set(name, value) {
             if (isClass(name, 'String')) {

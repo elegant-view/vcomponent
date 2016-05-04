@@ -19,14 +19,12 @@ export default function () {
             }
 
             node.innerHTML = '<ui-base></ui-base>';
-            let vc = new VComponent({startNode: node, endNode: node});
+            const vc = new VComponent({startNode: node, endNode: node});
             vc.registerComponents([Base]);
-            vc.render();
-
-            setTimeout(() => {
+            vc.render(() => {
                 expect(node.textContent).toBe('base');
                 done();
-            }, 70);
+            });
         });
 
         it('props', done => {
@@ -39,12 +37,10 @@ export default function () {
             node.innerHTML = '<ui-test name="yibuyisheng"></ui-test>';
             let vc = new VComponent({startNode: node, endNode: node});
             vc.registerComponents([Test]);
-            vc.render();
-
-            setTimeout(() => {
+            vc.render(() => {
                 expect(node.textContent).toBe('yibuyisheng');
                 done();
-            }, 70);
+            });
         });
 
         it('children', done => {
@@ -57,12 +53,10 @@ export default function () {
             node.innerHTML = '<ui-test>yibuyisheng</ui-test>';
             let vc = new VComponent({startNode: node, endNode: node});
             vc.registerComponents([Test]);
-            vc.render();
-
-            setTimeout(() => {
+            vc.render(() => {
                 expect(node.textContent).toBe('yibuyisheng');
                 done();
-            }, 70);
+            });
         });
 
         it('css class', done => {
@@ -75,12 +69,10 @@ export default function () {
             node.innerHTML = '<ui-test></ui-test>';
             let vc = new VComponent({startNode: node, endNode: node});
             vc.registerComponents([Test]);
-            vc.render();
-
-            setTimeout(() => {
+            vc.render(() => {
                 expect(node.firstElementChild.getAttribute('class')).toBe('test component');
                 done();
-            }, 70);
+            });
         });
 
         it('out data', done => {
@@ -97,11 +89,12 @@ export default function () {
 
             vc.setData({
                 outerName: 'yibuyisheng'
+            }, {
+                done() {
+                    expect(node.textContent).toBe('yibuyisheng');
+                    done();
+                }
             });
-            setTimeout(() => {
-                expect(node.textContent).toBe('yibuyisheng');
-                done();
-            }, 70);
         });
 
         it('out function', done => {

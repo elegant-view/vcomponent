@@ -21,8 +21,8 @@ export default class VComponent {
         this[VTPL].tree.setTreeVar('children', {});
     }
 
-    render() {
-        this[VTPL].render();
+    render(done) {
+        this[VTPL].render(done);
     }
 
     setData(...args) {
