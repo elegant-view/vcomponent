@@ -46,6 +46,7 @@ export default class Component {
     getComponentClasses() {}
 
     setState(name, value, options) {
+        options = options || {};
         if (this.$$state !== componentState.READY) {
             return log.warn(`don't set state data when the component 's state is not \`READY\``);
         }
