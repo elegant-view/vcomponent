@@ -1,15 +1,11 @@
 /**
  * @file 组件解析器。
- *       以`ui-`开头的标签都是组件标签。
- *       组件解析器实例包含的比较重要的几个属性：
- *       - 1、$$props ：组件属性的表达式函数和节点更新函数
- *           - 1、$$props[expr].exprFn ：计算表达式值的函数，类型是`function(ScopeModel):*`；
- *           - 2、$$props[expr].updateFns ：根据表达式值去更新dom的函数数组，类型是`[function(*)]`。
+ *       以`ev-`开头的标签都是组件标签。
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
 import ExprParserEnhance from './ExprParserEnhance';
-import {line2camel, getSuper, camel2line, distinctArr} from './utils';
+import {line2camel, getSuper, camel2line, distinctArr, isFunction, extend, isClass} from './utils';
 import ComponentManager from './ComponentManager';
 import Node from 'vtpl/nodes/Node';
 import componentState from './componentState';
@@ -23,8 +19,11 @@ const REGISTER_COMPONENTS = Symbol('registerComponents');
 const COMPONENT_TREE = Symbol('componentTree');
 const COMPONENT_CSS_CLASS_NAME = Symbol('componentCssClassName');
 const COMPONENT = Symbol('component');
-const UPDATE_PROPERTY_FUNCTIONS = Symbol('updatePropertyFunctions');
 const COMPONENT_NODE = Symbol('componentNode');
+const CHECK_PROPS = Symbol('checkProps');
+const GET_REST = Symbol('getRest');
+const ATTRS = Symbol('attrs');
+const SET_PROP = Symbol('setProp');
 
 export default class ComponentParser extends ExprParserEnhance {
     constructor(options) {
@@ -35,11 +34,12 @@ export default class ComponentParser extends ExprParserEnhance {
         this[COMPONENT] = null;
 
         this[COMPONENT_NODE] = this.startNode;
+        this[ATTRS] = {};
     }
 
     [CREATE_COMPONENT]() {
         const node = this[COMPONENT_NODE];
-        let componentName = line2camel(node.getTagName().replace('ui', ''));
+        let componentName = line2camel(node.getTagName().replace(/^ev/, ''));
         let ComponentClass = this.tree.getTreeVar('componentManager').getClass(componentName);
         if (!ComponentClass) {
             throw new Error(`the component \`${componentName}\` is not registed!`);
@@ -48,7 +48,6 @@ export default class ComponentParser extends ExprParserEnhance {
         this[COMPONENT] = new ComponentClass();
         this[COMPONENT].$$state = componentState.INITIALIZING;
         this[COMPONENT_CSS_CLASS_NAME] = this.getCssClassName(ComponentClass);
-        this[UPDATE_PROPERTY_FUNCTIONS] = {};
     }
 
     // 必须在组件创建之后
@@ -78,7 +77,7 @@ export default class ComponentParser extends ExprParserEnhance {
             node.getLastChild(),
             this.tree
         );
-        this.setProp('children', children);
+        this[SET_PROP]('children', children);
 
         this[COMPONENT_TREE].setParent(this.tree);
 
@@ -95,36 +94,32 @@ export default class ComponentParser extends ExprParserEnhance {
         this[REGISTER_COMPONENTS]();
 
         // 组件本身就有的css类名
-        this.setProp('class', this[COMPONENT_CSS_CLASS_NAME]);
+        this[SET_PROP]('class', this[COMPONENT_CSS_CLASS_NAME]);
 
         // 将scope注入到component里面去
         this[COMPONENT].$$scopeModel = this[COMPONENT_TREE].rootScope;
 
-        let config = this.getConfig();
-        let exprWacther = this.getExpressionWatcher();
-        let curNode = this[COMPONENT_NODE];
-        let attributes = curNode.getAttributes();
-        let attrs = {};
+        const config = this.getConfig();
+        const exprWacther = this.getExpressionWatcher();
+        const curNode = this[COMPONENT_NODE];
+        const attributes = curNode.getAttributes();
         for (let i = 0, il = attributes.length; i < il; i++) {
-            let attr = attributes[i];
-            let attrValue = attr.nodeValue;
-            let attrName = attr.nodeName;
+            let attrValue = attributes[i].nodeValue;
+            let attrName = attributes[i].nodeName;
 
-            attrs[line2camel(attrName)] = true;
+            const attr = this[ATTRS][line2camel(attrName)] = {};
 
-            // 对于含有表达式的prop，把表达式记录下来，并且生成相应的表达式值计算函数和prop更新函数。
+            // 对于含有表达式的prop，把表达式记录下来
             if (config.getExprRegExp().test(attrValue)) {
+                attr.isExpression = true;
+                attr.expression = attrValue;
                 exprWacther.addExpr(attrValue);
-
-                let updateFns = this[UPDATE_PROPERTY_FUNCTIONS][attrValue] || [];
-                attrName === 'd-rest'
-                    ? updateFns.push(setRestProps.bind(this, attrs))
-                    : updateFns.push(this.setProp.bind(this, attrName));
-                this[UPDATE_PROPERTY_FUNCTIONS][attrValue] = updateFns;
             }
             // 对于字面量prop，直接设置到$component.props里面去
             else {
-                this.setProp(attrName, attrValue);
+                attr.isExpression = false;
+                attr.value = attrValue;
+                this[SET_PROP](attrName, attrValue);
             }
         }
 
@@ -141,10 +136,6 @@ export default class ComponentParser extends ExprParserEnhance {
         this[COMPONENT].resumeExpr = function (expr) {
             exprWacther.resumeExpr(expr);
         };
-
-        function setRestProps(attrs, value, done) {
-            this.setRestProps(value, attrs, done);
-        }
 
         // 把组件节点放到 DOM 树中去
         function insertComponentNodes(componentNode, startNode, endNode) {
@@ -174,48 +165,76 @@ export default class ComponentParser extends ExprParserEnhance {
         this.getScope().addChild(this[COMPONENT_TREE].rootScope);
 
         exprWacther.on('change', (event, done) => {
-            const doneChecker = new DoneChecker(done);
             if (this.isDark) {
-                doneChecker.complete();
+                isFunction(done) && done();
                 return;
             }
 
-            const updateFns = this[UPDATE_PROPERTY_FUNCTIONS][event.expr];
-            if (updateFns && updateFns.length) {
-                updateFns.forEach(fn => {
-                    doneChecker.add(done => {
-                        fn(event.newValue, done);
-                    });
-                });
+            const expression = event.expr;
+            const expressionValue = event.newValue;
+            const newProps = {};
+            for (let attrName in this[ATTRS]) {
+                const attr = this[ATTRS][attrName];
+                if (attr.expression === expression) {
+                    if (attrName === 'evRest') {
+                        extend(newProps, expressionValue);
+                    }
+                    else {
+                        newProps[attrName] = expressionValue;
+                    }
+                }
             }
-            doneChecker.complete();
+
+            const checkResult = this[CHECK_PROPS](newProps);
+            if (checkResult instanceof Error) {
+                throw checkResult;
+            }
+
+            this[SET_PROP](newProps, null, done);
         });
     }
 
     initRender(done) {
         const doneChecker = new DoneChecker(done);
         const exprWacther = this.getExpressionWatcher();
-        // 初始化一下界面
-        /* eslint-disable guard-for-in */
-        for (let key in this[COMPONENT].props) {
-            /* eslint-disable no-loop-func */
-            doneChecker.add(done => {
-                this.setProp(key, this[COMPONENT].props[key], done);
-            });
-            /* eslint-enable no-loop-func */
-        }
 
-        for (let expr in this[UPDATE_PROPERTY_FUNCTIONS]) {
-            const updateFns = this[UPDATE_PROPERTY_FUNCTIONS][expr];
-            for (let i = 0, il = updateFns.length; i < il; ++i) {
-                /* eslint-disable no-loop-func */
-                doneChecker.add(done => {
-                    updateFns[i](exprWacther.calculate(expr), done);
-                });
-                /* eslint-enable no-loop-func */
+        const newProps = extend({}, this[COMPONENT].props);
+        const expressionValueCache = {};
+        for (let attrName in this[ATTRS]) {
+            const attr = this[ATTRS];
+            // 字面量已经在collectExprs的时候被直接设置到component.props里面去了，
+            // 因此这里只需要处理非字面量的props。
+            if (attr.isExpression) {
+                let expressionValue;
+                if (attr.expression in expressionValueCache) {
+                    expressionValue = expressionValueCache[attr.expression];
+                }
+                else {
+                    expressionValue = exprWacther.calculate(attr.expression);
+                    expressionValueCache[attr.expression] = expressionValue;
+                }
+
+                if (attrName === 'evRest') {
+                    extend(newProps, this[GET_REST](this[ATTRS], expressionValue));
+                }
+                else {
+                    newProps[attrName] = expressionValueCache[attr.expression]
+                        = exprWacther.calculate(attr.expression);
+                }
             }
         }
-        /* eslint-enable guard-for-in */
+
+        // 初始化参数类型的检查，如果不通过，直接抛出异常
+        const checkFns = this[COMPONENT].constructor.getPropsCheckFns() || {};
+        for (let propName in checkFns) {
+            if (!checkFns[propName](newProps[propName])) {
+                throw new Error(`invalid prop: ${propName}`);
+            }
+        }
+
+        doneChecker.add(done => {
+            this[SET_PROP](newProps, null, done);
+        });
 
         doneChecker.add(done => {
             this[COMPONENT_TREE].initRender(done);
@@ -228,76 +247,88 @@ export default class ComponentParser extends ExprParserEnhance {
         doneChecker.complete();
     }
 
-    setRestProps(value, attrs, done) {
-        const doneChecker = new DoneChecker(done);
-        if (!value || typeof value !== 'object') {
-            doneChecker.complete();
-            return;
-        }
-
-        for (let key in value) {
-            if (!(key in attrs)) {
-                /* eslint-disable no-loop-func */
-                doneChecker.add(done => {
-                    this.setProp(key, value[key], done);
-                });
-                /* eslint-enable no-loop-func */
+    [GET_REST](attrs, value) {
+        const rest = {};
+        for (let propName in value) {
+            if (propName in attrs) {
+                continue;
             }
+            rest[propName] = value[propName];
         }
-        doneChecker.complete();
+        return rest;
     }
 
     /**
      * 设置prop，不会更新DOM
      *
-     * @public
-     * @param {string} name  prop名字
+     * @private
+     * @param {string|Object} name  prop名字或者一个prop对象
      * @param {*} value prop值
      * @param {function()} done 异步操作完成的回调函数
      */
-    setProp(name, value, done) {
-        const doneChecker = new DoneChecker(done);
-        name = line2camel(name);
-
-        if (name === 'ref') {
-            this.ref = value;
-            // 把当前组件存放到父组件的treeVar里面去
-            const childComponents = this.tree.getTreeVar('children');
-            childComponents[this.ref] = this[COMPONENT];
-        }
-        else if (name === 'class') {
-            let classList = Node.getClassList(value);
-            classList = this[COMPONENT_CSS_CLASS_NAME].concat(classList || []);
-            classList = distinctArr(classList, cls => cls);
-
-            doneChecker.add(done => {
-                set.call(this, this[COMPONENT_TREE].rootScope, name, classList, done);
-            });
+    [SET_PROP](name, value, done) {
+        let primaryProps;
+        if (isClass(name, 'String')) {
+            primaryProps = {
+                [name]: value
+            };
         }
         else {
-            doneChecker.add(done => {
-                set.call(this, this[COMPONENT_TREE].rootScope, name, value, done);
-            });
+            primaryProps = name;
         }
 
-        doneChecker.complete();
+        const basicProps = {};
+        for (let propName in primaryProps) {
+            const value = primaryProps[propName];
+            if (propName === 'ref') {
+                this.ref = value;
+                // 把当前组件存放到父组件的treeVar里面去
+                const childComponents = this.tree.getTreeVar('children');
+                childComponents[this.ref] = this[COMPONENT];
+            }
+            else if (propName === 'class') {
+                let classList = Node.getClassList(value);
+                classList = this[COMPONENT_CSS_CLASS_NAME].concat(classList || []);
+                classList = distinctArr(classList, cls);
+                basicProps.class = classList;
+            }
+            else {
+                basicProps[propName] = value;
+            }
+        }
 
-        function set(scopeModel, name, value, done) {
-            const props = scopeModel.get('props');
-            props[name] = value;
-            scopeModel.set('props', props, false, done);
+        const scope = this[COMPONENT_TREE].rootScope;
+        const props = scope.get('props');
+        extend(props, basicProps);
+        scope.set('props', props, false, done);
+        if (this[COMPONENT]
+            && (this[COMPONENT].$$state === componentState.READY)
+        ) {
+            this[COMPONENT].propsChange();
+        }
 
-            if (this[COMPONENT]
-                && (this[COMPONENT].$$state === componentState.READY)
-            ) {
-                this[COMPONENT].propsChange();
+        function cls(cls) {
+            return cls;
+        }
+    }
+
+    // 该方法仅用于检查props change后的参数合法性
+    [CHECK_PROPS](newProps) {
+        const checkFns = this[COMPONENT].constructor.getPropsCheckFns() || {};
+        for (let propName in newProps) {
+            if (!newProps.hasOwnProperty(propName)) {
+                continue;
+            }
+            const checkFn = checkFns[propName];
+            if (isFunction(checkFn) && !checkFn(newProps[propName])) {
+                return new Error(`prop '${propName}' is not valid.`);
             }
         }
     }
 
     [REGISTER_COMPONENTS]() {
-        let componentManager = this.tree.getTreeVar('componentManager');
-        let curComponentManager = new ComponentManager();
+        const componentManager = this.tree.getTreeVar('componentManager');
+        const curComponentManager = new ComponentManager();
         curComponentManager.setParent(componentManager);
 
         if (this[COMPONENT].getComponentClasses instanceof Function) {
@@ -386,6 +417,6 @@ export default class ComponentParser extends ExprParserEnhance {
         }
 
         const tagName = node.getTagName();
-        return tagName.indexOf('ui-') === 0;
+        return tagName.indexOf('ev-') === 0;
     }
 }

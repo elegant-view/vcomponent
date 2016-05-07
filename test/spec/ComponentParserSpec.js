@@ -18,7 +18,7 @@ export default function () {
                 }
             }
 
-            node.innerHTML = '<ui-base></ui-base>';
+            node.innerHTML = '<ev-base></ev-base>';
             const vc = new VComponent({startNode: node, endNode: node});
             vc.registerComponents([Base]);
             vc.render(() => {
@@ -34,7 +34,7 @@ export default function () {
                 }
             }
 
-            node.innerHTML = '<ui-test name="yibuyisheng"></ui-test>';
+            node.innerHTML = '<ev-test name="yibuyisheng"></ev-test>';
             let vc = new VComponent({startNode: node, endNode: node});
             vc.registerComponents([Test]);
             vc.render(() => {
@@ -50,7 +50,7 @@ export default function () {
                 }
             }
 
-            node.innerHTML = '<ui-test>yibuyisheng</ui-test>';
+            node.innerHTML = '<ev-test>yibuyisheng</ev-test>';
             let vc = new VComponent({startNode: node, endNode: node});
             vc.registerComponents([Test]);
             vc.render(() => {
@@ -66,7 +66,7 @@ export default function () {
                 }
             }
 
-            node.innerHTML = '<ui-test></ui-test>';
+            node.innerHTML = '<ev-test></ev-test>';
             let vc = new VComponent({startNode: node, endNode: node});
             vc.registerComponents([Test]);
             vc.render(() => {
@@ -82,7 +82,7 @@ export default function () {
                 }
             }
 
-            node.innerHTML = '<ui-test name="${outerName}"></ui-test>';
+            node.innerHTML = '<ev-test name="${outerName}"></ev-test>';
             let vc = new VComponent({startNode: node, endNode: node});
             vc.registerComponents([Test]);
             vc.render();
@@ -105,7 +105,7 @@ export default function () {
                 }
             }
 
-            node.innerHTML = '<ui-test function="${outerFunction}"></ui-test>';
+            node.innerHTML = '<ev-test function="${outerFunction}"></ev-test>';
             let vc = new VComponent({startNode: node, endNode: node});
             vc.registerComponents([Test]);
             vc.render();
@@ -129,7 +129,7 @@ export default function () {
                 }
             }
 
-            node.innerHTML = '<ui-test name="zhangsan" d-rest="${restObj}"></ui-test>';
+            node.innerHTML = '<ev-test name="zhangsan" ev-rest="${restObj}"></ev-test>';
             let vc = new VComponent({startNode: node, endNode: node});
             vc.registerComponents([Test]);
             vc.render();
@@ -153,7 +153,7 @@ export default function () {
                 }
             }
 
-            node.innerHTML = '<ui-test name="zhangsan" d-rest="${restObj}"></ui-test>';
+            node.innerHTML = '<ev-test name="zhangsan" ev-rest="${restObj}"></ev-test>';
             let vc = new VComponent({startNode: node, endNode: node});
             vc.registerComponents([Test]);
             vc.render();

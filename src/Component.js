@@ -71,6 +71,10 @@ export default class Component {
         }
     }
 
+    static getPropsCheckFns() {
+        return {};
+    }
+
     static getStyle() {
         return '';
     }
