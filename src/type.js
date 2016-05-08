@@ -3,7 +3,7 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-import {isClass} from './utils';
+import {isClass, isFunction} from './utils';
 
 const STRING = Symbol('string');
 const NUMBER = Symbol('number');
@@ -19,7 +19,7 @@ export const PropTypes = {
     object: {
         [TYPE]: OBJECT,
         [REQUIRED]: false,
-        isRequired: {
+        required: {
             [TYPE]: OBJECT,
             [REQUIRED]: true
         }
@@ -27,7 +27,7 @@ export const PropTypes = {
     number: {
         [TYPE]: NUMBER,
         [REQUIRED]: false,
-        isRequired: {
+        required: {
             [TYPE]: NUMBER,
             [REQUIRED]: true
         }
@@ -35,7 +35,7 @@ export const PropTypes = {
     func: {
         [TYPE]: FUNCTION,
         [REQUIRED]: false,
-        isRequired: {
+        required: {
             [TYPE]: FUNCTION,
             [REQUIRED]: true
         }
@@ -43,7 +43,7 @@ export const PropTypes = {
     bool: {
         [TYPE]: BOOLEAN,
         [REQUIRED]: false,
-        isRequired: {
+        required: {
             [TYPE]: BOOLEAN,
             [REQUIRED]: true
         }
@@ -51,7 +51,7 @@ export const PropTypes = {
     string: {
         [TYPE]: STRING,
         [REQUIRED]: false,
-        isRequired: {
+        required: {
             [TYPE]: STRING,
             [REQUIRED]: true
         }
@@ -59,9 +59,145 @@ export const PropTypes = {
     array: {
         [TYPE]: ARRAY,
         [REQUIRED]: false,
-        isRequired: {
+        required: {
             [TYPE]: ARRAY,
             [REQUIRED]: true
+        }
+    },
+    instanceOf(Class) {
+        return {
+            [TYPE]: type,
+            [REQUIRED]: false,
+            required: {
+                [TYPE]: type,
+                [REQUIRED]: true
+            }
+        };
+
+        function type(value) {
+            return value instanceof Class;
+        }
+    },
+    oneOf(arr) {
+        return {
+            [TYPE]: type,
+            [REQUIRED]: false,
+            required: {
+                [TYPE]: type,
+                [REQUIRED]: true
+            }
+        };
+
+        function type(value) {
+            let isContain = false;
+            for (let item of arr) {
+                isContain = item === value;
+                if (isContain) {
+                    break;
+                }
+            }
+            return isContain;
+        }
+    },
+    oneOfType(typeList) {
+        return {
+            [TYPE]: type,
+            [REQUIRED]: false,
+            required: {
+                [TYPE]: type,
+                [REQUIRED]: true
+            }
+        };
+
+        function type(value) {
+            let isContain = false;
+            for (let item of typeList) {
+                isContain = check(item)(value);
+                if (isContain) {
+                    break;
+                }
+            }
+            return isContain;
+        }
+    },
+    arrayOf(itemType) {
+        return {
+            [TYPE]: type,
+            [REQUIRED]: false,
+            required: {
+                [TYPE]: type,
+                [REQUIRED]: true
+            }
+        };
+
+        function type(value) {
+            if (!isClass(value, 'Array')) {
+                return false;
+            }
+
+            let ret = true;
+            for (let item of value) {
+                ret = check(itemType)(item);
+                if (!ret) {
+                    break;
+                }
+            }
+            return ret;
+        }
+    },
+    objectOf(valueType) {
+        return {
+            [TYPE]: type,
+            [REQUIRED]: false,
+            required: {
+                [TYPE]: type,
+                [REQUIRED]: true
+            }
+        };
+
+        function type(value) {
+            if (typeof value !== 'object' || isClass(value, 'Array')) {
+                return false;
+            }
+
+            let ret = true;
+            for (let key in value) {
+                if (!value.hasOwnProperty(key)) {
+                    continue;
+                }
+                ret = check(valueType)(value[key]);
+                if (!ret) {
+                    break;
+                }
+            }
+            return ret;
+        }
+    },
+    shape(typeObj) {
+        return {
+            [TYPE]: type,
+            [REQUIRED]: false,
+            required: {
+                [TYPE]: type,
+                [REQUIRED]: true
+            }
+        };
+
+        function type(value) {
+            if (typeof value !== 'object') {
+                return false;
+            }
+
+            let ret = true;
+            for (let key in typeObj) {
+                if ((typeObj[key][REQUIRED] && !value.hasOwnProperty(key))
+                    || (value.hasOwnProperty(key) && !check(typeObj[key])(value[key]))
+                ) {
+                    ret = false;
+                    break;
+                }
+            }
+            return ret;
         }
     }
 };
@@ -87,13 +223,23 @@ const typeCheckFns = {
     }
 };
 
-export default function (type) {
+export default function check(type) {
+    // 允许使用自定义prop检查函数
+    if (isFunction(type)) {
+        return type;
+    }
+
+    // 接下来就是内置的检查函数了，如果type不具备内置类型的特征，就抛出异常
     if (!type || !(REQUIRED in type) || !(TYPE in type)) {
         throw new Error('wrong type');
     }
 
     return function (value) {
-        return (type[REQUIRED] && value && typeCheckFns[type[TYPE]](value))
-            || (!type[REQUIRED] && typeCheckFns[type[TYPE]](value));
+        if (value === undefined) {
+            return !type[REQUIRED];
+        }
+
+        const checkFn = isFunction(type[TYPE]) ? type[TYPE] : typeCheckFns[type[TYPE]];
+        return checkFn(value, type);
     };
 }

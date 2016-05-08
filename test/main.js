@@ -1,3 +1,2 @@
-import ComponentParserSpec from 'test/spec/ComponentParserSpec';
-
-ComponentParserSpec();
+import 'test/spec/ComponentParserSpec';
+import 'test/spec/typeSpec';
