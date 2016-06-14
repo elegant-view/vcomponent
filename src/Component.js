@@ -7,7 +7,7 @@
 
 import componentState from './componentState';
 import log from 'vtpl/log';
-import {isClass, type} from './utils';
+import {isClass} from './utils';
 import deepEqual from 'vtpl/deepEqual';
 import clone from 'vtpl/clone';
 
@@ -59,7 +59,7 @@ export default class Component {
             if (isClass(name, 'String')) {
                 state[name] = value;
             }
-            else if (type(name) === 'object') {
+            else if (typeof name === 'object') {
                 for (let key in name) {
                     if (!name.hasOwnProperty(key)) {
                         continue;

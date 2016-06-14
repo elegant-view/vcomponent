@@ -11,11 +11,20 @@ const ARRAY = Symbol('array');
 const BOOLEAN = Symbol('boolean');
 const FUNCTION = Symbol('function');
 const OBJECT = Symbol('object');
+const DATE = Symbol('date');
 
 const REQUIRED = Symbol('required');
 const TYPE = Symbol('type');
 
 export const PropTypes = {
+    date: {
+        [TYPE]: DATE,
+        [REQUIRED]: false,
+        required: {
+            [TYPE]: DATE,
+            [REQUIRED]: true
+        }
+    },
     object: {
         [TYPE]: OBJECT,
         [REQUIRED]: false,
@@ -203,6 +212,9 @@ export const PropTypes = {
 };
 
 const typeCheckFns = {
+    [DATE](value) {
+        return isClass(value, 'Date');
+    },
     [OBJECT](value) {
         return typeof value === 'object';
     },

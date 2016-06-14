@@ -7,7 +7,7 @@ server.start({
         include: [/\/(test|src)\/.*\.js$/],
         compileOptions: {
             presets: ['es2015', 'stage-0'],
-            plugins: ['transform-es2015-modules-amd']
+            plugins: ['transform-flow-strip-types', 'transform-es2015-modules-amd']
         }
     }
 });

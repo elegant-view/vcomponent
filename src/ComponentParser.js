@@ -161,7 +161,6 @@ export default class ComponentParser extends ExprParserEnhance {
 
         this[COMPONENT_TREE].link();
 
-        this[COMPONENT_TREE].rootScope.setParent(this.getScope());
         this.getScope().addChild(this[COMPONENT_TREE].rootScope);
 
         exprWacther.on('change', (event, done) => {
@@ -201,7 +200,7 @@ export default class ComponentParser extends ExprParserEnhance {
         const newProps = extend({}, this[COMPONENT].props);
         const expressionValueCache = {};
         for (let attrName in this[ATTRS]) {
-            const attr = this[ATTRS];
+            const attr = this[ATTRS][attrName];
             // 字面量已经在collectExprs的时候被直接设置到component.props里面去了，
             // 因此这里只需要处理非字面量的props。
             if (attr.isExpression) {
@@ -379,12 +378,8 @@ export default class ComponentParser extends ExprParserEnhance {
             doneChecker.complete();
             return;
         }
-        doneChecker.add(done => {
-            super.goDark(done);
-        });
-        doneChecker.add(done => {
-            this[COMPONENT_TREE].goDark(done);
-        });
+        doneChecker.add(done => super.goDark(done));
+        doneChecker.add(done => this[COMPONENT_TREE].goDark(done));
         doneChecker.complete();
     }
 
@@ -394,12 +389,8 @@ export default class ComponentParser extends ExprParserEnhance {
             doneChecker.complete();
             return;
         }
-        doneChecker.add(done => {
-            super.restoreFromDark(done);
-        });
-        doneChecker.add(done => {
-            this[COMPONENT_TREE].restoreFromDark(done);
-        });
+        doneChecker.add(done => super.restoreFromDark(done));
+        doneChecker.add(done => this[COMPONENT_TREE].restoreFromDark(done));
         doneChecker.complete();
     }
 

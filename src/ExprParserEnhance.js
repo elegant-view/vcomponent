@@ -72,7 +72,7 @@ export default class ExprParserEnhance extends HTMLExprParser {
                 endNode: this.endNode
             });
             this[CHILDREN_TREE].setParent(value.getParentTree());
-            this[CHILDREN_TREE].rootScope.setParent(value.getParentTree().rootScope);
+            // this[CHILDREN_TREE].rootScope.setParent(value.getParentTree().rootScope);
             value.getParentTree().rootScope.addChild(this[CHILDREN_TREE].rootScope);
 
             this[CHILDREN_TREE].compile();
