@@ -164,34 +164,43 @@ export default class ComponentParser extends ExprParserEnhance {
         this.getScope().addChild(this[COMPONENT_TREE].rootScope);
 
         exprWacther.on('change', (event, done) => {
-            if (this.isDark) {
-                isFunction(done) && done();
-                return;
-            }
+            const doneChecker = new DoneChecker(done);
 
-            const expression = event.expr;
-            const expressionValue = event.newValue;
-            const newProps = {};
-            /* eslint-disable guard-for-in */
-            for (let attrName in this[ATTRS]) {
-            /* eslint-enable guard-for-in */
-                const attr = this[ATTRS][attrName];
-                if (attr.expression === expression) {
-                    if (attrName === 'evRest') {
-                        extend(newProps, expressionValue);
+            if (!this.isDark) {
+                const expression = event.expr;
+                const expressionValue = event.newValue;
+                const newProps = {};
+                // this[ATTRS]是否包含当前发生改变的event.expr
+                let hasExpression = false;
+                /* eslint-disable guard-for-in */
+                for (let attrName in this[ATTRS]) {
+                /* eslint-enable guard-for-in */
+                    const attr = this[ATTRS][attrName];
+                    if (attr.expression === expression) {
+                        if (attrName === 'evRest') {
+                            extend(newProps, expressionValue);
+                        }
+                        else {
+                            newProps[attrName] = expressionValue;
+                        }
+
+                        hasExpression = true;
                     }
-                    else {
-                        newProps[attrName] = expressionValue;
-                    }
+                }
+
+                // 检查传进来的props是否合法
+                const checkResult = this[CHECK_PROPS](newProps);
+                if (checkResult instanceof Error) {
+                    throw checkResult;
+                }
+
+                // 有更新的话，才更新
+                if (hasExpression) {
+                    doneChecker.add(done => this[SET_PROP](newProps, null, done));
                 }
             }
 
-            const checkResult = this[CHECK_PROPS](newProps);
-            if (checkResult instanceof Error) {
-                throw checkResult;
-            }
-
-            this[SET_PROP](newProps, null, done);
+            doneChecker.complete();
         });
     }
 
@@ -238,13 +247,9 @@ export default class ComponentParser extends ExprParserEnhance {
             }
         }
 
-        doneChecker.add(done => {
-            this[SET_PROP](newProps, null, done);
-        });
+        doneChecker.add(done => this[SET_PROP](newProps, null, done));
 
-        doneChecker.add(done => {
-            this[COMPONENT_TREE].initRender(done);
-        });
+        doneChecker.add(::this[COMPONENT_TREE].initRender);
 
         // 到此处，组件应该就初始化完毕了。
         this[COMPONENT].$$state = componentState.READY;
@@ -309,11 +314,10 @@ export default class ComponentParser extends ExprParserEnhance {
         const props = scope.get('props');
         extend(props, basicProps);
         scope.set('props', props, false, () => {
-
             if (this[COMPONENT]
                 && this[COMPONENT].$$state === componentState.READY
             ) {
-                this[COMPONENT].propsChangeMounted();
+                this[COMPONENT].propsChangeMounted(basicProps);
             }
 
             done && done();
@@ -321,7 +325,7 @@ export default class ComponentParser extends ExprParserEnhance {
         if (this[COMPONENT]
             && this[COMPONENT].$$state === componentState.READY
         ) {
-            this[COMPONENT].propsChange();
+            this[COMPONENT].propsChange(basicProps);
         }
 
         function cls(cls) {

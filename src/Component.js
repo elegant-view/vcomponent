@@ -28,7 +28,7 @@ export default class Component {
      * 组件模板字符串
      *
      * @public
-     * @return {[type]} [description]
+     * @return {string} 模板字符串
      */
     getTemplate() {
         return '';
@@ -79,15 +79,17 @@ export default class Component {
      * props发生了变化，注意：此处还未将props更新到DOM上去
      *
      * @public
+     * @param {Object} changedProps 发生改变的props
      */
-    propsChange() {}
+    propsChange(changedProps) {}
 
     /**
      * props的改变已经体现到了DOM树上
      *
      * @public
+     * @param {Object} changedProps 发生改变的props
      */
-    propsChangeMounted() {}
+    propsChangeMounted(changedProps) {}
 
     /**
      * 拿到本组件内部使用到的组件类，是一种配置。
