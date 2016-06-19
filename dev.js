@@ -2,7 +2,7 @@ var server = require('dev-server');
 
 server.start({
     rootPath: __dirname,
-    port: 8001,
+    port: 8004,
     babel: {
         include: [/\/(test|src)\/.*\.js$/],
         compileOptions: {
