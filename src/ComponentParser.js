@@ -172,7 +172,9 @@ export default class ComponentParser extends ExprParserEnhance {
             const expression = event.expr;
             const expressionValue = event.newValue;
             const newProps = {};
+            /* eslint-disable guard-for-in */
             for (let attrName in this[ATTRS]) {
+            /* eslint-enable guard-for-in */
                 const attr = this[ATTRS][attrName];
                 if (attr.expression === expression) {
                     if (attrName === 'evRest') {
@@ -307,11 +309,17 @@ export default class ComponentParser extends ExprParserEnhance {
         const props = scope.get('props');
         extend(props, basicProps);
         scope.set('props', props, false, () => {
-            this[COMPONENT].propsChangeMounted();
+
+            if (this[COMPONENT]
+                && this[COMPONENT].$$state === componentState.READY
+            ) {
+                this[COMPONENT].propsChangeMounted();
+            }
+
             done && done();
         });
         if (this[COMPONENT]
-            && (this[COMPONENT].$$state === componentState.READY)
+            && this[COMPONENT].$$state === componentState.READY
         ) {
             this[COMPONENT].propsChange();
         }
