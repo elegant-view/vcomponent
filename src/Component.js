@@ -24,10 +24,21 @@ export default class Component {
         this.props = {};
     }
 
+    /**
+     * 组件模板字符串
+     *
+     * @public
+     * @return {[type]} [description]
+     */
     getTemplate() {
         return '';
     }
 
+    /**
+     * 销毁组件
+     *
+     * @public
+     */
     destroy() {}
 
     shouldUpdate(expr, exprValue, exprOldValue) {
@@ -39,16 +50,68 @@ export default class Component {
         return clone(expressionObject);
     }
 
-    propsChange() {}
-
+    /**
+     * 组件初始化数据都进来了，尚未挂载到DOM树上
+     *
+     * @public
+     * @deprecated
+     */
     ready() {}
 
-    getComponentClasses() {}
+    /**
+     * 组件初始化数据都进来了，尚未挂载到DOM树上
+     *
+     * @public
+     */
+    init() {
+        this.ready();
+    }
 
+    /**
+     * 初始化完成后，挂载到了DOM树上
+     *
+     * @public
+     * @deprecated
+     */
+    initMounted() {}
+
+    /**
+     * props发生了变化，注意：此处还未将props更新到DOM上去
+     *
+     * @public
+     */
+    propsChange() {}
+
+    /**
+     * props的改变已经体现到了DOM树上
+     *
+     * @public
+     */
+    propsChangeMounted() {}
+
+    /**
+     * 拿到本组件内部使用到的组件类，是一种配置。
+     *
+     * @public
+     * @return {Array.<Component>} 组件类数组
+     */
+    getComponentClasses() {
+        return [];
+    }
+
+    /**
+     * 设置state值
+     *
+     * @protected
+     * @param {string|Object} name    字符串或者对象
+     * @param {*} value   要设置的值
+     * @param {Object=} options 配置参数
+     */
     setState(name, value, options) {
         options = options || {};
         if (this.$$state !== componentState.READY) {
-            return log.warn(`don't set state data when the component 's state is not \`READY\``);
+            log.warn(`don't set state data when the component 's state is not \`READY\``);
+            return;
         }
 
         const state = this.$$scopeModel.get('state');
@@ -75,6 +138,13 @@ export default class Component {
         return {};
     }
 
+    /**
+     * 获取组件样式
+     *
+     * @static
+     * @public
+     * @return {string} 样式
+     */
     static getStyle() {
         return '';
     }

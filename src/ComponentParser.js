@@ -194,12 +194,17 @@ export default class ComponentParser extends ExprParserEnhance {
     }
 
     initRender(done) {
-        const doneChecker = new DoneChecker(done);
+        const doneChecker = new DoneChecker(() => {
+            this[COMPONENT].initMounted();
+            done();
+        });
         const exprWacther = this.getExpressionWatcher();
 
         const newProps = extend({}, this[COMPONENT].props);
         const expressionValueCache = {};
+        /* eslint-disable guard-for-in */
         for (let attrName in this[ATTRS]) {
+        /* eslint-enable guard-for-in */
             const attr = this[ATTRS][attrName];
             // 字面量已经在collectExprs的时候被直接设置到component.props里面去了，
             // 因此这里只需要处理非字面量的props。
@@ -241,7 +246,7 @@ export default class ComponentParser extends ExprParserEnhance {
 
         // 到此处，组件应该就初始化完毕了。
         this[COMPONENT].$$state = componentState.READY;
-        this[COMPONENT].ready();
+        this[COMPONENT].init();
 
         doneChecker.complete();
     }
@@ -277,7 +282,9 @@ export default class ComponentParser extends ExprParserEnhance {
         }
 
         const basicProps = {};
+        /* eslint-disable guard-for-in */
         for (let propName in primaryProps) {
+        /* eslint-enable guard-for-in */
             const value = primaryProps[propName];
             if (propName === 'ref') {
                 this.ref = value;
@@ -299,7 +306,10 @@ export default class ComponentParser extends ExprParserEnhance {
         const scope = this[COMPONENT_TREE].rootScope;
         const props = scope.get('props');
         extend(props, basicProps);
-        scope.set('props', props, false, done);
+        scope.set('props', props, false, () => {
+            this[COMPONENT].propsChangeMounted();
+            done && done();
+        });
         if (this[COMPONENT]
             && (this[COMPONENT].$$state === componentState.READY)
         ) {
