@@ -98,7 +98,13 @@ export default class ExprParserEnhance extends HTMLExprParser {
         return this.tree.getTreeVar('domUpdater').generateNodeAttrUpdateId(node, attrName);
     }
 
-    destroy() {
+    /**
+     * 释放资源
+     *
+     * @override
+     * @protected
+     */
+    release() {
         if (this[CHILDREN_TREE]) {
             this[CHILDREN_TREE].destroy();
             this[CHILDREN_TREE] = null;
@@ -111,7 +117,7 @@ export default class ExprParserEnhance extends HTMLExprParser {
         }
         this[REFERENCE] = null;
 
-        super.destroy();
+        super.release();
     }
 
     goDark(done) {

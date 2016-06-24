@@ -10,6 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "event": "github:elegant-view/event",
+    "protectobject": "github:elegant-view/protectobject",
     "vtpl": "github:elegant-view/vtpl"
   },
   "devDependencies": {

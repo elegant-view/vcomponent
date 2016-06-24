@@ -22,6 +22,7 @@ describe('ComponentParserSpec', () => {
         vc.registerComponents([Base]);
         vc.render(() => {
             expect(node.textContent).toBe('base');
+            vc.destroy();
             done();
         });
     });
@@ -38,6 +39,7 @@ describe('ComponentParserSpec', () => {
         vc.registerComponents([Test]);
         vc.render(() => {
             expect(node.textContent).toBe('yibuyisheng');
+            vc.destroy();
             done();
         });
     });
@@ -54,6 +56,7 @@ describe('ComponentParserSpec', () => {
         vc.registerComponents([Test]);
         vc.render(() => {
             expect(node.textContent).toBe('yibuyisheng');
+            vc.destroy();
             done();
         });
     });
@@ -70,6 +73,7 @@ describe('ComponentParserSpec', () => {
         vc.registerComponents([Test]);
         vc.render(() => {
             expect(node.firstElementChild.getAttribute('class')).toBe('test component');
+            vc.destroy();
             done();
         });
     });
@@ -92,6 +96,7 @@ describe('ComponentParserSpec', () => {
             done() {
                 expect(node.textContent).toBe('yibuyisheng');
                 done();
+                vc.destroy();
             }
         });
     });

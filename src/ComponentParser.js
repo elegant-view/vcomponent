@@ -359,14 +359,20 @@ export default class ComponentParser extends ExprParserEnhance {
         this[COMPONENT_TREE].setTreeVar('componentManager', curComponentManager);
     }
 
-    destroy() {
+    /**
+     * 释放资源
+     *
+     * @override
+     * @protected
+     */
+    release() {
         this[COMPONENT_TREE].destroy();
         this[COMPONENT].destroy();
         this[COMPONENT].$$state = componentState.DESTROIED;
 
         this.removeFromDOM(this.startNode, this.endNode);
 
-        super.destroy();
+        super.release();
     }
 
     /**
