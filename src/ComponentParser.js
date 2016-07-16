@@ -35,6 +35,7 @@ export default class ComponentParser extends ExprParserEnhance {
 
         this[COMPONENT_NODE] = this.startNode;
         this[ATTRS] = {};
+        this.expressions = [];
     }
 
     [CREATE_COMPONENT]() {
@@ -114,6 +115,7 @@ export default class ComponentParser extends ExprParserEnhance {
                 attr.isExpression = true;
                 attr.expression = attrValue;
                 exprWacther.addExpr(attrValue);
+                this.expressions.push(attrValue);
             }
             // 对于字面量prop，直接设置到$component.props里面去
             else {
@@ -157,51 +159,8 @@ export default class ComponentParser extends ExprParserEnhance {
     }
 
     linkScope() {
-        const exprWacther = this.getExpressionWatcher();
-
         this[COMPONENT_TREE].link();
-
         this.getScope().addChild(this[COMPONENT_TREE].rootScope);
-
-        exprWacther.on('change', (event, done) => {
-            const doneChecker = new DoneChecker(done);
-
-            if (!this.isDark) {
-                const expression = event.expr;
-                const expressionValue = event.newValue;
-                const newProps = {};
-                // this[ATTRS]是否包含当前发生改变的event.expr
-                let hasExpression = false;
-                /* eslint-disable guard-for-in */
-                for (let attrName in this[ATTRS]) {
-                /* eslint-enable guard-for-in */
-                    const attr = this[ATTRS][attrName];
-                    if (attr.expression === expression) {
-                        if (attrName === 'evRest') {
-                            extend(newProps, expressionValue);
-                        }
-                        else {
-                            newProps[attrName] = expressionValue;
-                        }
-
-                        hasExpression = true;
-                    }
-                }
-
-                // 检查传进来的props是否合法
-                const checkResult = this[CHECK_PROPS](newProps);
-                if (checkResult instanceof Error) {
-                    throw checkResult;
-                }
-
-                // 有更新的话，才更新
-                if (hasExpression) {
-                    doneChecker.add(done => this[SET_PROP](newProps, null, done));
-                }
-            }
-
-            doneChecker.complete();
-        });
     }
 
     initRender(done) {
@@ -254,6 +213,54 @@ export default class ComponentParser extends ExprParserEnhance {
         // 到此处，组件应该就初始化完毕了。
         this[COMPONENT].$$state = componentState.READY;
         this[COMPONENT].init();
+
+        doneChecker.complete();
+    }
+
+    /**
+     * 相关表达式发生变化之后的回调函数
+     *
+     * @public
+     * @override
+     * @param  {Event}   event 事件对象
+     * @param  {Function} done  完成处理的回调函数
+     */
+    onExpressionChange(event, done) {
+        const doneChecker = new DoneChecker(done);
+
+        if (!this.isDark) {
+            const expression = event.expr;
+            const expressionValue = event.newValue;
+            const newProps = {};
+            // this[ATTRS]是否包含当前发生改变的event.expr
+            let hasExpression = false;
+            /* eslint-disable guard-for-in */
+            for (let attrName in this[ATTRS]) {
+            /* eslint-enable guard-for-in */
+                const attr = this[ATTRS][attrName];
+                if (attr.expression === expression) {
+                    if (attrName === 'evRest') {
+                        extend(newProps, expressionValue);
+                    }
+                    else {
+                        newProps[attrName] = expressionValue;
+                    }
+
+                    hasExpression = true;
+                }
+            }
+
+            // 检查传进来的props是否合法
+            const checkResult = this[CHECK_PROPS](newProps);
+            if (checkResult instanceof Error) {
+                throw checkResult;
+            }
+
+            // 有更新的话，才更新
+            if (hasExpression) {
+                doneChecker.add(done => this[SET_PROP](newProps, null, done));
+            }
+        }
 
         doneChecker.complete();
     }
@@ -371,6 +378,7 @@ export default class ComponentParser extends ExprParserEnhance {
         this[COMPONENT].$$state = componentState.DESTROIED;
 
         this.removeFromDOM(this.startNode, this.endNode);
+        this.expressions = null;
 
         super.release();
     }

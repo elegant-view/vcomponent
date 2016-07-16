@@ -34,10 +34,10 @@ export default class ExprParserEnhance extends HTMLExprParser {
      * 此处增加处理children的情况
      *
      * @protected
-     * @param {string} attrName  属性名
-     * @param {string|Object} value 值
+     * @override
+     * @param {*} value 值
      */
-    setAttr(attrName, value) {
+    setNodeValue(value) {
         if (value && value instanceof Children) {
             // 如果之前创建了这种子树，直接销毁掉。
             if (this[CHILDREN_TREE]) {
@@ -79,7 +79,21 @@ export default class ExprParserEnhance extends HTMLExprParser {
             this[CHILDREN_TREE].link();
             this[CHILDREN_TREE].initRender();
         }
-        else if (attrName === 'ref') {
+        else {
+            super.setNodeValue(value);
+        }
+    }
+
+    /**
+     * 此处增加处理ref的情况
+     *
+     * @protected
+     * @override
+     * @param {string} attrName  属性名
+     * @param {string|Object} value 值
+     */
+    setAttr(attrName, value) {
+        if (attrName === 'ref') {
             this.ref = value;
             let children = this.tree.getTreeVar('children');
             children[value] = this.node;
