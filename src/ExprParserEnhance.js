@@ -51,16 +51,7 @@ export default class ExprParserEnhance extends HTMLExprParser {
             // 将children节点插入到dom树里面去
             let parentNode = this.node.getParentNode();
             parentNode.insertBefore(this.startNode, this.node);
-            let delayFns = [];
-            for (let curNode = value.getStartNode();
-                 curNode && !curNode.isAfter(value.getEndNode());
-                 curNode = curNode.getNextSibling()
-            ) {
-                delayFns.push(parentNode.insertBefore.bind(parentNode, curNode, this.node));
-            }
-            for (let i = 0, il = delayFns.length; i < il; ++i) {
-                delayFns[i]();
-            }
+            value.iterateClone(curNode => parentNode.insertBefore(curNode, this.node));
             parentNode.insertBefore(this.endNode, this.node);
             // 移除之前的文本节点，这个节点现在已经没有用了。
             this.node.remove();

@@ -24,6 +24,7 @@ const CHECK_PROPS = Symbol('checkProps');
 const GET_REST = Symbol('getRest');
 const ATTRS = Symbol('attrs');
 const SET_PROP = Symbol('setProp');
+const CHILDREN = Symbol('children');
 
 export default class ComponentParser extends ExprParserEnhance {
     constructor(options) {
@@ -36,6 +37,14 @@ export default class ComponentParser extends ExprParserEnhance {
         this[COMPONENT_NODE] = this.startNode;
         this[ATTRS] = {};
         this.expressions = [];
+
+        /**
+         * 有可能存在children
+         *
+         * @private
+         * @type {Children}
+         */
+        this[CHILDREN] = null;
     }
 
     [CREATE_COMPONENT]() {
@@ -73,12 +82,12 @@ export default class ComponentParser extends ExprParserEnhance {
         });
 
         // 记录下children
-        const children = new Children(
+        this[CHILDREN] = new Children(
             node.getFirstChild(),
             node.getLastChild(),
             this.tree
         );
-        this[SET_PROP]('children', children);
+        this[SET_PROP]('children', this[CHILDREN]);
 
         this[COMPONENT_TREE].setParent(this.tree);
 
@@ -372,6 +381,9 @@ export default class ComponentParser extends ExprParserEnhance {
      * @protected
      */
     release() {
+        this[CHILDREN] && this[CHILDREN].destroy();
+        this[CHILDREN] = null;
+
         this[COMPONENT_TREE].destroy();
         this[COMPONENT].destroy();
         this[COMPONENT].$$state = componentState.DESTROIED;

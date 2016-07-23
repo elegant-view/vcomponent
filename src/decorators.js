@@ -7,12 +7,14 @@ import typ from './type';
 
 export function propsType(types) {
     const checkFns = {};
+    /* eslint-disable fecs-use-for-of */
     for (let propName in types) {
         if (!types.hasOwnProperty(propName)) {
             continue;
         }
         checkFns[propName] = typ(types[propName]);
     }
+    /* eslint-enable fecs-use-for-of */
 
     return function (target) {
         const ParentClass = Object.getPrototypeOf(target.prototype).constructor;

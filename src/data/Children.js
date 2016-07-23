@@ -22,6 +22,15 @@ export default class Children extends Data {
         return this.$$endNode;
     }
 
+    iterateClone(fn) {
+        for (let curNode = this.getStartNode();
+             curNode && !curNode.isAfter(this.getEndNode());
+             curNode = curNode.getNextSibling()
+        ) {
+            fn(curNode.cloneNode(true));
+        }
+    }
+
     getParentTree() {
         return this.$$parentTree;
     }
@@ -37,5 +46,9 @@ export default class Children extends Data {
 
     clone() {
         return new Children(this.$$startNode, this.$$endNode, this.$$parentTree);
+    }
+
+    destroy() {
+
     }
 }

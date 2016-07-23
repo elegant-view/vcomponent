@@ -170,6 +170,7 @@ export const PropTypes = {
             }
 
             let ret = true;
+            /* eslint-disable fecs-use-for-of */
             for (let key in value) {
                 if (!value.hasOwnProperty(key)) {
                     continue;
@@ -179,6 +180,7 @@ export const PropTypes = {
                     break;
                 }
             }
+            /* eslint-enable fecs-use-for-of */
             return ret;
         }
     },
@@ -198,6 +200,7 @@ export const PropTypes = {
             }
 
             let ret = true;
+            /* eslint-disable fecs-use-for-of */
             for (let key in typeObj) {
                 if ((typeObj[key][REQUIRED] && !value.hasOwnProperty(key))
                     || (value.hasOwnProperty(key) && !check(typeObj[key])(value[key]))
@@ -206,6 +209,7 @@ export const PropTypes = {
                     break;
                 }
             }
+            /* eslint-enable fecs-use-for-of */
             return ret;
         }
     }
