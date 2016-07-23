@@ -72,7 +72,6 @@ export default class ExprParserEnhance extends HTMLExprParser {
                 endNode: this.endNode
             });
             this[CHILDREN_TREE].setParent(value.getParentTree());
-            // this[CHILDREN_TREE].rootScope.setParent(value.getParentTree().rootScope);
             value.getParentTree().rootScope.addChild(this[CHILDREN_TREE].rootScope);
 
             this[CHILDREN_TREE].compile();
@@ -134,32 +133,24 @@ export default class ExprParserEnhance extends HTMLExprParser {
         super.release();
     }
 
-    goDark(done) {
+    hide(done) {
         const doneChecker = new DoneChecker(done);
         if (this[CHILDREN_TREE]) {
-            doneChecker.add(done => {
-                this[CHILDREN_TREE].goDark(done);
-            });
+            doneChecker.add(innerDone => this[CHILDREN_TREE].goDark(innerDone));
         }
         else {
-            doneChecker.add(done => {
-                super.goDark(done);
-            });
+            doneChecker.add(innerDone => super.goDark(innerDone));
         }
         doneChecker.complete();
     }
 
-    restoreFromDark(done) {
+    show(done) {
         const doneChecker = new DoneChecker(done);
         if (this[CHILDREN_TREE]) {
-            doneChecker.add(done => {
-                this[CHILDREN_TREE].restoreFromDark(done);
-            });
+            doneChecker.add(innerDone => this[CHILDREN_TREE].restoreFromDark(innerDone));
         }
         else {
-            doneChecker.add(done => {
-                super.restoreFromDark(done);
-            });
+            doneChecker.add(innerDone => super.restoreFromDark(innerDone));
         }
         doneChecker.complete();
     }

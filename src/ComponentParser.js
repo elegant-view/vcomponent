@@ -87,7 +87,7 @@ export default class ComponentParser extends ExprParserEnhance {
     }
 
     /**
-     * d-rest是一个特殊属性
+     * ev-rest是一个特殊属性
      */
     collectExprs() {
         this[CREATE_COMPONENT]();
@@ -100,7 +100,6 @@ export default class ComponentParser extends ExprParserEnhance {
         // 将scope注入到component里面去
         this[COMPONENT].$$scopeModel = this[COMPONENT_TREE].rootScope;
 
-        const config = this.getConfig();
         const exprWacther = this.getExpressionWatcher();
         const curNode = this[COMPONENT_NODE];
         const attributes = curNode.getAttributes();
@@ -111,7 +110,7 @@ export default class ComponentParser extends ExprParserEnhance {
             const attr = this[ATTRS][line2camel(attrName)] = {};
 
             // 对于含有表达式的prop，把表达式记录下来
-            if (config.getExprRegExp().test(attrValue)) {
+            if (this.isExpression(attrValue)) {
                 attr.isExpression = true;
                 attr.expression = attrValue;
                 exprWacther.addExpr(attrValue);
@@ -408,25 +407,17 @@ export default class ComponentParser extends ExprParserEnhance {
         return [];
     }
 
-    goDark(done) {
+    hide(done) {
         const doneChecker = new DoneChecker(done);
-        if (this.isDark) {
-            doneChecker.complete();
-            return;
-        }
-        doneChecker.add(done => super.goDark(done));
-        doneChecker.add(done => this[COMPONENT_TREE].goDark(done));
+        doneChecker.add(innerDone => super.goDark(innerDone));
+        doneChecker.add(innerDone => this[COMPONENT_TREE].goDark(innerDone));
         doneChecker.complete();
     }
 
-    restoreFromDark(done) {
+    show(done) {
         const doneChecker = new DoneChecker(done);
-        if (!this.isDark) {
-            doneChecker.complete();
-            return;
-        }
-        doneChecker.add(done => super.restoreFromDark(done));
-        doneChecker.add(done => this[COMPONENT_TREE].restoreFromDark(done));
+        doneChecker.add(innerDone => super.restoreFromDark(innerDone));
+        doneChecker.add(innerDone => this[COMPONENT_TREE].restoreFromDark(innerDone));
         doneChecker.complete();
     }
 

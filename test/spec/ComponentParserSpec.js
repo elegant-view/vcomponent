@@ -30,7 +30,7 @@ describe('ComponentParserSpec', () => {
     it('props', done => {
         class Test extends Component {
             getTemplate() {
-                return '${props.name}';
+                return '{props.name}';
             }
         }
 
@@ -47,7 +47,7 @@ describe('ComponentParserSpec', () => {
     it('children', done => {
         class Test extends Component {
             getTemplate() {
-                return '${props.children}';
+                return '{props.children}';
             }
         }
 
@@ -64,7 +64,7 @@ describe('ComponentParserSpec', () => {
     it('css class', done => {
         class Test extends Component {
             getTemplate() {
-                return '<div class="${props.class}"></div>';
+                return '<div class="{props.class}"></div>';
             }
         }
 
@@ -81,11 +81,11 @@ describe('ComponentParserSpec', () => {
     it('out data', done => {
         class Test extends Component {
             getTemplate() {
-                return '${props.name}';
+                return '{props.name}';
             }
         }
 
-        node.innerHTML = '<ev-test name="${outerName}"></ev-test>';
+        node.innerHTML = '<ev-test name="{outerName}"></ev-test>';
         let vc = new VComponent({startNode: node, endNode: node});
         vc.registerComponents([Test]);
         vc.render();
@@ -109,7 +109,7 @@ describe('ComponentParserSpec', () => {
             }
         }
 
-        node.innerHTML = '<ev-test function="${outerFunction}"></ev-test>';
+        node.innerHTML = '<ev-test function="{outerFunction}"></ev-test>';
         let vc = new VComponent({startNode: node, endNode: node});
         vc.registerComponents([Test]);
         vc.render();
@@ -157,7 +157,7 @@ describe('ComponentParserSpec', () => {
             }
         }
 
-        node.innerHTML = '<ev-test name="zhangsan" ev-rest="${restObj}"></ev-test>';
+        node.innerHTML = '<ev-test name="zhangsan" ev-rest="{restObj}"></ev-test>';
         let vc = new VComponent({startNode: node, endNode: node});
         vc.registerComponents([Test]);
         vc.render();

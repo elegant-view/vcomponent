@@ -4,3 +4,4 @@ dom-component
 .idea
 npm-debug.log
 .DS_Store
+coverage

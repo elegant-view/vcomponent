@@ -5,7 +5,8 @@
   "main": "src/main.js",
   "scripts": {
     "dev": "node dev.js",
-    "build": "webpack ."
+    "build": "webpack .",
+    "test": "karma start"
   },
   "author": "",
   "license": "ISC",
@@ -28,6 +29,16 @@
     "jasmine-core": "^2.4.1",
     "requirejs": "^2.2.0",
     "webpack": "^1.12.11",
-    "webpack-dev-server": "^1.14.1"
+    "webpack-dev-server": "^1.14.1",
+    "karma": "^1.1.0",
+    "karma-babel-preprocessor": "^6.0.1",
+    "karma-chrome-launcher": "^1.0.1",
+    "karma-coverage": "^1.0.0",
+    "karma-firefox-launcher": "^1.0.0",
+    "karma-ie-launcher": "^1.0.0",
+    "karma-jasmine": "^1.0.2",
+    "karma-jasmine-html-reporter": "github:elegant-view/karma-jasmine-html-reporter",
+    "karma-requirejs": "^1.0.0",
+    "karma-safari-launcher": "^1.0.0"
   }
 }

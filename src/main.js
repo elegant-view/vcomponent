@@ -9,28 +9,30 @@ import ExprParserEnhance from './ExprParserEnhance';
 import ComponentManager from './ComponentManager';
 import VTpl from 'vtpl';
 
-const VTPL = Symbol('vtpl');
-
 export default class VComponent {
     constructor(options) {
-        this[VTPL] = new VTpl(options);
-        this[VTPL].registerParser(ExprParserEnhance);
-        this[VTPL].registerParser(ComponentParser);
+        /**
+         * @protected
+         */
+        this.vtpl = new VTpl(options);
 
-        this[VTPL].tree.setTreeVar('componentManager', new ComponentManager());
-        this[VTPL].tree.setTreeVar('children', {});
+        this.vtpl.registerParser(ExprParserEnhance);
+        this.vtpl.registerParser(ComponentParser);
+
+        this.vtpl.tree.setTreeVar('componentManager', new ComponentManager());
+        this.vtpl.tree.setTreeVar('children', {});
     }
 
     render(done) {
-        this[VTPL].render(done);
+        this.vtpl.render(done);
     }
 
     setData(...args) {
-        this[VTPL].setData(...args);
+        this.vtpl.setData(...args);
     }
 
     getData(...args) {
-        let scope = this[VTPL].tree.rootScope;
+        let scope = this.vtpl.tree.rootScope;
         return scope.get(...args);
     }
 
@@ -46,19 +48,19 @@ export default class VComponent {
      * @param {*} value 变量值
      */
     registerComponents(componentClasses) {
-        let componentManager = this[VTPL].tree.getTreeVar('componentManager');
+        let componentManager = this.vtpl.tree.getTreeVar('componentManager');
         componentManager.register(componentClasses);
     }
 
     destroy() {
-        let componentManager = this[VTPL].tree.getTreeVar('componentManager');
+        const componentManager = this.vtpl.tree.getTreeVar('componentManager');
         componentManager.destroy();
 
-        this[VTPL].destroy();
+        this.vtpl.destroy();
     }
 
     ref(name) {
-        let children = this[VTPL].tree.getTreeVar('children') || {};
+        let children = this.vtpl.tree.getTreeVar('children') || {};
         return children[name];
     }
 }
