@@ -12,11 +12,16 @@ const BOOLEAN = Symbol('boolean');
 const FUNCTION = Symbol('function');
 const OBJECT = Symbol('object');
 const DATE = Symbol('date');
+const ANY = Symbol('any');
 
 const REQUIRED = Symbol('required');
 const TYPE = Symbol('type');
 
 export const PropTypes = {
+    any: {
+        [TYPE]: ANY,
+        [REQUIRED]: false
+    },
     date: {
         [TYPE]: DATE,
         [REQUIRED]: false,
@@ -236,6 +241,9 @@ const typeCheckFns = {
     },
     [STRING](value) {
         return isClass(value, 'String');
+    },
+    [ANY](value) {
+        return true;
     }
 };
 

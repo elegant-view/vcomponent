@@ -44,12 +44,12 @@ export default class ExprParserEnhance extends HTMLExprParser {
                 throw new Error('already have a child tree.');
             }
 
-            let nodesManager = this.tree.getTreeVar('nodesManager');
+            const nodesManager = this.tree.getTreeVar('nodesManager');
             this.startNode = nodesManager.createComment('children');
             this.endNode = nodesManager.createComment('/children');
 
             // 将children节点插入到dom树里面去
-            let parentNode = this.node.getParentNode();
+            const parentNode = this.node.getParentNode();
             parentNode.insertBefore(this.startNode, this.node);
             value.iterateClone(curNode => parentNode.insertBefore(curNode, this.node));
             parentNode.insertBefore(this.endNode, this.node);
@@ -85,7 +85,7 @@ export default class ExprParserEnhance extends HTMLExprParser {
     setAttr(attrName, value) {
         if (attrName === 'ref') {
             this.ref = value;
-            let children = this.tree.getTreeVar('children');
+            const children = this.tree.getTreeVar('children');
             children[value] = this.node;
         }
         else {

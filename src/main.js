@@ -60,7 +60,7 @@ export default class VComponent {
     }
 
     ref(name) {
-        let children = this.vtpl.tree.getTreeVar('children') || {};
+        const children = this.vtpl.tree.getTreeVar('children') || {};
         return children[name];
     }
 }

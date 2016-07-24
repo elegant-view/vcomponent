@@ -321,7 +321,7 @@ export default class ComponentParser extends ExprParserEnhance {
                 basicProps.class = classList;
             }
             else {
-                basicProps[propName] = value;
+                basicProps[line2camel(propName)] = value;
             }
         }
 
