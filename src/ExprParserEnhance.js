@@ -130,7 +130,7 @@ export default class ExprParserEnhance extends HTMLExprParser {
             doneChecker.add(innerDone => this[CHILDREN_TREE].goDark(innerDone));
         }
         else {
-            doneChecker.add(innerDone => super.goDark(innerDone));
+            doneChecker.add(innerDone => super.hide(innerDone));
         }
         doneChecker.complete();
     }
@@ -141,7 +141,7 @@ export default class ExprParserEnhance extends HTMLExprParser {
             doneChecker.add(innerDone => this[CHILDREN_TREE].restoreFromDark(innerDone));
         }
         else {
-            doneChecker.add(innerDone => super.restoreFromDark(innerDone));
+            doneChecker.add(innerDone => super.show(innerDone));
         }
         doneChecker.complete();
     }
