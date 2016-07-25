@@ -76,6 +76,12 @@ export default class ComponentParser extends ExprParserEnhance {
 
         this[COMPONENT_TREE] = Tree.createTree({startNode: this.startNode, endNode: this.endNode});
 
+        if (!isClass(this[COMPONENT].props, 'Object')) {
+            throw new Error('wrong props');
+        }
+        if (!isClass(this[COMPONENT].state, 'Object')) {
+            throw new Error('wrong state');
+        }
         this[COMPONENT_TREE].rootScope.set({
             props: this[COMPONENT].props,
             state: this[COMPONENT].state

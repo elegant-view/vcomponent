@@ -109,29 +109,26 @@ export default class Component {
      * @param {*} value   要设置的值
      * @param {Object=} options 配置参数
      */
-    setState(name, value, options = {}) {
+    setState(name, value, options) {
         if (this.$$state !== componentState.READY) {
             log.warn(`don't set state data when the component 's state is not \`READY\``);
             return;
         }
 
         const state = this.$$scopeModel.get('state');
-        set(name, value);
-        this.$$scopeModel.set({state}, options.isSilent, options.done);
-
-        function set(name, value) {
-            if (isClass(name, 'String')) {
-                state[name] = value;
+        if (isClass(name, 'String')) {
+            state[name] = value;
+            options = options || {};
+            this.$$scopeModel.set({state}, options.isSilent, options.done);
+        }
+        else if (name && isClass(name, 'Object')) {
+            /* eslint-disable guard-for-in */
+            for (let key in name) {
+                state[key] = name[key];
             }
-            else if (typeof name === 'object') {
-                for (let key in name) {
-                    if (!name.hasOwnProperty(key)) {
-                        continue;
-                    }
-
-                    state[key] = name[key];
-                }
-            }
+            /* eslint-enable guard-for-in */
+            options = value || {};
+            this.$$scopeModel.set({state}, options.isSilent, options.done);
         }
     }
 
