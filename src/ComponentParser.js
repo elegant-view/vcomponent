@@ -49,8 +49,8 @@ export default class ComponentParser extends ExprParserEnhance {
 
     [CREATE_COMPONENT]() {
         const node = this[COMPONENT_NODE];
-        let componentName = line2camel(node.getTagName().replace(/^ev/, ''));
-        let ComponentClass = this.tree.getTreeVar('componentManager').getClass(componentName);
+        const componentName = line2camel(node.getTagName().replace(/^ev/, ''));
+        const ComponentClass = this.tree.getTreeVar('componentManager').getClass(componentName);
         if (!ComponentClass) {
             throw new Error(`the component \`${componentName}\` is not registed!`);
         }
@@ -139,11 +139,8 @@ export default class ComponentParser extends ExprParserEnhance {
             }
         }
 
-        // 子树先compile完，再把整棵树插入到DOM中
+        // 子树compile
         this[COMPONENT_TREE].compile();
-        insertComponentNodes(curNode, this.startNode, this.endNode);
-
-        this[COMPONENT_NODE] = null;
 
         // 给component扩展两个控制表达式监测的方法
         this[COMPONENT].suspendExpr = function (expr) {
@@ -152,24 +149,6 @@ export default class ComponentParser extends ExprParserEnhance {
         this[COMPONENT].resumeExpr = function (expr) {
             exprWacther.resumeExpr(expr);
         };
-
-        // 把组件节点放到 DOM 树中去
-        function insertComponentNodes(componentNode, startNode, endNode) {
-            let parentNode = componentNode.getParentNode();
-
-            Node.iterate(startNode, endNode, curNode => {
-                const nextNode = curNode.getNextSibling();
-                parentNode.insertBefore(curNode, componentNode);
-
-                return {
-                    type: 'options',
-                    getNextNode: () => nextNode,
-                    getChildNodes: () => []
-                };
-            });
-
-            componentNode.remove();
-        }
     }
 
     linkScope() {
@@ -177,8 +156,29 @@ export default class ComponentParser extends ExprParserEnhance {
         this.getScope().addChild(this[COMPONENT_TREE].rootScope);
     }
 
+    insertComponentNodes(componentNode, startNode, endNode) {
+        const parentNode = componentNode.getParentNode();
+        if (!parentNode) {
+            return;
+        }
+
+        Node.iterate(startNode, endNode, curNode => {
+            const nextNode = curNode.getNextSibling();
+            parentNode.insertBefore(curNode, componentNode);
+
+            return {
+                type: 'options',
+                getNextNode: () => nextNode,
+                getChildNodes: () => []
+            };
+        });
+
+        componentNode.remove();
+    }
+
     initRender(done) {
         const doneChecker = new DoneChecker(() => {
+            this.insertComponentNodes(this[COMPONENT_NODE], this.startNode, this.endNode);
             this[COMPONENT].initMounted();
             done();
         });
@@ -396,6 +396,8 @@ export default class ComponentParser extends ExprParserEnhance {
 
         this.removeFromDOM(this.startNode, this.endNode);
         this.expressions = null;
+
+        this[COMPONENT_NODE] = null;
 
         super.release();
     }
