@@ -14,6 +14,8 @@ const CHILDREN_TREE = Symbol('childrenTree');
 
 export default class ExprParserEnhance extends HTMLExprParser {
 
+    static priority = 3;
+
     constructor(...args) {
         super(...args);
 

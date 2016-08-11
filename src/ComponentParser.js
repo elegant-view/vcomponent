@@ -27,6 +27,9 @@ const SET_PROP = Symbol('setProp');
 const CHILDREN = Symbol('children');
 
 export default class ComponentParser extends ExprParserEnhance {
+
+    static priority = 4;
+
     constructor(options) {
         super(options);
 

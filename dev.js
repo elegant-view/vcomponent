@@ -7,7 +7,11 @@ server.start({
         include: [/\/(test|src)\/.*\.js$/],
         compileOptions: {
             presets: ['es2015', 'stage-0'],
-            plugins: ['babel-plugin-transform-decorators-legacy', 'transform-es2015-modules-amd']
+            plugins: [
+                'transform-class-properties',
+                'babel-plugin-transform-decorators-legacy',
+                'transform-es2015-modules-amd'
+            ]
         }
     }
 });
