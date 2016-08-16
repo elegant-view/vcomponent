@@ -181,7 +181,6 @@ export default class ComponentParser extends ExprParserEnhance {
 
     initRender(done) {
         const doneChecker = new DoneChecker(() => {
-            this.insertComponentNodes(this[COMPONENT_NODE], this.startNode, this.endNode);
             this[COMPONENT].initMounted();
             done();
         });
@@ -225,6 +224,13 @@ export default class ComponentParser extends ExprParserEnhance {
 
         doneChecker.add(done => this[SET_PROP](newProps, null, done));
 
+        doneChecker.add(innerDone => {
+            const domUpdater = this.getDOMUpdater();
+            const taskId = domUpdater.generateTaskId();
+            domUpdater.addTaskFn(taskId, () => {
+                this.insertComponentNodes(this[COMPONENT_NODE], this.startNode, this.endNode);
+            }, innerDone);
+        });
         doneChecker.add(::this[COMPONENT_TREE].initRender);
 
         // 到此处，组件应该就初始化完毕了。
