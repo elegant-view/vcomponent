@@ -438,14 +438,14 @@ export default class ComponentParser extends ExprParserEnhance {
 
     hide(done) {
         const doneChecker = new DoneChecker(done);
-        doneChecker.add(innerDone => super.goDark(innerDone));
+        doneChecker.add(innerDone => super.hide(innerDone));
         doneChecker.add(innerDone => this[COMPONENT_TREE].goDark(innerDone));
         doneChecker.complete();
     }
 
     show(done) {
         const doneChecker = new DoneChecker(done);
-        doneChecker.add(innerDone => super.restoreFromDark(innerDone));
+        doneChecker.add(innerDone => super.show(innerDone));
         doneChecker.add(innerDone => this[COMPONENT_TREE].restoreFromDark(innerDone));
         doneChecker.complete();
     }
