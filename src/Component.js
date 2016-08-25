@@ -132,6 +132,20 @@ export default class Component {
         }
     }
 
+    /**
+     * 组件被隐藏了,很可能DOM元素脱离了DOM树
+     *
+     * @public
+     */
+    beforeHide() {}
+
+    /**
+     * 组件显示出来了,DOM元素回到了DOM树中
+     *
+     * @public
+     */
+    afterShow() {}
+
     static getPropsCheckFns() {
         return {};
     }
