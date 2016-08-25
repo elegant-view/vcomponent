@@ -31,6 +31,23 @@ export default class ExprParserEnhance extends HTMLExprParser {
     set ref(value) {
         this[REFERENCE] = value;
     }
+    
+    /**
+     * @inheritDoc
+     * @public
+     */
+    collectExprs() {
+        // 提前处理一下ref
+        const nodeType = this.startNode.getNodeType();
+        if (nodeType === Node.ELEMENT_NODE) {
+            const ref = this.startNode.getAttribute('ref');
+            if (ref) {
+                this.setAttr('ref', ref);
+            }
+        }
+
+        super.collectExprs();
+    }
 
     /**
      * 此处增加处理children的情况
