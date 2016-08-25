@@ -342,8 +342,7 @@ export default class ComponentParser extends ExprParserEnhance {
 
         const scope = this[COMPONENT_TREE].rootScope;
         const props = scope.get('props');
-        extend(props, basicProps);
-        scope.set('props', props, false, () => {
+        scope.set('props', extend(props, basicProps), false, () => {
             if (this[COMPONENT]
                 && this[COMPONENT].$$state === componentState.READY
             ) {
@@ -437,6 +436,8 @@ export default class ComponentParser extends ExprParserEnhance {
     }
 
     hide(done) {
+        this[COMPONENT].beforeHide();
+
         const doneChecker = new DoneChecker(done);
         doneChecker.add(innerDone => super.hide(innerDone));
         doneChecker.add(innerDone => this[COMPONENT_TREE].goDark(innerDone));
@@ -444,7 +445,10 @@ export default class ComponentParser extends ExprParserEnhance {
     }
 
     show(done) {
-        const doneChecker = new DoneChecker(done);
+        const doneChecker = new DoneChecker(() => {
+            this[COMPONENT].afterShow();
+            typeof done === 'function' && done();
+        });
         doneChecker.add(innerDone => super.show(innerDone));
         doneChecker.add(innerDone => this[COMPONENT_TREE].restoreFromDark(innerDone));
         doneChecker.complete();
