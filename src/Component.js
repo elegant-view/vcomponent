@@ -11,6 +11,18 @@ import {isClass} from './utils';
 import deepEqual from 'vtpl/deepEqual';
 import clone from 'vtpl/clone';
 
+const TYPE_KEY = Symbol('type');
+
+export function type(typeStr) {
+    return function (target) {
+        target[TYPE_KEY] = typeStr;
+    };
+}
+
+export function getType(componentClass) {
+    return componentClass[TYPE_KEY] || componentClass.name;
+}
+
 export default class Component {
     constructor() {
         this.refs = {};

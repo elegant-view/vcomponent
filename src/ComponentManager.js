@@ -6,6 +6,7 @@
  */
 
 import {isArray, getSuper} from './utils';
+import {getType} from './Component';
 
 export default class ComponentManager {
     constructor() {
@@ -27,7 +28,7 @@ export default class ComponentManager {
             if (!ComponentClass) {
                 throw new Error('the `ComponentClass` passed in is undefined, please check your code.');
             }
-            let name = ComponentClass.name;
+            let name = getType(ComponentClass);
             this.components[name] = ComponentClass;
             this.mountStyle(ComponentClass);
         }
@@ -71,7 +72,7 @@ export default class ComponentManager {
      * @param {Class} ComponentClass 组件类
      */
     mountStyle(ComponentClass) {
-        let componentName = ComponentClass.name;
+        let componentName = getType(ComponentClass);
         let styleNodeId = 'component-' + componentName;
 
         // 判断一下，避免重复添加css
@@ -98,7 +99,7 @@ export default class ComponentManager {
      * @param {Class} ComponentClass 组件类
      */
     unmountStyle(ComponentClass) {
-        let componentName = ComponentClass.name;
+        let componentName = getType(ComponentClass);
         let styleNodeId = 'component-' + componentName;
 
         let el = document.getElementById(styleNodeId);
