@@ -28,8 +28,14 @@ const CHILDREN = Symbol('children');
 
 export default class ComponentParser extends ExprParserEnhance {
 
+    /**
+     * @override
+     */
     static priority = 4;
 
+    /**
+     * @override
+     */
     constructor(options) {
         super(options);
 
@@ -50,6 +56,11 @@ export default class ComponentParser extends ExprParserEnhance {
         this[CHILDREN] = null;
     }
 
+    /**
+     * 创建组件实例
+     *
+     * @private
+     */
     [CREATE_COMPONENT]() {
         const node = this[COMPONENT_NODE];
         const componentName = line2camel(node.getTagName().replace(/^ev/, ''));
@@ -91,17 +102,95 @@ export default class ComponentParser extends ExprParserEnhance {
         });
 
         // 记录下children
-        this[CHILDREN] = new Children(
-            node.getFirstChild(),
-            node.getLastChild(),
-            this.tree
-        );
+        this[CHILDREN] = this.parseChildren();
         this[SET_PROP]('children', this[CHILDREN]);
 
         this[COMPONENT_TREE].setParent(this.tree);
 
         // 用于存放当前组件下的子组件
         this[COMPONENT_TREE].setTreeVar('children', this[COMPONENT].refs);
+    }
+
+    /**
+     * 解析出来children。
+     * children有两种形式：
+     * 1、单children形式，表现得和html DOM结构类似，写法也很类似：
+     *     <ev-component><p>...</p><p>...</p></ev-component>
+     *     其中Component的模板为：
+     *     <div>{props.children}</div>
+     * 2、多children形式：
+     *     <ev-component>
+     *         <!-- children: child1 -->
+     *         child1
+     *         <!-- /children -->
+     *         <!-- children: child2 -->
+     *         child2
+     *         <!-- /children -->
+     *     </ev-component>
+     *     其中Component的模板为：
+     *     <div>
+     *         <div>{props.children.child1}</div>
+     *         <div>{props.children.child2}</div>
+     *     </div>
+     *
+     * @private
+     * @return {Children|Object}
+     */
+    parseChildren() {
+        const componentNode = this[COMPONENT_NODE];
+
+        let children = {};
+        let child = {};
+        let inChild = false;
+        let hasChild = false;
+        Node.iterate(componentNode.getFirstChild(), componentNode.getLastChild(), curNode => {
+            if (curNode.getNodeType() === Node.COMMENT_NODE) {
+                if (/^\s*child:\s*/.test(curNode.getNodeValue())) {
+                    if (inChild) {
+                        throw new Error('children template can not nest.');
+                    }
+
+                    const nextSibling = curNode.getNextSibling();
+                    if (!nextSibling) {
+                        throw new Error('no end children node.');
+                    }
+
+                    // 看看这个child是不是空的
+                    if (nextSibling.getNodeType() === Node.COMMENT_NODE
+                        && nextSibling.nodeValue.replace(/\s*/g, '') === '/child'
+                    ) {
+                        return;
+                    }
+
+                    const nodeValue = curNode.getNodeValue();
+                    child.name = nodeValue.replace(/^\s*child:\s*/, '').replace(/\s+/g, '');
+                    child.startNode = curNode.getNextSibling();
+
+                    inChild = true;
+                }
+                else if (curNode.getNodeValue().replace(/\s+/g, '') === '/child') {
+                    if (!inChild) {
+                        throw new Error('wrong end node');
+                    }
+
+                    child.endNode = curNode.getPreviousSibling();
+                    children[child.name] = new Children(child.startNode, child.endNode, this.tree);
+                    child = {};
+                    inChild = false;
+                    hasChild = true;
+                }
+            }
+        });
+
+        if (!hasChild) {
+            children = new Children(
+                componentNode.getFirstChild(),
+                componentNode.getLastChild(),
+                this.tree
+            );
+        }
+
+        return children;
     }
 
     /**
@@ -154,11 +243,22 @@ export default class ComponentParser extends ExprParserEnhance {
         };
     }
 
+    /**
+     * @override
+     */
     linkScope() {
         this[COMPONENT_TREE].link();
         this.getScope().addChild(this[COMPONENT_TREE].rootScope);
     }
 
+    /**
+     * 在DOM树中插入组件节点
+     *
+     * @private
+     * @param  {WrapNode} componentNode 组件占位节点
+     * @param  {WrapNode} startNode     组件开始节点
+     * @param  {WrapNode} endNode       组件结束节点
+     */
     insertComponentNodes(componentNode, startNode, endNode) {
         const parentNode = componentNode.getParentNode();
         if (!parentNode) {
@@ -179,6 +279,9 @@ export default class ComponentParser extends ExprParserEnhance {
         componentNode.remove();
     }
 
+    /**
+     * @override
+     */
     initRender(done) {
         const doneChecker = new DoneChecker(() => {
             this[COMPONENT].initMounted();
@@ -288,6 +391,9 @@ export default class ComponentParser extends ExprParserEnhance {
         doneChecker.complete();
     }
 
+    /**
+     * @override
+     */
     [GET_REST](attrs, value) {
         const rest = {};
         for (let propName in value) {
@@ -376,6 +482,9 @@ export default class ComponentParser extends ExprParserEnhance {
         }
     }
 
+    /**
+     * @override
+     */
     [REGISTER_COMPONENTS]() {
         const componentManager = this.tree.getTreeVar('componentManager');
         const curComponentManager = new ComponentManager();
@@ -395,8 +504,18 @@ export default class ComponentParser extends ExprParserEnhance {
      * @protected
      */
     release() {
-        this[CHILDREN] && this[CHILDREN].destroy();
-        this[CHILDREN] = null;
+        if (this[CHILDREN]) {
+            if (this[CHILDREN] instanceof Children) {
+                this[CHILDREN].destroy();
+            }
+            else {
+                for (let key in this[CHILDREN]) {
+                    this[CHILDREN][key].destroy();
+                }
+            }
+
+            this[CHILDREN] = null;
+        }
 
         this[COMPONENT_TREE].destroy();
         this[COMPONENT].destroy();
@@ -431,10 +550,16 @@ export default class ComponentParser extends ExprParserEnhance {
         return name;
     }
 
+    /**
+     * @override
+     */
     getChildNodes() {
         return [];
     }
 
+    /**
+     * @override
+     */
     hide(done) {
         this[COMPONENT].beforeHide();
 
@@ -444,6 +569,9 @@ export default class ComponentParser extends ExprParserEnhance {
         doneChecker.complete();
     }
 
+    /**
+     * @override
+     */
     show(done) {
         const doneChecker = new DoneChecker(() => {
             this[COMPONENT].afterShow();

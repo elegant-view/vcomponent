@@ -61,6 +61,32 @@ describe('ComponentParserSpec', () => {
         });
     });
 
+    it('multiple children', done => {
+        class Test extends Component {
+            getTemplate() {
+                return '<b>{props.children.child1}</b><b>{props.children.child2}</b>';
+            }
+        }
+
+        node.innerHTML = `
+            <ev-test>
+                <!-- child: child1 -->
+                    yibuyisheng
+                <!-- /child -->
+                <!-- child: child2 -->
+                    1
+                <!-- /child -->
+            </ev-test>
+        `;
+        let vc = new VComponent({startNode: node, endNode: node});
+        vc.registerComponents([Test]);
+        vc.render(() => {
+            expect(node.textContent.replace(/\s+/g, '')).toBe('yibuyisheng1');
+            vc.destroy();
+            done();
+        });
+    });
+
     it('css class', done => {
         class Test extends Component {
             getTemplate() {
