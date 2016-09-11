@@ -185,6 +185,13 @@ export default class Component {
      */
     afterShow() {}
 
+    /**
+     * 获取用于检查传入的props数据合法性的函数
+     *
+     * @static
+     * @public
+     * @return {Object}
+     */
     static getPropsCheckFns() {
         return {};
     }

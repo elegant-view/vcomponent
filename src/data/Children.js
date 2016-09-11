@@ -14,6 +14,30 @@ import Data from 'vtpl/Data';
 export default class Children extends Data {
 
     /**
+     * 开始节点
+     *
+     * @type {WrapNode}
+     * @private
+     */
+    startNode;
+
+    /**
+     * 结束节点
+     *
+     * @type {WrapNode}
+     * @private
+     */
+    endNode;
+
+    /**
+     * 树
+     *
+     * @type {Tree}
+     * @private
+     */
+    parentTree;
+
+    /**
      * 构造函数
      *
      * @public
@@ -24,9 +48,9 @@ export default class Children extends Data {
     constructor(startNode, endNode, parentTree) {
         super();
 
-        this.$$startNode = startNode;
-        this.$$endNode = endNode;
-        this.$$parentTree = parentTree;
+        this.startNode = startNode;
+        this.endNode = endNode;
+        this.parentTree = parentTree;
     }
 
     /**
@@ -36,7 +60,7 @@ export default class Children extends Data {
      * @return {WrapNode}
      */
     getStartNode() {
-        return this.$$startNode;
+        return this.startNode;
     }
 
     /**
@@ -46,7 +70,7 @@ export default class Children extends Data {
      * @return {WrapNode}
      */
     getEndNode() {
-        return this.$$endNode;
+        return this.endNode;
     }
 
     /**
@@ -71,7 +95,7 @@ export default class Children extends Data {
      * @return {Tree}
      */
     getParentTree() {
-        return this.$$parentTree;
+        return this.parentTree;
     }
 
     /**
@@ -85,9 +109,9 @@ export default class Children extends Data {
         if (!(children instanceof Children)) {
             return false;
         }
-        return this.$$startNode === children.$$startNode
-            && this.$$endNode === children.$$endNode
-            && this.$$parentTree === children.$$parentTree;
+        return this.startNode === children.$$startNode
+            && this.endNode === children.$$endNode
+            && this.parentTree === children.$$parentTree;
     }
 
     /**
@@ -97,7 +121,7 @@ export default class Children extends Data {
      * @return {Children}
      */
     clone() {
-        return new Children(this.$$startNode, this.$$endNode, this.$$parentTree);
+        return new Children(this.startNode, this.endNode, this.parentTree);
     }
 
     /**
@@ -106,8 +130,8 @@ export default class Children extends Data {
      * @public
      */
     destroy() {
-        this.$$startNode = null;
-        this.$$endNode = null;
-        this.$$parentTree = null;
+        this.startNode = null;
+        this.endNode = null;
+        this.parentTree = null;
     }
 }
