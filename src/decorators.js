@@ -20,7 +20,9 @@ export function propsType(types) {
         const ParentClass = Object.getPrototypeOf(target.prototype).constructor;
         const allCheckFns = ParentClass.getPropsCheckFns();
 
+        /* eslint-disable fecs-use-for-of,fecs-valid-map-set */
         for (let propName in checkFns) {
+        /* eslint-enable fecs-use-for-of,fecs-valid-map-set */
             if (!checkFns.hasOwnProperty(propName)) {
                 continue;
             }

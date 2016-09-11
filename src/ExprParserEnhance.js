@@ -12,6 +12,12 @@ import DoneChecker from 'vtpl/DoneChecker';
 const REFERENCE = Symbol('reference');
 const CHILDREN_TREE = Symbol('childrenTree');
 
+/**
+ * ExprParserEnhance
+ *
+ * @class
+ * @extends {HTMLExprParser}
+ */
 export default class ExprParserEnhance extends HTMLExprParser {
 
     /**
@@ -30,10 +36,22 @@ export default class ExprParserEnhance extends HTMLExprParser {
         this[REFERENCE] = null;
     }
 
+    /**
+     * 获取ref名
+     *
+     * @public
+     * @return {string}
+     */
     get ref() {
         return this[REFERENCE];
     }
 
+    /**
+     * 设置ref名
+     *
+     * @public
+     * @param  {string} value ref名
+     */
     set ref(value) {
         this[REFERENCE] = value;
     }
@@ -118,6 +136,9 @@ export default class ExprParserEnhance extends HTMLExprParser {
         }
     }
 
+    /**
+     * @override
+     */
     getTaskId(attrName) {
         let node = this.node;
         if (this[CHILDREN_TREE]) {
@@ -149,6 +170,9 @@ export default class ExprParserEnhance extends HTMLExprParser {
         super.release();
     }
 
+    /**
+     * @override
+     */
     hide(done) {
         const doneChecker = new DoneChecker(done);
         if (this[CHILDREN_TREE]) {
@@ -160,6 +184,9 @@ export default class ExprParserEnhance extends HTMLExprParser {
         doneChecker.complete();
     }
 
+    /**
+     * @override
+     */
     show(done) {
         const doneChecker = new DoneChecker(done);
         if (this[CHILDREN_TREE]) {

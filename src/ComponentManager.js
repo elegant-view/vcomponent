@@ -5,9 +5,14 @@
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
-import {isArray, getSuper} from './utils';
+import {isArray} from './utils';
 import {getType} from './Component';
 
+/**
+ * ComponentManager
+ *
+ * @class
+ */
 export default class ComponentManager {
 
     /**

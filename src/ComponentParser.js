@@ -26,6 +26,12 @@ const ATTRS = Symbol('attrs');
 const SET_PROP = Symbol('setProp');
 const CHILDREN = Symbol('children');
 
+/**
+ * ComponentParser
+ *
+ * @class
+ * @extends {ExprParserEnhance}
+ */
 export default class ComponentParser extends ExprParserEnhance {
 
     /**
@@ -74,7 +80,12 @@ export default class ComponentParser extends ExprParserEnhance {
         this[COMPONENT_CSS_CLASS_NAME] = this.getCssClassName(ComponentClass);
     }
 
-    // 必须在组件创建之后
+    /**
+     * 创建组件树。
+     * 必须在组件创建之后。
+     *
+     * @protected
+     */
     [CREATE_COMPONENT_TREE]() {
         const node = this[COMPONENT_NODE];
         const nodesManager = this.getNodesManager();
@@ -195,6 +206,9 @@ export default class ComponentParser extends ExprParserEnhance {
 
     /**
      * ev-rest是一个特殊属性
+     *
+     * @override
+     * @protected
      */
     collectExprs() {
         this[CREATE_COMPONENT]();
@@ -271,8 +285,12 @@ export default class ComponentParser extends ExprParserEnhance {
 
             return {
                 type: 'options',
-                getNextNode: () => nextNode,
-                getChildNodes: () => []
+                getNextNode() {
+                    return nextNode;
+                },
+                getChildNodes() {
+                    return [];
+                }
             };
         });
 
@@ -291,9 +309,9 @@ export default class ComponentParser extends ExprParserEnhance {
 
         const newProps = extend({}, this[COMPONENT].props);
         const expressionValueCache = {};
-        /* eslint-disable guard-for-in */
+        /* eslint-disable guard-for-in,fecs-use-for-of */
         for (let attrName in this[ATTRS]) {
-        /* eslint-enable guard-for-in */
+        /* eslint-enable guard-for-in,fecs-use-for-of */
             const attr = this[ATTRS][attrName];
             // 字面量已经在collectExprs的时候被直接设置到component.props里面去了，
             // 因此这里只需要处理非字面量的props。
@@ -319,7 +337,9 @@ export default class ComponentParser extends ExprParserEnhance {
 
         // 初始化参数类型的检查，如果不通过，直接抛出异常
         const checkFns = this[COMPONENT].constructor.getPropsCheckFns() || {};
+        /* eslint-disable fecs-use-for-of */
         for (let propName in checkFns) {
+        /* eslint-enable fecs-use-for-of */
             if (!checkFns[propName](newProps[propName])) {
                 throw new Error(`invalid prop: ${propName}`);
             }
@@ -360,9 +380,9 @@ export default class ComponentParser extends ExprParserEnhance {
             const newProps = {};
             // this[ATTRS]是否包含当前发生改变的event.expr
             let hasExpression = false;
-            /* eslint-disable guard-for-in */
+            /* eslint-disable guard-for-in,fecs-use-for-of */
             for (let attrName in this[ATTRS]) {
-            /* eslint-enable guard-for-in */
+            /* eslint-enable guard-for-in,fecs-use-for-of */
                 const attr = this[ATTRS][attrName];
                 if (attr.expression === expression) {
                     if (attrName === 'evRest') {
@@ -396,7 +416,9 @@ export default class ComponentParser extends ExprParserEnhance {
      */
     [GET_REST](attrs, value) {
         const rest = {};
+        /* eslint-disable fecs-use-for-of */
         for (let propName in value) {
+        /* eslint-enable fecs-use-for-of */
             if (propName in attrs) {
                 continue;
             }
@@ -425,9 +447,9 @@ export default class ComponentParser extends ExprParserEnhance {
         }
 
         const basicProps = {};
-        /* eslint-disable guard-for-in */
+        /* eslint-disable guard-for-in,fecs-use-for-of,fecs-valid-map-set */
         for (let propName in primaryProps) {
-        /* eslint-enable guard-for-in */
+        /* eslint-enable guard-for-in,fecs-use-for-of,fecs-valid-map-set */
             const value = primaryProps[propName];
             if (propName === 'ref') {
                 this.ref = value;
@@ -468,10 +490,18 @@ export default class ComponentParser extends ExprParserEnhance {
         }
     }
 
-    // 该方法仅用于检查props change后的参数合法性
+    /**
+     * 该方法仅用于检查props change后的参数合法性
+     *
+     * @private
+     * @param {Object} newProps 新props
+     * @return {Error|Undefined}
+     */
     [CHECK_PROPS](newProps) {
         const checkFns = this[COMPONENT].constructor.getPropsCheckFns() || {};
+        /* eslint-disable fecs-use-for-of */
         for (let propName in newProps) {
+        /* eslint-enable fecs-use-for-of */
             if (!newProps.hasOwnProperty(propName)) {
                 continue;
             }
@@ -509,9 +539,11 @@ export default class ComponentParser extends ExprParserEnhance {
                 this[CHILDREN].destroy();
             }
             else {
+                /* eslint-disable guard-for-in,fecs-use-for-of */
                 for (let key in this[CHILDREN]) {
                     this[CHILDREN][key].destroy();
                 }
+                /* eslint-enable guard-for-in,fecs-use-for-of */
             }
 
             this[CHILDREN] = null;

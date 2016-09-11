@@ -23,7 +23,18 @@ export function getType(componentClass) {
     return componentClass[TYPE_KEY] || componentClass.name;
 }
 
+/**
+ * Component
+ *
+ * @class
+ */
 export default class Component {
+
+    /**
+     * 构造函数
+     *
+     * @public
+     */
     constructor() {
         this.refs = {};
 
@@ -53,11 +64,29 @@ export default class Component {
      */
     destroy() {}
 
+    /**
+     * 是否应该更新DOM
+     *
+     * @public
+     * @param  {string} expr         表达式
+     * @param  {*} exprValue    新的表达式值
+     * @param  {*} exprOldValue 老的表达式值
+     * @return {boolean}
+     */
     shouldUpdate(expr, exprValue, exprOldValue) {
         // 默认深比较
         return deepEqual(exprOldValue, exprValue);
     }
 
+    /**
+     * 克隆表达式计算出来的数据。
+     * 子类可以覆盖这个方法，提供自定义的、更高效的克隆方式。
+     *
+     * @public
+     * @param  {string} expr             表达式
+     * @param  {*} expressionObject 表达式计算出来的数据
+     * @return {*}
+     */
     cloneExpressionObject(expr, expressionObject) {
         return clone(expressionObject);
     }
@@ -121,25 +150,23 @@ export default class Component {
      * @param {*} value   要设置的值
      * @param {Object=} options 配置参数
      */
-    setState(name, value, options) {
+    setState(name, value, options = {}) {
         if (this.$$state !== componentState.READY) {
-            log.warn(`don't set state data when the component 's state is not \`READY\``);
+            log.warn('don\'t set state data when the component\'s state is not `READY`');
             return;
         }
 
         const state = this.$$scopeModel.get('state');
         if (isClass(name, 'String')) {
             state[name] = value;
-            options = options || {};
             this.$$scopeModel.set({state}, options.isSilent, options.done);
         }
         else if (name && isClass(name, 'Object')) {
-            /* eslint-disable guard-for-in */
+            /* eslint-disable guard-for-in,fecs-use-for-of */
             for (let key in name) {
                 state[key] = name[key];
             }
-            /* eslint-enable guard-for-in */
-            options = value || {};
+            /* eslint-enable guard-for-in,fecs-use-for-of */
             this.$$scopeModel.set({state}, options.isSilent, options.done);
         }
     }

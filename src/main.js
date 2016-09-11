@@ -9,7 +9,19 @@ import ExprParserEnhance from './ExprParserEnhance';
 import ComponentManager from './ComponentManager';
 import VTpl from 'vtpl';
 
+/**
+ * VComponent
+ *
+ * @class
+ */
 export default class VComponent {
+
+    /**
+     * 构造函数
+     *
+     * @public
+     * @param  {Object} options 参数
+     */
     constructor(options) {
         /**
          * @protected
@@ -23,14 +35,33 @@ export default class VComponent {
         this.vtpl.tree.setTreeVar('children', {});
     }
 
+    /**
+     * 渲染
+     *
+     * @public
+     * @param  {Function} done 渲染完成之后的回调
+     */
     render(done) {
         this.vtpl.render(done);
     }
 
+    /**
+     * 设置数据
+     *
+     * @public
+     * @param {...[*]} args 数据
+     */
     setData(...args) {
         this.vtpl.setData(...args);
     }
 
+    /**
+     * 获取数据
+     *
+     * @public
+     * @param  {...*} args 参数
+     * @return {*}
+     */
     getData(...args) {
         let scope = this.vtpl.tree.rootScope;
         return scope.get(...args);
@@ -52,6 +83,11 @@ export default class VComponent {
         componentManager.register(componentClasses);
     }
 
+    /**
+     * 销毁
+     *
+     * @public
+     */
     destroy() {
         const componentManager = this.vtpl.tree.getTreeVar('componentManager');
         componentManager.destroy();
@@ -59,6 +95,13 @@ export default class VComponent {
         this.vtpl.destroy();
     }
 
+    /**
+     * 根据ref获取组件
+     *
+     * @public
+     * @param  {string} name ref名字
+     * @return {Component}
+     */
     ref(name) {
         const children = this.vtpl.tree.getTreeVar('children') || {};
         return children[name];
