@@ -9,6 +9,12 @@ import {isArray, getSuper} from './utils';
 import {getType} from './Component';
 
 export default class ComponentManager {
+
+    /**
+     * constructor
+     *
+     * @public
+     */
     constructor() {
         this.components = {};
     }
@@ -30,7 +36,6 @@ export default class ComponentManager {
             }
             let name = getType(ComponentClass);
             this.components[name] = ComponentClass;
-            this.mountStyle(ComponentClass);
         }
     }
 
@@ -66,59 +71,11 @@ export default class ComponentManager {
     }
 
     /**
-     * 将组件的样式挂载上去
+     * 销毁
      *
-     * @private
-     * @param {Class} ComponentClass 组件类
+     * @public
      */
-    mountStyle(ComponentClass) {
-        let componentName = getType(ComponentClass);
-        let styleNodeId = 'component-' + componentName;
-
-        // 判断一下，避免重复添加css
-        if (!document.getElementById(styleNodeId)) {
-            let style = (ComponentClass.getStyle instanceof Function && ComponentClass.getStyle()) || '';
-            if (style) {
-                let styleNode = document.createElement('style');
-                styleNode.setAttribute('id', styleNodeId);
-                styleNode.innerText = style;
-                document.head.appendChild(styleNode);
-            }
-        }
-
-        // 将父类的css样式也加上去。父类很可能没注册，如果此处不加上去，样式可能就会缺一块。
-        if (componentName !== 'Component') {
-            this.mountStyle(getSuper(ComponentClass));
-        }
-    }
-
-    /**
-     * 卸载掉组件样式
-     *
-     * @private
-     * @param {Class} ComponentClass 组件类
-     */
-    unmountStyle(ComponentClass) {
-        let componentName = getType(ComponentClass);
-        let styleNodeId = 'component-' + componentName;
-
-        let el = document.getElementById(styleNodeId);
-        if (el) {
-            el.parentNode.removeChild(el);
-        }
-
-        if (componentName !== 'Component') {
-            this.unmountStyle(getSuper(ComponentClass));
-        }
-    }
-
     destroy() {
-        /* eslint-disable guard-for-in */
-        for (let name in this.components) {
-        /* eslint-enable guard-for-in */
-            this.unmountStyle(this.components[name]);
-        }
-
         this.components = null;
     }
 }
