@@ -45,7 +45,7 @@ export default class Main extends v.Component {
             '<span>${words[1]}!</span>'
         ].join('');
 	}
-	
+
 	ready() {
 		this.setData({
        	words: ['Hello', 'world']

@@ -26,6 +26,8 @@ const ATTRS = Symbol('attrs');
 const SET_PROP = Symbol('setProp');
 const CHILDREN = Symbol('children');
 
+const CHILD_REGEXP = /^\s*child:\s*/;
+
 /**
  * ComponentParser
  *
@@ -150,13 +152,13 @@ export default class ComponentParser extends ExprParserEnhance {
     parseChildren() {
         const componentNode = this[COMPONENT_NODE];
 
-        let children = {};
+        const children = {};
         let child = {};
         let inChild = false;
         let hasChild = false;
         Node.iterate(componentNode.getFirstChild(), componentNode.getLastChild(), curNode => {
             if (curNode.getNodeType() === Node.COMMENT_NODE) {
-                if (/^\s*child:\s*/.test(curNode.getNodeValue())) {
+                if (CHILD_REGEXP.test(curNode.getNodeValue())) {
                     if (inChild) {
                         throw new Error('children template can not nest.');
                     }
@@ -174,7 +176,7 @@ export default class ComponentParser extends ExprParserEnhance {
                     }
 
                     const nodeValue = curNode.getNodeValue();
-                    child.name = nodeValue.replace(/^\s*child:\s*/, '').replace(/\s+/g, '');
+                    child.name = nodeValue.replace(CHILD_REGEXP, '').replace(/\s+/g, '');
                     child.startNode = curNode.getNextSibling();
 
                     inChild = true;
@@ -433,7 +435,7 @@ export default class ComponentParser extends ExprParserEnhance {
      * @private
      * @param {string|Object} name  prop名字或者一个prop对象
      * @param {*} value prop值
-     * @param {function()} done 异步操作完成的回调函数
+     * @param {Function} done 异步操作完成的回调函数
      */
     [SET_PROP](name, value, done) {
         let primaryProps;
