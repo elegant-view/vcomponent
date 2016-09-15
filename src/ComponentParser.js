@@ -152,7 +152,7 @@ export default class ComponentParser extends ExprParserEnhance {
     parseChildren() {
         const componentNode = this[COMPONENT_NODE];
 
-        const children = {};
+        let children = {};
         let child = {};
         let inChild = false;
         let hasChild = false;
