@@ -195,15 +195,4 @@ export default class Component {
     static getPropsCheckFns() {
         return {};
     }
-
-    /**
-     * 获取组件样式
-     *
-     * @static
-     * @public
-     * @return {string} 样式
-     */
-    static getStyle() {
-        return '';
-    }
 }
