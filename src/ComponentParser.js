@@ -78,7 +78,7 @@ export default class ComponentParser extends ExprParserEnhance {
         }
 
         this[COMPONENT] = new ComponentClass();
-        this[COMPONENT].$$state = componentState.INITIALIZING;
+        this[COMPONENT].setStage(componentState.INITIALIZING);
         this[COMPONENT_CSS_CLASS_NAME] = this.getCssClassName(ComponentClass);
     }
 
@@ -359,7 +359,7 @@ export default class ComponentParser extends ExprParserEnhance {
         doneChecker.add(::this[COMPONENT_TREE].initRender);
 
         // 到此处，组件应该就初始化完毕了。
-        this[COMPONENT].$$state = componentState.READY;
+        this[COMPONENT].setStage(componentState.READY);
         this[COMPONENT].init();
 
         doneChecker.complete();
@@ -474,7 +474,7 @@ export default class ComponentParser extends ExprParserEnhance {
         const props = scope.get('props');
         scope.set('props', extend(props, basicProps), false, () => {
             if (this[COMPONENT]
-                && this[COMPONENT].$$state === componentState.READY
+                && this[COMPONENT].isInStage(componentState.READY)
             ) {
                 this[COMPONENT].propsChangeMounted(basicProps);
             }
@@ -482,7 +482,7 @@ export default class ComponentParser extends ExprParserEnhance {
             done && done();
         });
         if (this[COMPONENT]
-            && this[COMPONENT].$$state === componentState.READY
+            && this[COMPONENT].isInStage(componentState.READY)
         ) {
             this[COMPONENT].propsChange(basicProps);
         }
@@ -553,7 +553,7 @@ export default class ComponentParser extends ExprParserEnhance {
 
         this[COMPONENT_TREE].destroy();
         this[COMPONENT].destroy();
-        this[COMPONENT].$$state = componentState.DESTROIED;
+        this[COMPONENT].setStage(componentState.DESTROIED);
 
         this.removeFromDOM(this.startNode, this.endNode);
         this.expressions = null;

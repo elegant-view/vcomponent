@@ -1,7 +1,7 @@
 /**
  * @file 组件基类。
  *       以`ui-`开头的标签都是组件标签。
- *       组件的生命周期状态（$$state）在ComponentParser中维护
+ *       组件的生命周期状态在ComponentParser中维护
  * @author yibuyisheng(yibuyisheng@163.com)
  */
 
@@ -10,6 +10,8 @@ import log from 'vtpl/log';
 import {isClass} from './utils';
 import deepEqual from 'vtpl/deepEqual';
 import clone from 'vtpl/clone';
+import mixin from 'vtpl/decorators/mixin';
+import StageTrait from 'vtpl/decorators/StageTrait';
 
 const TYPE_KEY = Symbol('type');
 
@@ -28,6 +30,7 @@ export function getType(componentClass) {
  *
  * @class
  */
+@mixin(StageTrait)
 export default class Component {
 
     /**
@@ -36,10 +39,15 @@ export default class Component {
      * @public
      */
     constructor() {
+        this.restrictStageEnum([
+            componentState.INITIALIZING,
+            componentState.READY,
+            componentState.DESTROIED,
+            componentState.BEFORE_RENDER
+        ]);
+
         this.refs = {};
 
-        // 在parser里面维护
-        this.$$state = null;
         // 在parser里面设置
         this.$$scopeModel = null;
 
@@ -151,7 +159,7 @@ export default class Component {
      * @param {Object=} options 配置参数
      */
     setState(name, value, options = {}) {
-        if (this.$$state !== componentState.READY) {
+        if (this.isInStage(componentState.READY)) {
             log.warn('don\'t set state data when the component\'s state is not `READY`');
             return;
         }

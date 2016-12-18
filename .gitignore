@@ -5,3 +5,4 @@ dom-component
 npm-debug.log
 .DS_Store
 coverage
+dist
