@@ -159,7 +159,7 @@ export default class Component {
      * @param {Object=} options 配置参数
      */
     setState(name, value, options = {}) {
-        if (this.isInStage(componentState.READY)) {
+        if (!this.isInStage(componentState.READY)) {
             log.warn('don\'t set state data when the component\'s state is not `READY`');
             return;
         }
