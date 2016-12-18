@@ -304,7 +304,10 @@ export default class ComponentParser extends ExprParserEnhance {
      */
     initRender(done) {
         const doneChecker = new DoneChecker(() => {
-            this[COMPONENT].initMounted();
+            if (!this[COMPONENT].isInStage(componentState.DESTROIED)) {
+                this[COMPONENT].initMounted();
+            }
+
             done();
         });
         const exprWacther = this.getExpressionWatcher();
@@ -352,7 +355,7 @@ export default class ComponentParser extends ExprParserEnhance {
         doneChecker.add(innerDone => {
             const domUpdater = this.getDOMUpdater();
             const taskId = domUpdater.generateTaskId();
-            domUpdater.addTaskFn(taskId, () => {
+            this.addTaskFn(taskId, () => {
                 this.insertComponentNodes(this[COMPONENT_NODE], this.startNode, this.endNode);
             }, innerDone);
         });
